@@ -38,7 +38,9 @@ class OutfitRepository {
     List<String> luckyColors = const [],
   }) async {
     final client = SupabaseService.client;
-    if (client == null || client.auth.currentUser == null) return const [];
+    if (client == null || client.auth.currentUser == null) {
+      throw StateError('Sign in to generate AI outfits.');
+    }
 
     final response = await client.functions.invoke(
       'generate-outfits',
@@ -59,7 +61,9 @@ class OutfitRepository {
 
   Future<Outfit?> rushOutfit({String style = 'rush'}) async {
     final client = SupabaseService.client;
-    if (client == null || client.auth.currentUser == null) return null;
+    if (client == null || client.auth.currentUser == null) {
+      throw StateError('Sign in to use rush outfit.');
+    }
 
     final response = await client.functions.invoke(
       'rush-outfit',

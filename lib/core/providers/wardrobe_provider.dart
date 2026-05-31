@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/wardrobe_repository.dart';
 import '../../shared/models/clothing_item.dart';
-import '../../shared/services/mock_data.dart';
 
 final wardrobeProvider =
     StateNotifierProvider<WardrobeNotifier, List<ClothingItem>>((ref) {
@@ -11,7 +10,7 @@ final wardrobeProvider =
     });
 
 class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
-  WardrobeNotifier() : super(MockData.clothingItems) {
+  WardrobeNotifier() : super(const []) {
     load();
   }
 
@@ -20,15 +19,13 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   Future<void> load() async {
     try {
       final items = await _repository.fetchItems();
-      if (items.isNotEmpty) state = items;
-    } catch (_) {
-      // Keep mock wardrobe available when backend is not configured or offline.
-    }
+      state = items;
+    } catch (_) {}
   }
 
-  void addItem(ClothingItem item) {
+  Future<void> addItem(ClothingItem item) async {
     state = [...state, item];
-    _repository.insertItem(item);
+    await _repository.insertItem(item);
   }
 
   Future<void> addUploadedItem({
@@ -52,12 +49,12 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     }
   }
 
-  void removeItem(String id) {
+  Future<void> removeItem(String id) async {
     state = state.where((item) => item.id != id).toList();
-    _repository.archiveItem(id);
+    await _repository.archiveItem(id);
   }
 
-  void markWorn(String id) {
+  Future<void> markWorn(String id) async {
     state = state.map((item) {
       if (item.id == id) {
         return item.copyWith(
@@ -67,14 +64,14 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       }
       return item;
     }).toList();
-    _repository.recordWear(itemIds: [id]);
+    await _repository.recordWear(itemIds: [id]);
   }
 
-  void markOutfitWorn({
+  Future<void> markOutfitWorn({
     String? outfitId,
     required List<String> itemIds,
     String? style,
-  }) {
+  }) async {
     state = state.map((item) {
       if (itemIds.contains(item.id)) {
         return item.copyWith(
@@ -84,7 +81,11 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       }
       return item;
     }).toList();
-    _repository.recordWear(outfitId: outfitId, itemIds: itemIds, style: style);
+    await _repository.recordWear(
+      outfitId: outfitId,
+      itemIds: itemIds,
+      style: style,
+    );
   }
 
   List<ClothingItem> byCategory(ClothingCategory category) {

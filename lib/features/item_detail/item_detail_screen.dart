@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/widgets/outfit_card.dart';
+import '../../shared/widgets/wardrobe_image.dart';
 
 class ItemDetailScreen extends ConsumerWidget {
   final String itemId;
@@ -42,18 +42,7 @@ class ItemDetailScreen extends ConsumerWidget {
               stretchModes: const [StretchMode.zoomBackground],
               background: Hero(
                 tag: 'item_${item.id}',
-                child: CachedNetworkImage(
-                  imageUrl: item.imageUrl,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => Container(
-                    color: item.category.color.withOpacity(0.2),
-                    child: Icon(
-                      item.category.icon,
-                      size: 80,
-                      color: item.category.color,
-                    ),
-                  ),
-                ),
+                child: WardrobeImage(item: item),
               ),
             ),
             leading: Padding(

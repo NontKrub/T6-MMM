@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../core/theme/app_colors.dart';
+import 'wardrobe_image.dart';
 
 class OutfitCard extends StatelessWidget {
   final Outfit outfit;
@@ -134,18 +134,7 @@ class _ItemThumb extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: CachedNetworkImage(
-          imageUrl: item.imageUrl,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => Container(
-            color: item.category.color.withOpacity(0.2),
-            child: Icon(
-              item.category.icon,
-              size: 20,
-              color: item.category.color,
-            ),
-          ),
-        ),
+        child: WardrobeImage(item: item),
       ),
     );
   }

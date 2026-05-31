@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../shared/models/clothing_item.dart';
+import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
 const _uuid = Uuid();
@@ -12,10 +13,13 @@ class WardrobeRepository {
   static const bucket = 'wardrobe-images';
 
   SupabaseClient? get _client => SupabaseService.client;
+  final _local = LocalAccountRepository();
 
   Future<List<ClothingItem>> fetchItems() async {
     final client = _client;
-    if (client == null || client.auth.currentUser == null) return const [];
+    if (client == null || client.auth.currentUser == null) {
+      return _local.fetchItems();
+    }
 
     final rows = await client
         .from('clothing_items')
@@ -51,9 +55,19 @@ class WardrobeRepository {
   }) async {
     final client = _client;
     final user = client?.auth.currentUser;
-    if (client == null || user == null) return null;
-
     final itemId = _uuid.v4();
+    if (client == null || user == null) {
+      final item = ClothingItem(
+        id: itemId,
+        name: name.isNotEmpty ? name : 'Wardrobe item',
+        brand: brand,
+        category: fallbackCategory,
+        imageUrl: fileName,
+        tags: tags,
+      );
+      return _local.insertItem(item);
+    }
+
     final extension = fileName.split('.').last.toLowerCase();
     final safeExtension = ['jpg', 'jpeg', 'png', 'webp'].contains(extension)
         ? extension
@@ -116,7 +130,10 @@ class WardrobeRepository {
   Future<void> insertItem(ClothingItem item) async {
     final client = _client;
     final user = client?.auth.currentUser;
-    if (client == null || user == null) return;
+    if (client == null || user == null) {
+      await _local.insertItem(item);
+      return;
+    }
 
     await client
         .from('clothing_items')
@@ -125,7 +142,10 @@ class WardrobeRepository {
 
   Future<void> archiveItem(String id) async {
     final client = _client;
-    if (client == null || client.auth.currentUser == null) return;
+    if (client == null || client.auth.currentUser == null) {
+      await _local.archiveItem(id);
+      return;
+    }
     await client
         .from('clothing_items')
         .update({'archived_at': DateTime.now().toIso8601String()})
@@ -138,7 +158,17 @@ class WardrobeRepository {
     String? style,
   }) async {
     final client = _client;
-    if (client == null || client.auth.currentUser == null) return;
+    if (client == null || client.auth.currentUser == null) {
+      final items = await _local.fetchItems();
+      final now = DateTime.now();
+      await _local.updateItems(
+        items.map((item) {
+          if (!itemIds.contains(item.id)) return item;
+          return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
+        }).toList(),
+      );
+      return;
+    }
     await client.rpc(
       'record_wear_event',
       params: {

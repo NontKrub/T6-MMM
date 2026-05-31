@@ -10,7 +10,7 @@ export type ClothingItemRow = {
   last_worn: string | null;
 };
 
-export function fallbackOutfits(items: ClothingItemRow[], style = "casual", count = 3) {
+export function leastRecentlyWornOutfit(items: ClothingItemRow[], style = "casual") {
   const byCategory = (category: ClothingItemRow["category"]) =>
     items.filter((item) => item.category === category);
 
@@ -21,22 +21,22 @@ export function fallbackOutfits(items: ClothingItemRow[], style = "casual", coun
   const hats = byCategory("hat");
 
   if (tops.length === 0 || pants.length === 0 || shoes.length === 0) {
-    return [];
+    return null;
   }
 
-  return Array.from({ length: Math.min(count, tops.length, 3) }).map((_, index) => ({
-    name: index === 0 ? "Ready Set Look" : `Generated Look ${index + 1}`,
+  return {
+    name: "Rush Outfit",
     item_ids: [
-      tops[index % tops.length].id,
-      pants[index % pants.length].id,
-      shoes[index % shoes.length].id,
-      ...(accessories.length ? [accessories[index % accessories.length].id] : []),
-      ...(index === 0 && hats.length ? [hats[0].id] : []),
+      tops[0].id,
+      pants[0].id,
+      shoes[0].id,
+      ...(accessories.length ? [accessories[0].id] : []),
+      ...(hats.length ? [hats[0].id] : []),
     ],
     style,
-    reason: "Built from complete outfit categories in your wardrobe.",
-    score: 72 - index,
-  }));
+    reason: "Fast practical pick using least-recently-worn complete outfit categories.",
+    score: 80,
+  };
 }
 
 export function repetitionInsights(events: Array<{ style: string | null; colors: string[]; worn_at: string }>) {

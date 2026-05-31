@@ -142,6 +142,14 @@ class UserProfile {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      ...toProfileJson(),
+      'style_preferences': stylePreferences,
+      'occasions': occasions,
+    };
+  }
+
   UserProfile copyWith({
     String? name,
     String? avatarUrl,

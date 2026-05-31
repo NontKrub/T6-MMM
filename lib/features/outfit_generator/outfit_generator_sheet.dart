@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -25,31 +26,50 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   bool _matchWeather = false;
   List<Outfit> _generatedOutfits = [];
   bool _loading = false;
+  String? _error;
 
   static const _styles = ['casual', 'work', 'formal', 'sport', 'date'];
   final _weatherMock = '☀️ Sunny · 28°C';
 
   Future<void> _generate() async {
-    setState(() => _loading = true);
-    final outfits = await ref
-        .read(outfitsProvider.notifier)
-        .generateBackendOutfits(
-          _selectedStyle,
-          ref,
-          usePersonalColor: _usePersonalColor,
-          useLuckyColor: _useLuckyColor,
-          matchWeather: _matchWeather,
-        );
     setState(() {
-      _generatedOutfits = outfits;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final outfits = await ref
+          .read(outfitsProvider.notifier)
+          .generateBackendOutfits(
+            _selectedStyle,
+            ref,
+            usePersonalColor: _usePersonalColor,
+            useLuckyColor: _useLuckyColor,
+            matchWeather: _matchWeather,
+          );
+      setState(() {
+        _generatedOutfits = outfits;
+        _loading = false;
+        _error = outfits.isEmpty ? 'No outfits were generated.' : null;
+      });
+    } catch (error) {
+      setState(() {
+        _generatedOutfits = const [];
+        _loading = false;
+        _error = error.toString();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wardrobe = ref.watch(wardrobeProvider);
+    final locked = ref
+        .watch(sessionProvider)
+        .maybeWhen(
+          data: (session) => session.requiresLoginForAi,
+          orElse: () => true,
+        );
 
     return Container(
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 40),
@@ -83,81 +103,96 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // Style chips
-                  Text('Style', style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    children: _styles.map((s) {
-                      final sel = _selectedStyle == s;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedStyle = s),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? AppColors.seedColor
-                                : AppColors.seedColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            s[0].toUpperCase() + s.substring(1),
-                            style: TextStyle(
-                              color: sel ? Colors.white : AppColors.seedColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                  if (locked) ...[
+                    const SizedBox(height: 20),
+                    const _LockedState(),
+                  ] else ...[
+                    const SizedBox(height: 20),
+                    // Style chips
+                    Text(
+                      'Style',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: _styles.map((s) {
+                        final sel = _selectedStyle == s;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedStyle = s),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? AppColors.seedColor
+                                  : AppColors.seedColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              s[0].toUpperCase() + s.substring(1),
+                              style: TextStyle(
+                                color: sel ? Colors.white : AppColors.seedColor,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  // Filters
-                  Text(
-                    'Filters',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 10),
-                  _FilterToggle(
-                    label: 'Use my personal color season',
-                    value: _usePersonalColor,
-                    onChanged: (v) => setState(() => _usePersonalColor = v),
-                  ),
-                  _FilterToggle(
-                    label: "Today's lucky color",
-                    value: _useLuckyColor,
-                    onChanged: (v) => setState(() => _useLuckyColor = v),
-                  ),
-                  _FilterToggle(
-                    label: 'Match weather · $_weatherMock',
-                    value: _matchWeather,
-                    onChanged: (v) => setState(() => _matchWeather = v),
-                  ),
-                  const SizedBox(height: 24),
-                  // Generate button
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _loading ? null : _generate,
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: Text(_loading ? 'Generating...' : 'Generate'),
+                        );
+                      }).toList(),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    // Filters
+                    Text(
+                      'Filters',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 10),
+                    _FilterToggle(
+                      label: 'Use my personal color season',
+                      value: _usePersonalColor,
+                      onChanged: (v) => setState(() => _usePersonalColor = v),
+                    ),
+                    _FilterToggle(
+                      label: "Today's lucky color",
+                      value: _useLuckyColor,
+                      onChanged: (v) => setState(() => _useLuckyColor = v),
+                    ),
+                    _FilterToggle(
+                      label: 'Match weather · $_weatherMock',
+                      value: _matchWeather,
+                      onChanged: (v) => setState(() => _matchWeather = v),
+                    ),
+                    const SizedBox(height: 24),
+                    // Generate button
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _loading ? null : _generate,
+                        icon: _loading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.auto_awesome_rounded, size: 18),
+                        label: Text(_loading ? 'Generating...' : 'Generate'),
+                      ),
+                    ),
+                  ],
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+                    ),
+                  ],
                   // Generated results
                   if (_generatedOutfits.isNotEmpty) ...[
                     const SizedBox(height: 24),
@@ -232,6 +267,41 @@ class _FilterToggle extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LockedState extends StatelessWidget {
+  const _LockedState();
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: 18,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.lock_outline_rounded,
+            color: AppColors.seedColor,
+            size: 34,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'AI outfit generation needs a login',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.',
+            style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

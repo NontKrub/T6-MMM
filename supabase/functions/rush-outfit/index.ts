@@ -1,4 +1,4 @@
-import { ClothingItemRow, fallbackOutfits } from "../_shared/domain.ts";
+import { ClothingItemRow, leastRecentlyWornOutfit } from "../_shared/domain.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     const wardrobe = (items ?? []) as ClothingItemRow[];
-    const [outfit] = fallbackOutfits(wardrobe, style, 1);
+    const outfit = leastRecentlyWornOutfit(wardrobe, style);
     if (!outfit) {
       return jsonResponse({ error: "Add at least one top, one bottom, and one pair of shoes first." }, 422);
     }

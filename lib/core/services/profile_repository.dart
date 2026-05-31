@@ -1,11 +1,14 @@
 import '../../shared/models/user_profile.dart';
+import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
 class ProfileRepository {
+  final _local = LocalAccountRepository();
+
   Future<UserProfile?> fetchProfile() async {
     final client = SupabaseService.client;
     final user = client?.auth.currentUser;
-    if (client == null || user == null) return null;
+    if (client == null || user == null) return _local.fetchProfile();
 
     final profileRow = await client
         .from('profiles')
@@ -35,7 +38,10 @@ class ProfileRepository {
   Future<void> upsertProfile(UserProfile profile) async {
     final client = SupabaseService.client;
     final user = client?.auth.currentUser;
-    if (client == null || user == null) return;
+    if (client == null || user == null) {
+      await _local.upsertProfile(profile);
+      return;
+    }
 
     await client.from('profiles').upsert({
       ...profile.toProfileJson(),

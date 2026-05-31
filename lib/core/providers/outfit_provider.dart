@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/models/clothing_item.dart';
-import '../../shared/services/mock_data.dart';
 import '../services/outfit_repository.dart';
 import 'wardrobe_provider.dart';
 
@@ -17,7 +16,7 @@ final currentOutfitProvider = StateProvider<Outfit?>((ref) => null);
 final generatedOutfitsProvider = StateProvider<List<Outfit>>((ref) => []);
 
 class OutfitNotifier extends StateNotifier<List<Outfit>> {
-  OutfitNotifier() : super(MockData.outfits) {
+  OutfitNotifier() : super(const []) {
     load();
   }
 
@@ -26,7 +25,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
   Future<void> load() async {
     try {
       final outfits = await _repository.fetchOutfits();
-      if (outfits.isNotEmpty) state = outfits;
+      state = outfits;
     } catch (_) {}
   }
 
@@ -41,53 +40,6 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
         );
   }
 
-  List<Outfit> generateOutfits(String style, WidgetRef ref) {
-    final wardrobe = ref.read(wardrobeProvider);
-    // Mock generation: filter by style tag, build combinations
-    final tops = wardrobe
-        .where(
-          (i) =>
-              i.category == ClothingCategory.top &&
-              (style == 'all' || i.tags.contains(style)),
-        )
-        .toList();
-    final pants = wardrobe
-        .where(
-          (i) =>
-              i.category == ClothingCategory.pants &&
-              (style == 'all' || i.tags.contains(style)),
-        )
-        .toList();
-    final shoes = wardrobe
-        .where((i) => i.category == ClothingCategory.shoes)
-        .toList();
-    final accessories = wardrobe
-        .where((i) => i.category == ClothingCategory.accessory)
-        .toList();
-
-    if (tops.isEmpty || pants.isEmpty || shoes.isEmpty) return [];
-
-    final generated = <Outfit>[];
-    for (var i = 0; i < 3 && i < tops.length; i++) {
-      generated.add(
-        Outfit(
-          id: 'gen_$i',
-          name: 'Generated Look ${i + 1}',
-          itemIds: [
-            tops[i % tops.length].id,
-            pants[i % pants.length].id,
-            shoes[i % shoes.length].id,
-            if (accessories.isNotEmpty) accessories[i % accessories.length].id,
-          ],
-          style: style,
-        ),
-      );
-    }
-
-    ref.read(generatedOutfitsProvider.notifier).state = generated;
-    return generated;
-  }
-
   Future<List<Outfit>> generateBackendOutfits(
     String style,
     WidgetRef ref, {
@@ -95,20 +47,15 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     bool useLuckyColor = false,
     bool matchWeather = false,
   }) async {
-    try {
-      final generated = await _repository.generateOutfits(
-        style: style,
-        usePersonalColor: usePersonalColor,
-        useLuckyColor: useLuckyColor,
-        matchWeather: matchWeather,
-      );
-      if (generated.isNotEmpty) {
-        state = [...generated, ...state];
-        ref.read(generatedOutfitsProvider.notifier).state = generated;
-        return generated;
-      }
-    } catch (_) {}
-    return generateOutfits(style, ref);
+    final generated = await _repository.generateOutfits(
+      style: style,
+      usePersonalColor: usePersonalColor,
+      useLuckyColor: useLuckyColor,
+      matchWeather: matchWeather,
+    );
+    state = [...generated, ...state];
+    ref.read(generatedOutfitsProvider.notifier).state = generated;
+    return generated;
   }
 
   Outfit rushOutfit(WidgetRef ref) {
@@ -123,7 +70,9 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
         .where((i) => i.category == ClothingCategory.shoes)
         .toList();
 
-    if (tops.isEmpty || pants.isEmpty || shoes.isEmpty) return state.first;
+    if (tops.isEmpty || pants.isEmpty || shoes.isEmpty) {
+      throw StateError('Add at least one top, pants, and shoes first.');
+    }
 
     tops.shuffle();
     pants.shuffle();
@@ -137,13 +86,11 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
   }
 
   Future<Outfit> rushBackendOutfit(WidgetRef ref) async {
-    try {
-      final outfit = await _repository.rushOutfit();
-      if (outfit != null) {
-        state = [outfit, ...state];
-        return outfit;
-      }
-    } catch (_) {}
-    return rushOutfit(ref);
+    final outfit = await _repository.rushOutfit();
+    if (outfit == null) {
+      throw StateError('Rush outfit requires a signed-in account.');
+    }
+    state = [outfit, ...state];
+    return outfit;
   }
 }

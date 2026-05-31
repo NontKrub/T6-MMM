@@ -47,3 +47,12 @@ app.*.map.json
 
 # Supabase local CLI state
 /supabase/.temp/
+
+# Local environment/config values
+.env
+.env.*
+*.env
+/config/*.local.json
+/config/*.secrets.json
+/supabase/.env
+/supabase/.env.*

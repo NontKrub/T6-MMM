@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
 import 'supabase_service.dart';
 
@@ -17,10 +18,6 @@ class AuthService {
     await _signInWithOAuth(OAuthProvider.google);
   }
 
-  Future<void> signInWithFacebook() async {
-    await _signInWithOAuth(OAuthProvider.facebook);
-  }
-
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
     final client = _client;
     if (client == null) {
@@ -31,6 +28,7 @@ class AuthService {
     await client.auth.signInWithOAuth(
       provider,
       redirectTo: AppConfig.authRedirectUrl,
+      authScreenLaunchMode: LaunchMode.externalApplication,
     );
   }
 

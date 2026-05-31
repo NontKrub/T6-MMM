@@ -2,35 +2,39 @@ import 'package:flutter_riverpod/legacy.dart';
 
 class OnboardingState {
   final int step;
+  final String name;
+  final DateTime? birthDate;
   final String? bodyType;
   final List<String> styles;
   final String? colorSeason;
-  final double brandTier;
   final List<String> occasions;
 
   const OnboardingState({
     this.step = 0,
+    this.name = '',
+    this.birthDate,
     this.bodyType,
     this.styles = const [],
     this.colorSeason,
-    this.brandTier = 0.3,
     this.occasions = const [],
   });
 
   OnboardingState copyWith({
     int? step,
+    String? name,
+    DateTime? birthDate,
     String? bodyType,
     List<String>? styles,
     String? colorSeason,
-    double? brandTier,
     List<String>? occasions,
   }) {
     return OnboardingState(
       step: step ?? this.step,
+      name: name ?? this.name,
+      birthDate: birthDate ?? this.birthDate,
       bodyType: bodyType ?? this.bodyType,
       styles: styles ?? this.styles,
       colorSeason: colorSeason ?? this.colorSeason,
-      brandTier: brandTier ?? this.brandTier,
       occasions: occasions ?? this.occasions,
     );
   }
@@ -45,8 +49,12 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
   OnboardingNotifier() : super(const OnboardingState());
 
   void nextStep() => state = state.copyWith(step: state.step + 1);
-  void prevStep() => state = state.copyWith(step: (state.step - 1).clamp(0, 4));
+  void prevStep() {
+    if (state.step > 0) state = state.copyWith(step: state.step - 1);
+  }
 
+  void setName(String name) => state = state.copyWith(name: name);
+  void setBirthDate(DateTime date) => state = state.copyWith(birthDate: date);
   void setBodyType(String type) => state = state.copyWith(bodyType: type);
   void toggleStyle(String style) {
     final updated = List<String>.from(state.styles);
@@ -56,7 +64,6 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
 
   void setColorSeason(String season) =>
       state = state.copyWith(colorSeason: season);
-  void setBrandTier(double tier) => state = state.copyWith(brandTier: tier);
   void toggleOccasion(String occasion) {
     final updated = List<String>.from(state.occasions);
     updated.contains(occasion)

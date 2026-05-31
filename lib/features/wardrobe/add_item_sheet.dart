@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../shared/models/clothing_item.dart';
@@ -19,8 +22,7 @@ class AddItemSheet extends ConsumerStatefulWidget {
 class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   XFile? _pickedFile;
   String? _imagePath;
-  bool _analyzing = false;
-  bool _analyzed = false;
+  bool _saving = false;
   ClothingCategory _category = ClothingCategory.top;
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
@@ -43,27 +45,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     setState(() {
       _pickedFile = file;
       _imagePath = file.path;
-      _analyzing = true;
-      _analyzed = false;
-    });
-
-    // Mock AI analysis delay
-    await Future.delayed(const Duration(milliseconds: 1600));
-
-    // Mock: auto-assign category based on filename or just pick a random one
-    final mockCategories = ClothingCategory.values.toList()..shuffle();
-    setState(() {
-      _analyzing = false;
-      _analyzed = true;
-      _category = mockCategories.first;
     });
   }
 
   Future<void> _save() async {
     if (_nameController.text.isEmpty) return;
 
-    if (_pickedFile != null) {
-      setState(() => _analyzing = true);
+    if (_pickedFile != null && SupabaseService.isSignedIn) {
+      setState(() => _saving = true);
       try {
         await ref
             .read(wardrobeProvider.notifier)
@@ -81,7 +70,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         Navigator.pop(context);
         return;
       } catch (_) {
-        setState(() => _analyzing = false);
+        setState(() => _saving = false);
       }
     }
 
@@ -90,9 +79,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       name: _nameController.text,
       brand: _brandController.text.isEmpty ? null : _brandController.text,
       category: _category,
-      imageUrl: _imagePath != null
-          ? 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400'
-          : 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+      imageUrl: _imagePath ?? '',
       tags: _tags,
     );
 
@@ -151,7 +138,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           style: BorderStyle.solid,
                         ),
                       ),
-                      child: _analyzing
+                      child: _saving
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -161,7 +148,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'AI categorizing...',
+                                  'Saving...',
                                   style: TextStyle(
                                     color: AppColors.seedColor,
                                     fontSize: 13,
@@ -175,14 +162,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(20),
-                                  child: Image.network(
-                                    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+                                  child: Image.file(
+                                    File(_imagePath!),
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: 160,
                                   ),
                                 ),
-                                if (_analyzed)
+                                if (SupabaseService.isSignedIn)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
@@ -193,7 +180,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
-                                      '✓ Categorized as ${_category.label}',
+                                      'Category: ${_category.label}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,

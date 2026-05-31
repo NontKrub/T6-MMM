@@ -12,12 +12,10 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
   UserProfileNotifier(this._ref)
     : super(
         const UserProfile(
-          id: 'mock_user',
-          name: 'Alex',
-          colorSeason: ColorSeason.winter,
+          id: 'local_guest',
+          name: 'Guest',
+          colorSeason: ColorSeason.spring,
           avatarType: AvatarType.human,
-          stylePreferences: ['Minimal', 'Casual'],
-          occasions: ['Work', 'Weekend'],
           onboardingComplete: false,
         ),
       ) {
@@ -33,9 +31,11 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
       if (profile != null) {
         state = profile;
         _ref.read(skinToneIndexProvider.notifier).state = profile.skinToneIndex;
-        _ref.read(hairColorIndexProvider.notifier).state = profile.hairColorIndex;
+        _ref.read(hairColorIndexProvider.notifier).state =
+            profile.hairColorIndex;
         _ref.read(bodyShapeProvider.notifier).state = profile.bodyShape;
-        _ref.read(hairStyleIndexProvider.notifier).state = profile.hairStyleIndex;
+        _ref.read(hairStyleIndexProvider.notifier).state =
+            profile.hairStyleIndex;
       }
     } catch (_) {}
   }
@@ -71,6 +71,11 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
 
   void updateName(String name) {
     state = state.copyWith(name: name);
+    _persist();
+  }
+
+  void updateBirthDate(DateTime date) {
+    state = state.copyWith(birthDate: date);
     _persist();
   }
 

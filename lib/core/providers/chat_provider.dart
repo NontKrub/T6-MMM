@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:uuid/uuid.dart';
 import '../services/chat_repository.dart';
 import '../../shared/models/chat_message.dart';
-import '../../shared/services/mock_data.dart';
 
 const _uuid = Uuid();
 
@@ -39,22 +38,20 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     state = [...state, userMsg];
 
     ref.read(chatTypingProvider.notifier).state = true;
-    await Future.delayed(const Duration(milliseconds: 1400));
-    ref.read(chatTypingProvider.notifier).state = false;
-
     final backendMessage = await _repository.sendMessage(text);
+    ref.read(chatTypingProvider.notifier).state = false;
     if (backendMessage != null) {
       state = [...state, backendMessage];
       return;
     }
-
-    final response = MockData.getChatResponse(text);
-    final aiMsg = ChatMessage(
-      id: _uuid.v4(),
-      text: response,
-      isUser: false,
-      timestamp: DateTime.now(),
-    );
-    state = [...state, aiMsg];
+    state = [
+      ...state,
+      ChatMessage(
+        id: _uuid.v4(),
+        text: 'Sign in with a configured backend to use Fashion AI.',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ),
+    ];
   }
 }

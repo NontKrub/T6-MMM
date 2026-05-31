@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../core/theme/app_colors.dart';
+import 'wardrobe_image.dart';
 
 class ClothingItemCard extends StatelessWidget {
   final ClothingItem item;
@@ -17,8 +17,6 @@ class ClothingItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -35,36 +33,7 @@ class ClothingItemCard extends StatelessWidget {
           child: Stack(
             children: [
               // Item image
-              Positioned.fill(
-                child: CachedNetworkImage(
-                  imageUrl: item.imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    color: isDark
-                        ? const Color(0xFF1E1B2E)
-                        : const Color(0xFFEDE9FF),
-                    child: Center(
-                      child: Icon(
-                        item.category.icon,
-                        color: item.category.color.withOpacity(0.5),
-                        size: 36,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: isDark
-                        ? const Color(0xFF1E1B2E)
-                        : const Color(0xFFEDE9FF),
-                    child: Center(
-                      child: Icon(
-                        item.category.icon,
-                        color: item.category.color,
-                        size: 36,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              Positioned.fill(child: WardrobeImage(item: item)),
               // Bottom info overlay
               Positioned(
                 bottom: 0,

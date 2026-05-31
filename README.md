@@ -8,7 +8,7 @@ Mix Match Mood, or MMM for short, is a Flutter wardrobe assistant that helps you
 - Outfit generation for everyday planning and in-a-rush recommendations.
 - Fashion chat assistant backed by Supabase Edge Functions.
 - Missing-piece suggestions and repetition insights.
-- Guest/mock mode when Supabase configuration is not provided.
+- Guest local account for profile and wardrobe when Supabase sign-in is not used.
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ Install dependencies:
 flutter pub get
 ```
 
-Run locally in guest/mock mode:
+Run locally with a guest local account:
 
 ```sh
 flutter run

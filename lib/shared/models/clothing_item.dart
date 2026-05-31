@@ -107,6 +107,20 @@ class ClothingItem {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'brand': brand,
+      'category': category.value,
+      'image_url': imageUrl,
+      'tags': tags,
+      'primary_color': color,
+      'wear_count': wearCount,
+      'last_worn': lastWorn?.toIso8601String(),
+    };
+  }
+
   Map<String, dynamic> toInsertJson({
     required String userId,
     required String imagePath,

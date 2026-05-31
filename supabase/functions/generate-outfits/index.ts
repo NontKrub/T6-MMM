@@ -1,4 +1,4 @@
-import { ClothingItemRow, fallbackOutfits } from "../_shared/domain.ts";
+import { ClothingItemRow } from "../_shared/domain.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { outfitSchema, openAiJson } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
@@ -31,8 +31,9 @@ Deno.serve(async (req) => {
     ]);
 
     const wardrobe = (items ?? []) as ClothingItemRow[];
-    if (wardrobe.length < 3) {
-      return jsonResponse({ outfits: fallbackOutfits(wardrobe, style), saved: [] });
+    const categories = new Set(wardrobe.map((item) => item.category));
+    if (!categories.has("top") || !categories.has("pants") || !categories.has("shoes")) {
+      return jsonResponse({ error: "Add at least one top, one bottom, and one pair of shoes first." }, 422);
     }
 
     let generated;
@@ -64,8 +65,10 @@ Deno.serve(async (req) => {
           strict: true,
         },
       });
-    } catch {
-      generated = { outfits: fallbackOutfits(wardrobe, style) };
+    } catch (error) {
+      return jsonResponse({
+        error: error instanceof Error ? error.message : "AI outfit generation failed.",
+      }, 502);
     }
 
     const validIds = new Set(wardrobe.map((item) => item.id));
@@ -95,6 +98,10 @@ Deno.serve(async (req) => {
       });
       await supabase.from("outfit_items").insert(rows);
       saved.push({ ...inserted, item_ids: itemIds });
+    }
+
+    if (saved.length === 0) {
+      return jsonResponse({ error: "AI did not return usable outfits from your wardrobe." }, 502);
     }
 
     return jsonResponse({ outfits: saved });

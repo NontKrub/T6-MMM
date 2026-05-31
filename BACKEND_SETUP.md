@@ -2,7 +2,7 @@
 
 ## Required Services
 
-- Supabase project with Google and Facebook OAuth providers enabled.
+- Supabase project with Google OAuth provider enabled.
 - Supabase Storage bucket/migrations from `supabase/migrations`.
 - Supabase Edge Functions from `supabase/functions`.
 - OpenRouter API key for image analysis, outfit generation, missing pieces, and
@@ -20,8 +20,10 @@ flutter run \
   --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
 ```
 
-If `SUPABASE_URL` or `SUPABASE_ANON_KEY` is missing, the app stays in local
-mock/guest mode.
+If `SUPABASE_URL` or `SUPABASE_ANON_KEY` is missing, OAuth sign-in is shown as
+unavailable. Continue as guest still creates a local-only account for profile
+and wardrobe data; AI/backend features remain locked until Supabase is
+configured and the user signs in.
 
 ## OAuth Redirect Setup
 
@@ -32,9 +34,9 @@ URL:
 mmm://login-callback
 ```
 
-In Supabase Dashboard > Authentication > Providers, enable Google and Facebook
-and enter each provider's client ID and secret. In the Google and Facebook
-developer consoles, set the OAuth callback/redirect URI to:
+In Supabase Dashboard > Authentication > Providers, enable Google and enter
+the provider client ID and secret. In the Google developer console, set the
+OAuth callback/redirect URI to:
 
 ```txt
 https://YOUR_PROJECT.supabase.co/auth/v1/callback

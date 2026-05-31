@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
+import '../../shared/widgets/wardrobe_image.dart';
 
 class InARushModal extends ConsumerStatefulWidget {
   final WidgetRef ref;
@@ -19,6 +21,7 @@ class InARushModal extends ConsumerStatefulWidget {
 class _InARushModalState extends ConsumerState<InARushModal> {
   Outfit? _outfit;
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -28,14 +31,24 @@ class _InARushModalState extends ConsumerState<InARushModal> {
 
   Future<void> _loadOutfit() async {
     setState(() => _loading = true);
-    final outfit = await ref
-        .read(outfitsProvider.notifier)
-        .rushBackendOutfit(widget.ref);
-    if (!mounted) return;
-    setState(() {
-      _outfit = outfit;
-      _loading = false;
-    });
+    try {
+      final outfit = await ref
+          .read(outfitsProvider.notifier)
+          .rushBackendOutfit(widget.ref);
+      if (!mounted) return;
+      setState(() {
+        _outfit = outfit;
+        _error = null;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _outfit = null;
+        _error = error.toString();
+        _loading = false;
+      });
+    }
   }
 
   void _reshuffle() {
@@ -45,6 +58,12 @@ class _InARushModalState extends ConsumerState<InARushModal> {
   @override
   Widget build(BuildContext context) {
     final wardrobe = ref.watch(wardrobeProvider);
+    final locked = ref
+        .watch(sessionProvider)
+        .maybeWhen(
+          data: (session) => session.requiresLoginForAi,
+          orElse: () => true,
+        );
     final outfit = _outfit;
     final items = outfit == null
         ? <ClothingItem>[]
@@ -100,7 +119,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                       ),
                     ),
                     Text(
-                      'Your outfit is ready',
+                      locked ? 'Sign in required' : 'Your outfit is ready',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 13,
@@ -116,6 +135,17 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 36),
                 child: CircularProgressIndicator(color: Colors.white),
+              )
+            else if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  locked
+                      ? 'Rush outfit uses backend AI. Sign in with Supabase to use it.'
+                      : _error!,
+                  style: TextStyle(color: Colors.white.withOpacity(0.75)),
+                  textAlign: TextAlign.center,
+                ),
               )
             else
               Row(
@@ -138,19 +168,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(15),
-                                    child: CachedNetworkImage(
-                                      imageUrl: item.imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorWidget: (_, __, ___) => Container(
-                                        color: item.category.color.withOpacity(
-                                          0.2,
-                                        ),
-                                        child: Icon(
-                                          item.category.icon,
-                                          color: item.category.color,
-                                        ),
-                                      ),
-                                    ),
+                                    child: WardrobeImage(item: item),
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -181,7 +199,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _reshuffle,
+                    onPressed: locked ? null : _reshuffle,
                     icon: const Icon(Icons.shuffle_rounded, size: 16),
                     label: const Text('Reshuffle'),
                     style: OutlinedButton.styleFrom(
@@ -194,16 +212,21 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () {
-                      if (_outfit != null) {
-                        ref
-                            .read(outfitsProvider.notifier)
-                            .selectOutfit(_outfit!, ref);
-                      }
-                      Navigator.pop(context);
-                    },
+                    onPressed: _outfit == null
+                        ? () {
+                            Navigator.pop(context);
+                            context.go('/auth');
+                          }
+                        : () {
+                            if (_outfit != null) {
+                              ref
+                                  .read(outfitsProvider.notifier)
+                                  .selectOutfit(_outfit!, ref);
+                            }
+                            Navigator.pop(context);
+                          },
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Wear This'),
+                    label: Text(_outfit == null ? 'Sign In' : 'Wear This'),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.seedColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),
