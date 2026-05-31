@@ -1,18 +1,86 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
+import '../../core/providers/session_provider.dart';
+import '../../core/providers/user_profile_provider.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/local_account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 
-class AuthScreen extends ConsumerWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends ConsumerState<AuthScreen> {
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    if (AppConfig.isSupabaseConfigured) {
+      _authSub = AuthService().authStateChanges.listen(_onAuthStateChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _onAuthStateChange(AuthState authState) async {
+    if (authState.event != AuthChangeEvent.signedIn) return;
+    await ref.read(userProfileProvider.notifier).load();
+    final profile = ref.read(userProfileProvider);
+    if (!mounted) return;
+    context.go(profile.onboardingComplete ? '/home' : '/onboarding');
+  }
+
+  Future<void> _handleGuestLogin() async {
+    await LocalAccountRepository().startGuestAccount();
+    ref.invalidate(sessionProvider);
+    await ref.read(userProfileProvider.notifier).load();
+    if (!mounted) return;
+    context.go('/onboarding', extra: {'isGuest': true});
+  }
+
+  Future<void> _handleOAuth(Future<void> Function() action) async {
+    if (!AppConfig.isSupabaseConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.authUnavailable ??
+                'Sign in is unavailable until Supabase is configured.',
+          ),
+        ),
+      );
+      return;
+    }
+    try {
+      await action();
+      // Navigation is handled by _onAuthStateChange once the deep-link
+      // callback returns the session to the app.
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: Stack(
@@ -31,7 +99,6 @@ class AuthScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // Decorative blobs
           Positioned(
             top: -80,
             right: -60,
@@ -77,7 +144,7 @@ class AuthScreen extends ConsumerWidget {
                   ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
                   const SizedBox(height: 28),
                   Text(
-                        'Your wardrobe,\nreimagined.',
+                        l10n?.authHeroTitle ?? 'Your wardrobe,\nreimagined.',
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               color: Colors.white,
@@ -90,7 +157,8 @@ class AuthScreen extends ConsumerWidget {
                       .slideX(begin: -0.2, end: 0),
                   const SizedBox(height: 12),
                   Text(
-                    'AI-powered outfit suggestions,\npersonalized just for you.',
+                    l10n?.authHeroSubtitle ??
+                        'AI-powered outfit suggestions,\npersonalized just for you.',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.6),
                       fontSize: 16,
@@ -106,7 +174,7 @@ class AuthScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Get started',
+                              l10n?.authGetStarted ?? 'Get started',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: Colors.white,
@@ -117,27 +185,17 @@ class AuthScreen extends ConsumerWidget {
                             const SizedBox(height: 20),
                             _SocialButton(
                               icon: Icons.g_mobiledata_rounded,
-                              label: 'Continue with Google',
-                              onTap: () => _handleOAuth(
-                                context,
-                                AuthService().signInWithGoogle,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _SocialButton(
-                              icon: Icons.facebook_rounded,
-                              label: 'Continue with Facebook',
-                              onTap: () => _handleOAuth(
-                                context,
-                                AuthService().signInWithFacebook,
-                              ),
-                              color: const Color(0xFF1877F2),
+                              label: l10n?.authContinueWithGoogle ??
+                                  'Continue with Google',
+                              onTap: () =>
+                                  _handleOAuth(AuthService().signInWithGoogle),
                             ),
                             const SizedBox(height: 16),
                             GestureDetector(
-                              onTap: () => _handleLogin(context),
+                              onTap: _handleGuestLogin,
                               child: Text(
-                                'Continue as guest',
+                                l10n?.authContinueAsGuest ??
+                                    'Continue as guest',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.5),
                                   fontSize: 13,
@@ -160,41 +218,17 @@ class AuthScreen extends ConsumerWidget {
       ),
     );
   }
-
-  void _handleLogin(BuildContext context) {
-    context.go('/onboarding');
-  }
-
-  Future<void> _handleOAuth(
-    BuildContext context,
-    Future<void> Function() action,
-  ) async {
-    if (!AppConfig.isSupabaseConfigured) {
-      _handleLogin(context);
-      return;
-    }
-    try {
-      await action();
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
-    }
-  }
 }
 
 class _SocialButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color? color;
 
   const _SocialButton({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.color,
   });
 
   @override
@@ -204,7 +238,7 @@ class _SocialButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: color ?? Colors.white.withOpacity(0.12),
+          color: Colors.white.withOpacity(0.12),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

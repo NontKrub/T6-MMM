@@ -7,6 +7,7 @@ import '../../core/providers/avatar_customization_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/user_profile.dart';
 import 'widgets/avatar_viewer.dart';
 import 'widgets/repetition_insight_card.dart';
@@ -18,6 +19,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final profile = ref.watch(userProfileProvider);
     final skinTone = ref.watch(skinToneIndexProvider);
     final hairColor = ref.watch(hairColorIndexProvider);
@@ -152,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'Customize',
+                                  l10n?.homeCustomize ?? 'Customize',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -218,7 +220,7 @@ class HomeScreen extends ConsumerWidget {
                                 Icons.auto_awesome_rounded,
                                 size: 18,
                               ),
-                              label: const Text('Generate Outfit'),
+                              label: Text(l10n?.homeGenerateOutfit ?? 'Generate Outfit'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.seedColor,
                                 padding: const EdgeInsets.symmetric(
@@ -315,12 +317,50 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
     (AvatarBodyShape.male, Icons.man_rounded, 'Male'),
   ];
 
-  static const _hairStyleLabels = [
+  static const _hairStyleKeys = [
     'Tousled', 'Side Swept', 'Undercut', 'Long', 'Ponytail', 'Bob',
   ];
 
+  String _localizedAvatarLabel(AppLocalizations? l, String key) =>
+      switch (key) {
+        'Human' => l?.avatarHuman ?? key,
+        'Dog' => l?.avatarDog ?? key,
+        'Cat' => l?.avatarCat ?? key,
+        _ => key,
+      };
+
+  String _localizedBodyShapeLabel(AppLocalizations? l, String key) =>
+      switch (key) {
+        'Female' => l?.avatarFemale ?? key,
+        'Male' => l?.avatarMale ?? key,
+        _ => key,
+      };
+
+  String _localizedHairStyle(AppLocalizations? l, String key) =>
+      switch (key) {
+        'Tousled' => l?.avatarHairTousled ?? key,
+        'Side Swept' => l?.avatarHairSideSwept ?? key,
+        'Undercut' => l?.avatarHairUndercut ?? key,
+        'Long' => l?.avatarHairLong ?? key,
+        'Ponytail' => l?.avatarHairPonytail ?? key,
+        'Bob' => l?.avatarHairBob ?? key,
+        _ => key,
+      };
+
+  String _localizedHairColor(AppLocalizations? l, String key) =>
+      switch (key) {
+        'Black' => l?.avatarHairBlack ?? key,
+        'Dark' => l?.avatarHairDark ?? key,
+        'Brown' => l?.avatarHairBrown ?? key,
+        'Blonde' => l?.avatarHairBlonde ?? key,
+        'Auburn' => l?.avatarHairAuburn ?? key,
+        'Platinum' => l?.avatarHairPlatinum ?? key,
+        _ => key,
+      };
+
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
+    final l10n = AppLocalizations.of(context);
     final profile = widgetRef.watch(userProfileProvider);
     final skinTone = widgetRef.watch(skinToneIndexProvider);
     final hairColor = widgetRef.watch(hairColorIndexProvider);
@@ -359,7 +399,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                 ),
               ),
               Text(
-                'Your Avatar',
+                l10n?.avatarTitle ?? 'Your Avatar',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
@@ -425,7 +465,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              label,
+                              _localizedAvatarLabel(l10n, label),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -456,7 +496,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Body shape
-                _SectionLabel(label: 'Body Shape'),
+                _SectionLabel(label: l10n?.avatarBodyShape ?? 'Body Shape'),
                 const SizedBox(height: 10),
                 Row(
                   children: _bodyShapeMeta.map((meta) {
@@ -486,7 +526,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                             children: [
                               Icon(icon, size: 26, color: sel ? Colors.white : AppColors.seedColor.withValues(alpha: 0.70)),
                               const SizedBox(height: 6),
-                              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : Colors.grey)),
+                              Text(_localizedBodyShapeLabel(l10n, label), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : Colors.grey)),
                               if (sel) ...[const SizedBox(height: 4), Container(width: 4, height: 4, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white))],
                             ],
                           ),
@@ -498,12 +538,12 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                 const SizedBox(height: 22),
 
                 // Hair style
-                _SectionLabel(label: 'Hair Style'),
+                _SectionLabel(label: l10n?.avatarHairStyle ?? 'Hair Style'),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: List.generate(_hairStyleLabels.length, (i) {
+                  children: List.generate(_hairStyleKeys.length, (i) {
                     final sel = hairStyle == i;
                     return GestureDetector(
                       onTap: () {
@@ -524,7 +564,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           boxShadow: sel ? [BoxShadow(color: AppColors.seedColor.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 2))] : null,
                         ),
                         child: Text(
-                          _hairStyleLabels[i],
+                          _localizedHairStyle(l10n, _hairStyleKeys[i]),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
@@ -537,7 +577,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                 ),
                 const SizedBox(height: 22),
 
-                _SectionLabel(label: 'Skin Tone'),
+                _SectionLabel(label: l10n?.avatarSkinTone ?? 'Skin Tone'),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -586,7 +626,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   }),
                 ),
                 const SizedBox(height: 22),
-                _SectionLabel(label: 'Hair'),
+                _SectionLabel(label: l10n?.avatarHair ?? 'Hair'),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -631,7 +671,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            _hairLabels[i],
+                            _localizedHairColor(l10n, _hairLabels[i]),
                             style: TextStyle(
                               fontSize: 9,
                               color: sel
@@ -660,9 +700,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: Text(
+                      l10n?.avatarDone ?? 'Done',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),

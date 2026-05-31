@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/config/app_config.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/services/local_account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/user_profile.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -12,11 +18,12 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final profile = ref.watch(userProfileProvider);
     final wardrobe = ref.watch(wardrobeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(l10n?.profileTitle ?? 'Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         child: Column(
@@ -73,9 +80,15 @@ class ProfileScreen extends ConsumerWidget {
             // Stats
             Row(
               children: [
-                _StatCard(value: '${wardrobe.length}', label: 'Items'),
+                _StatCard(
+                  value: '${wardrobe.length}',
+                  label: l10n?.profileItems ?? 'Items',
+                ),
                 const SizedBox(width: 12),
-                _StatCard(value: '5', label: 'Outfits'),
+                _StatCard(
+                  value: '5',
+                  label: l10n?.profileOutfits ?? 'Outfits',
+                ),
                 const SizedBox(width: 12),
                 _StatCard(
                   value: wardrobe.isNotEmpty
@@ -85,12 +98,15 @@ class ProfileScreen extends ConsumerWidget {
                             .split(' ')
                             .first
                       : '—',
-                  label: 'Fav item',
+                  label: l10n?.profileFavItem ?? 'Fav item',
                 ),
               ],
             ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
             const SizedBox(height: 24),
-            Text('Color Season', style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              l10n?.profileColorSeason ?? 'Color Season',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
             const SizedBox(height: 10),
             ...ColorSeason.values.map((season) {
               final sel = profile.colorSeason == season;
@@ -151,7 +167,7 @@ class ProfileScreen extends ConsumerWidget {
             // Style preferences
             if (profile.stylePreferences.isNotEmpty) ...[
               Text(
-                'Style Preferences',
+                l10n?.profileStylePreferences ?? 'Style Preferences',
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 10),
@@ -186,9 +202,9 @@ class ProfileScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () => _signOut(context, ref),
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Sign Out'),
+                label: Text(l10n?.profileSignOut ?? 'Sign Out'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red.withOpacity(0.8),
                   side: BorderSide(color: Colors.red.withOpacity(0.3)),
@@ -201,6 +217,18 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+  await LocalAccountRepository().clearGuestAccount();
+  if (AppConfig.isSupabaseConfigured) {
+    await AuthService().signOut();
+  }
+  ref.invalidate(userProfileProvider);
+  ref.invalidate(sessionProvider);
+  ref.invalidate(wardrobeProvider);
+  if (!context.mounted) return;
+  context.go('/auth');
 }
 
 class _StatCard extends StatelessWidget {

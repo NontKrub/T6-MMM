@@ -5,24 +5,37 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/onboarding_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/user_profile.dart';
 
 class OnboardingScreen extends ConsumerWidget {
-  const OnboardingScreen({super.key});
+  final bool isGuest;
+  const OnboardingScreen({super.key, this.isGuest = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(onboardingProvider);
     final notifier = ref.read(onboardingProvider.notifier);
 
     final steps = [
-      _BodyTypeStep(onSelect: notifier.setBodyType, selected: state.bodyType),
-      _StyleStep(onToggle: notifier.toggleStyle, selected: state.styles),
+      if (isGuest)
+        _UserInfoStep(
+          name: state.name,
+          birthDate: state.birthDate,
+          onNameChanged: notifier.setName,
+          onBirthDateChanged: notifier.setBirthDate,
+        ),
+      _StyleAndBodyStep(
+        onToggleStyle: notifier.toggleStyle,
+        onSelectBodyType: notifier.setBodyType,
+        selectedStyles: state.styles,
+        selectedBodyType: state.bodyType,
+      ),
       _ColorSeasonStep(
         onSelect: notifier.setColorSeason,
         selected: state.colorSeason,
       ),
-      _BrandTierStep(value: state.brandTier, onChanged: notifier.setBrandTier),
       _OccasionStep(
         onToggle: notifier.toggleOccasion,
         selected: state.occasions,
@@ -30,6 +43,9 @@ class OnboardingScreen extends ConsumerWidget {
     ];
 
     final isLastStep = state.step == steps.length - 1;
+
+    // Continue is disabled on the Name+DOB step until name is filled
+    final canContinue = !(isGuest && state.step == 0 && state.name.trim().isEmpty);
 
     return Scaffold(
       body: Container(
@@ -60,7 +76,11 @@ class OnboardingScreen extends ConsumerWidget {
                       const SizedBox(width: 24),
                     const Spacer(),
                     Text(
-                      '${state.step + 1} / ${steps.length}',
+                      l10n?.onboardingStep(
+                            state.step + 1,
+                            steps.length,
+                          ) ??
+                          '${state.step + 1} / ${steps.length}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 13,
@@ -110,32 +130,51 @@ class OnboardingScreen extends ConsumerWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () {
-                      if (isLastStep) {
-                        ref
-                            .read(userProfileProvider.notifier)
-                            .updateStylePreferences(state.styles);
-                        ref
-                            .read(userProfileProvider.notifier)
-                            .updateOccasions(state.occasions);
-                        ref
-                            .read(userProfileProvider.notifier)
-                            .updateOnboardingDetails(
-                              bodyType: state.bodyType,
-                              colorSeason: state.colorSeason == null
-                                  ? null
-                                  : colorSeasonFromString(state.colorSeason!),
-                              brandTier: state.brandTier,
-                            );
-                        ref
-                            .read(userProfileProvider.notifier)
-                            .completeOnboarding();
-                        context.go('/home');
-                      } else {
-                        notifier.nextStep();
-                      }
-                    },
-                    child: Text(isLastStep ? 'Enter MMM' : 'Continue'),
+                    onPressed: canContinue
+                        ? () {
+                            if (isLastStep) {
+                              if (isGuest) {
+                                if (state.name.trim().isNotEmpty) {
+                                  ref
+                                      .read(userProfileProvider.notifier)
+                                      .updateName(state.name.trim());
+                                }
+                                if (state.birthDate != null) {
+                                  ref
+                                      .read(userProfileProvider.notifier)
+                                      .updateBirthDate(state.birthDate!);
+                                }
+                              }
+                              ref
+                                  .read(userProfileProvider.notifier)
+                                  .updateStylePreferences(state.styles);
+                              ref
+                                  .read(userProfileProvider.notifier)
+                                  .updateOccasions(state.occasions);
+                              ref
+                                  .read(userProfileProvider.notifier)
+                                  .updateOnboardingDetails(
+                                    bodyType: state.bodyType,
+                                    colorSeason: state.colorSeason == null
+                                        ? null
+                                        : colorSeasonFromString(
+                                            state.colorSeason!,
+                                          ),
+                                  );
+                              ref
+                                  .read(userProfileProvider.notifier)
+                                  .completeOnboarding();
+                              context.go('/home');
+                            } else {
+                              notifier.nextStep();
+                            }
+                          }
+                        : null,
+                    child: Text(
+                      isLastStep
+                          ? (l10n?.onboardingEnter ?? 'Enter MMM')
+                          : (l10n?.onboardingContinue ?? 'Continue'),
+                    ),
                   ),
                 ),
               ),
@@ -147,26 +186,79 @@ class OnboardingScreen extends ConsumerWidget {
   }
 }
 
-// ─── Step 1: Body Type ────────────────────────────────────────────────────────
+// ─── Step: Name + Date of Birth (guest only) ──────────────────────────────────
 
-class _BodyTypeStep extends StatelessWidget {
-  final ValueChanged<String> onSelect;
-  final String? selected;
+class _UserInfoStep extends StatefulWidget {
+  final String name;
+  final DateTime? birthDate;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<DateTime> onBirthDateChanged;
 
-  const _BodyTypeStep({required this.onSelect, this.selected});
+  const _UserInfoStep({
+    required this.name,
+    required this.birthDate,
+    required this.onNameChanged,
+    required this.onBirthDateChanged,
+  });
 
-  static const _types = ['Straight', 'Hourglass', 'Pear', 'Apple', 'Athletic'];
+  @override
+  State<_UserInfoStep> createState() => _UserInfoStepState();
+}
+
+class _UserInfoStepState extends State<_UserInfoStep> {
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.name);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: widget.birthDate ?? DateTime(now.year - 20),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 5),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.seedColor,
+            onPrimary: Colors.white,
+            surface: Color(0xFF1A0E2E),
+            onSurface: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) widget.onBirthDateChanged(picked);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final l10n = AppLocalizations.of(context);
+    final hasDob = widget.birthDate != null;
+    final dob = widget.birthDate;
+    final dobLabel = hasDob
+        ? '${dob!.day}/${dob.month}/${dob.year}'
+        : (l10n?.onboardingSelectDate ?? 'Select date');
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
           Text(
-            'Your body type',
+            l10n?.onboardingUserInfoTitle ?? 'Tell us about you',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -174,44 +266,104 @@ class _BodyTypeStep extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Helps us suggest cuts that flatter you.',
+            l10n?.onboardingUserInfoSubtitle ??
+                'We use this to personalise your experience.',
             style: TextStyle(color: Colors.white.withOpacity(0.5)),
           ),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _types.map((type) {
-              final sel = selected == type;
-              return GestureDetector(
-                onTap: () => onSelect(type),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: sel
-                        ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: sel
-                          ? AppColors.seedColor
-                          : Colors.white.withOpacity(0.15),
-                    ),
-                  ),
-                  child: Text(
-                    type,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
+          const SizedBox(height: 40),
+          // Name field
+          Text(
+            l10n?.onboardingYourName ?? 'Your name',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _nameController,
+            onChanged: widget.onNameChanged,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: l10n?.onboardingNameHint ?? 'e.g. Alex',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.08),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.seedColor),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          // DOB picker
+          Text(
+            l10n?.onboardingDateOfBirth ?? 'Date of birth',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: _pickDate,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: hasDob
+                      ? AppColors.seedColor
+                      : Colors.white.withOpacity(0.15),
                 ),
-              );
-            }).toList(),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    color: hasDob
+                        ? AppColors.seedColor
+                        : Colors.white.withOpacity(0.4),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    dobLabel,
+                    style: TextStyle(
+                      color: hasDob
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.3),
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n?.onboardingDobHint ??
+                'Optional — helps us tailor lucky colour predictions.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.35),
+              fontSize: 12,
+            ),
           ),
         ],
       ).animate().fadeIn(duration: 400.ms),
@@ -219,13 +371,71 @@ class _BodyTypeStep extends StatelessWidget {
   }
 }
 
-// ─── Step 2: Style Keywords ───────────────────────────────────────────────────
+// ─── Localized label helpers ─────────────────────────────────────────────────
 
-class _StyleStep extends StatelessWidget {
-  final ValueChanged<String> onToggle;
-  final List<String> selected;
+String _bodyTypeLabel(AppLocalizations? l, String type) {
+  return switch (type) {
+    'Straight' => l?.bodyTypeStraight ?? type,
+    'Hourglass' => l?.bodyTypeHourglass ?? type,
+    'Pear' => l?.bodyTypePear ?? type,
+    'Apple' => l?.bodyTypeApple ?? type,
+    'Athletic' => l?.bodyTypeAthletic ?? type,
+    _ => type,
+  };
+}
 
-  const _StyleStep({required this.onToggle, required this.selected});
+String _styleLabel(AppLocalizations? l, String style) {
+  return switch (style) {
+    'Casual' => l?.styleVibesCasual ?? style,
+    'Minimalist' => l?.styleVibesMinimalist ?? style,
+    'Streetwear' => l?.styleVibesStreetwear ?? style,
+    'Formal' => l?.styleVibesFormal ?? style,
+    'Vintage' => l?.styleVibesVintage ?? style,
+    'Y2K' => l?.styleVibesY2K ?? style,
+    'Cottagecore' => l?.styleVibesCottagecore ?? style,
+    'Preppy' => l?.styleVibesPreppy ?? style,
+    'Bohemian' => l?.styleVibesBohemian ?? style,
+    'Athleisure' => l?.styleVibesAthleisure ?? style,
+    'Dark Academia' => l?.styleVibesDarkAcademia ?? style,
+    'Clean Girl' => l?.styleVibesCleanGirl ?? style,
+    _ => style,
+  };
+}
+
+String _occasionLabel(AppLocalizations? l, String occasion) {
+  return switch (occasion) {
+    'Work' => l?.occasionWork ?? occasion,
+    'Weekend' => l?.occasionWeekend ?? occasion,
+    'Dates' => l?.occasionDates ?? occasion,
+    'Sports' => l?.occasionSports ?? occasion,
+    'Events' => l?.occasionEvents ?? occasion,
+    'Travel' => l?.occasionTravel ?? occasion,
+    _ => occasion,
+  };
+}
+
+// ─── Step: Style & Body Type (combined) ──────────────────────────────────────
+
+class _StyleAndBodyStep extends StatelessWidget {
+  final ValueChanged<String> onToggleStyle;
+  final ValueChanged<String> onSelectBodyType;
+  final List<String> selectedStyles;
+  final String? selectedBodyType;
+
+  const _StyleAndBodyStep({
+    required this.onToggleStyle,
+    required this.onSelectBodyType,
+    required this.selectedStyles,
+    this.selectedBodyType,
+  });
+
+  static const _bodyTypes = [
+    'Straight',
+    'Hourglass',
+    'Pear',
+    'Apple',
+    'Athletic',
+  ];
 
   static const _styles = [
     'Casual',
@@ -244,14 +454,15 @@ class _StyleStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
           Text(
-            'Your style vibes',
+            l10n?.onboardingStyleTitle ?? 'Your style & build',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -259,22 +470,86 @@ class _StyleStep extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pick everything that resonates. No wrong answers.',
+            l10n?.onboardingStyleSubtitle ??
+                'Pick your body type and the vibes that resonate.',
             style: TextStyle(color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 32),
+          // Body type section
+          Text(
+            l10n?.onboardingBodyType ?? 'BODY TYPE',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _bodyTypes.map((type) {
+              final sel = selectedBodyType == type;
+              return GestureDetector(
+                onTap: () => onSelectBodyType(type),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: sel
+                        ? AppColors.seedColor
+                        : Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: sel
+                          ? AppColors.seedColor
+                          : Colors.white.withOpacity(0.15),
+                    ),
+                  ),
+                  child: Text(
+                    _bodyTypeLabel(l10n, type),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 32),
+          // Style section
+          Text(
+            l10n?.onboardingStyleVibes ?? 'STYLE VIBES',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n?.onboardingStyleVibesHint ?? 'Pick everything that resonates.',
+            style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 12),
+          ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: _styles.map((style) {
-              final sel = selected.contains(style);
+              final sel = selectedStyles.contains(style);
               return GestureDetector(
-                onTap: () => onToggle(style),
+                onTap: () => onToggleStyle(style),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
-                    vertical: 12,
+                    vertical: 11,
                   ),
                   decoration: BoxDecoration(
                     color: sel
@@ -288,7 +563,7 @@ class _StyleStep extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    style,
+                    _styleLabel(l10n, style),
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
@@ -299,13 +574,14 @@ class _StyleStep extends StatelessWidget {
               );
             }).toList(),
           ),
+          const SizedBox(height: 16),
         ],
       ).animate().fadeIn(duration: 400.ms),
     );
   }
 }
 
-// ─── Step 3: Color Season ─────────────────────────────────────────────────────
+// ─── Step: Color Season ───────────────────────────────────────────────────────
 
 class _ColorSeasonStep extends StatelessWidget {
   final ValueChanged<String> onSelect;
@@ -338,6 +614,7 @@ class _ColorSeasonStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -345,7 +622,7 @@ class _ColorSeasonStep extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Your color season',
+            l10n?.onboardingColorSeasonTitle ?? 'Your color season',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -353,7 +630,8 @@ class _ColorSeasonStep extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Determines which color palette flatters you most.',
+            l10n?.onboardingColorSeasonSubtitle ??
+                'Determines which color palette flatters you most.',
             style: TextStyle(color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 32),
@@ -428,80 +706,7 @@ class _SeasonData {
   const _SeasonData(this.name, this.colors);
 }
 
-// ─── Step 4: Brand Tier ───────────────────────────────────────────────────────
-
-class _BrandTierStep extends StatelessWidget {
-  final double value;
-  final ValueChanged<double> onChanged;
-
-  const _BrandTierStep({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final tiers = ['Fast Fashion', 'High Street', 'Contemporary', 'Luxury'];
-    final idx = (value * (tiers.length - 1)).round();
-
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 12),
-          Text(
-            'Brand preference',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Your typical shopping tier.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5)),
-          ),
-          const SizedBox(height: 48),
-          Center(
-            child: Text(
-              tiers[idx],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.seedColor,
-              inactiveTrackColor: Colors.white.withOpacity(0.15),
-              thumbColor: AppColors.seedColor,
-              overlayColor: AppColors.seedColor.withOpacity(0.2),
-              trackHeight: 4,
-            ),
-            child: Slider(value: value, onChanged: onChanged),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: tiers
-                .map(
-                  (t) => Text(
-                    t.split(' ').first,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 11,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ).animate().fadeIn(duration: 400.ms),
-    );
-  }
-}
-
-// ─── Step 5: Occasions ────────────────────────────────────────────────────────
+// ─── Step: Occasions ──────────────────────────────────────────────────────────
 
 class _OccasionStep extends StatelessWidget {
   final ValueChanged<String> onToggle;
@@ -520,6 +725,7 @@ class _OccasionStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -527,7 +733,7 @@ class _OccasionStep extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Your lifestyle',
+            l10n?.onboardingLifestyleTitle ?? 'Your lifestyle',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -535,7 +741,8 @@ class _OccasionStep extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'What occasions do you dress for?',
+            l10n?.onboardingLifestyleSubtitle ??
+                'What occasions do you dress for?',
             style: TextStyle(color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 32),
@@ -568,7 +775,7 @@ class _OccasionStep extends StatelessWidget {
                       Icon(o.icon, color: Colors.white, size: 28),
                       const SizedBox(height: 8),
                       Text(
-                        o.label,
+                        _occasionLabel(l10n, o.label),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,

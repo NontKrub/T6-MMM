@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/clothing_item.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/category_tabs.dart';
 import '../../shared/widgets/clothing_item_card.dart';
 import 'add_item_sheet.dart';
@@ -23,6 +24,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final allItems = ref.watch(wardrobeProvider);
 
     List<ClothingItem> filtered = _searchQuery.isNotEmpty
@@ -46,12 +48,13 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Wardrobe',
+                        l10n?.wardrobeTitle ?? 'Wardrobe',
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        '${allItems.length} items',
+                        l10n?.wardrobeItemCount(allItems.length) ??
+                            '${allItems.length} items',
                         style: TextStyle(
                           color: Colors.grey.withOpacity(0.7),
                           fontSize: 13,
@@ -70,7 +73,8 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                 controller: _searchController,
                 onChanged: (v) => setState(() => _searchQuery = v),
                 decoration: InputDecoration(
-                  hintText: 'Search by name, brand, or tag…',
+                  hintText: l10n?.wardrobeSearchHint ??
+                      'Search by name, brand, or tag…',
                   prefixIcon: const Icon(Icons.search_rounded, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -148,6 +152,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -159,13 +164,15 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            hasSearch ? 'No items found' : 'Your wardrobe is empty',
+            hasSearch
+                ? (l10n?.wardrobeNoResults ?? 'No items found')
+                : (l10n?.wardrobeEmpty ?? 'Your wardrobe is empty'),
             style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 15),
           ),
           if (!hasSearch) ...[
             const SizedBox(height: 6),
             Text(
-              'Tap + to add your first item',
+              l10n?.wardrobeEmptyHint ?? 'Tap + to add your first item',
               style: TextStyle(
                 color: Colors.grey.withOpacity(0.4),
                 fontSize: 13,

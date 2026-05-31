@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/splash/splash_screen.dart';
+import '../../features/language/language_screen.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/shell/main_shell.dart';
@@ -18,10 +19,26 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
+  onException: (_, __, router) => router.go('/auth'),
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+    GoRoute(
+      path: '/language',
+      builder: (_, state) => LanguageScreen(
+        fromSettings:
+            (state.extra as Map<String, dynamic>?)?['fromSettings'] as bool? ??
+            false,
+      ),
+    ),
     GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
-    GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+    GoRoute(
+      path: '/onboarding',
+      builder: (_, state) => OnboardingScreen(
+        isGuest:
+            (state.extra as Map<String, dynamic>?)?['isGuest'] as bool? ??
+            false,
+      ),
+    ),
     GoRoute(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,

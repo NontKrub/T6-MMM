@@ -2,31 +2,32 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({super.key});
 
-  static const _tabs = [
-    _NavTab(icon: Icons.home_rounded, label: 'Home', path: '/home'),
-    _NavTab(
-      icon: Icons.checkroom_rounded,
-      label: 'Wardrobe',
-      path: '/wardrobe',
-    ),
-    _NavTab(
-      icon: Icons.add_shopping_cart_rounded,
-      label: 'Missing',
-      path: '/missing',
-    ),
-    _NavTab(icon: Icons.chat_bubble_rounded, label: 'Chat', path: '/chat'),
+  static const _tabPaths = ['/home', '/wardrobe', '/missing', '/chat'];
+  static const _tabIcons = [
+    Icons.home_rounded,
+    Icons.checkroom_rounded,
+    Icons.add_shopping_cart_rounded,
+    Icons.chat_bubble_rounded,
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = [
+      l10n?.navHome ?? 'Home',
+      l10n?.navWardrobe ?? 'Wardrobe',
+      l10n?.navMissing ?? 'Missing',
+      l10n?.navChat ?? 'Chat',
+    ];
     final location = GoRouterState.of(context).uri.toString();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    int selectedIndex = _tabs.indexWhere((t) => location.startsWith(t.path));
+    int selectedIndex = _tabPaths.indexWhere((p) => location.startsWith(p));
     if (selectedIndex < 0) selectedIndex = 0;
 
     return Padding(
@@ -49,12 +50,13 @@ class FloatingNavBar extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(_tabs.length, (i) {
+              children: List.generate(_tabPaths.length, (i) {
                 final selected = i == selectedIndex;
                 return _NavItem(
-                  tab: _tabs[i],
+                  icon: _tabIcons[i],
+                  label: labels[i],
                   selected: selected,
-                  onTap: () => context.go(_tabs[i].path),
+                  onTap: () => context.go(_tabPaths[i]),
                 );
               }),
             ),
@@ -65,20 +67,15 @@ class FloatingNavBar extends StatelessWidget {
   }
 }
 
-class _NavTab {
+class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String path;
-  const _NavTab({required this.icon, required this.label, required this.path});
-}
-
-class _NavItem extends StatelessWidget {
-  final _NavTab tab;
   final bool selected;
   final VoidCallback onTap;
 
   const _NavItem({
-    required this.tab,
+    required this.icon,
+    required this.label,
     required this.selected,
     required this.onTap,
   });
@@ -99,7 +96,7 @@ class _NavItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
-          tab.icon,
+          icon,
           size: 24,
           color: selected ? AppColors.seedColor : Colors.grey,
         ),
