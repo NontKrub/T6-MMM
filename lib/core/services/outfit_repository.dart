@@ -1,7 +1,18 @@
 import '../../shared/models/outfit.dart';
+import 'recommendation_repository.dart';
 import 'supabase_service.dart';
+import 'weather_context_repository.dart';
 
 class OutfitRepository {
+  final RecommendationRepository _recommendations;
+  final WeatherContextRepository _weatherContext;
+
+  OutfitRepository({
+    RecommendationRepository? recommendations,
+    WeatherContextRepository? weatherContext,
+  }) : _recommendations = recommendations ?? RecommendationRepository(),
+       _weatherContext = weatherContext ?? WeatherContextRepository();
+
   Future<List<Outfit>> fetchOutfits() async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) return const [];
@@ -34,13 +45,18 @@ class OutfitRepository {
     bool usePersonalColor = false,
     bool useLuckyColor = false,
     bool matchWeather = false,
-    Map<String, dynamic>? weather,
-    List<String> luckyColors = const [],
   }) async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) {
       throw StateError('Sign in to generate AI outfits.');
     }
+
+    final weather = matchWeather
+        ? await _weatherContext.currentFromDeviceLocation()
+        : null;
+    final luckyColors = useLuckyColor
+        ? await _recommendations.dailyLuckyColors()
+        : const <String>[];
 
     final response = await client.functions.invoke(
       'generate-outfits',

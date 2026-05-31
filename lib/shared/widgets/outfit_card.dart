@@ -35,7 +35,7 @@ class OutfitCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -65,36 +65,52 @@ class OutfitCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    outfit.name,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (outfit.style != null) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.seedColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        outfit.style!,
-                        style: TextStyle(
-                          color: AppColors.seedColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          outfit.name,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
+                      if (outfit.score != null) ...[
+                        const SizedBox(width: 8),
+                        _ScorePill(score: outfit.score!),
+                      ],
+                    ],
+                  ),
+                  if (outfit.reason?.isNotEmpty == true) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      outfit.reason!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.72,
+                        ),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (outfit.style != null ||
+                      outfit.selectionFactors.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (outfit.style != null) _FactorChip(outfit.style!),
+                        ...outfit.selectionFactors.take(4).map(_FactorChip.new),
+                      ],
                     ),
                   ],
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             // Wear button
             if (onWear != null)
               FilledButton(
@@ -110,6 +126,54 @@ class OutfitCard extends StatelessWidget {
                 child: const Text('Wear', style: TextStyle(fontSize: 13)),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScorePill extends StatelessWidget {
+  final double score;
+  const _ScorePill({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.seedColor.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        score.round().toString(),
+        style: const TextStyle(
+          color: AppColors.seedColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _FactorChip extends StatelessWidget {
+  final String label;
+  const _FactorChip(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.seedColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label.replaceAll('_', ' '),
+        style: const TextStyle(
+          color: AppColors.seedColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

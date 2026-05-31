@@ -29,7 +29,6 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   String? _error;
 
   static const _styles = ['casual', 'work', 'formal', 'sport', 'date'];
-  final _weatherMock = '☀️ Sunny · 28°C';
 
   Future<void> _generate() async {
     setState(() {
@@ -86,7 +85,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -129,7 +128,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                             decoration: BoxDecoration(
                               color: sel
                                   ? AppColors.seedColor
-                                  : AppColors.seedColor.withOpacity(0.1),
+                                  : AppColors.seedColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -162,7 +161,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                       onChanged: (v) => setState(() => _useLuckyColor = v),
                     ),
                     _FilterToggle(
-                      label: 'Match weather · $_weatherMock',
+                      label: 'Match weather',
                       value: _matchWeather,
                       onChanged: (v) => setState(() => _matchWeather = v),
                     ),
@@ -190,7 +189,9 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                     const SizedBox(height: 16),
                     Text(
                       _error!,
-                      style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+                      style: TextStyle(
+                        color: Colors.grey.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
                   // Generated results
@@ -263,7 +264,7 @@ class _FilterToggle extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppColors.seedColor,
+              activeThumbColor: AppColors.seedColor,
             ),
           ],
         ),
@@ -298,7 +299,7 @@ class _LockedState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.',
-            style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+            style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
             textAlign: TextAlign.center,
           ),
         ],

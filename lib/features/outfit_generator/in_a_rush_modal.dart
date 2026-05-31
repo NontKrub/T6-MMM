@@ -83,7 +83,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
             colors: [Color(0xFF1A1628), Color(0xFF0F0E1A)],
           ),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         padding: const EdgeInsets.all(28),
         child: Column(
@@ -121,7 +121,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                     Text(
                       locked ? 'Sign in required' : 'Your outfit is ready',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
                     ),
@@ -143,55 +143,97 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                   locked
                       ? 'Rush outfit uses backend AI. Sign in with Supabase to use it.'
                       : _error!,
-                  style: TextStyle(color: Colors.white.withOpacity(0.75)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
                   textAlign: TextAlign.center,
                 ),
               )
             else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: items.asMap().entries.map((e) {
-                  final item = e.value;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child:
-                        Column(
-                              children: [
-                                Container(
-                                  width: 72,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.15),
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: items.asMap().entries.map((e) {
+                      final item = e.value;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child:
+                            Column(
+                                  children: [
+                                    Container(
+                                      width: 72,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(15),
+                                        child: WardrobeImage(item: item),
+                                      ),
                                     ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(15),
-                                    child: WardrobeImage(item: item),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                SizedBox(
-                                  width: 72,
-                                  child: Text(
-                                    item.name,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 10,
+                                    const SizedBox(height: 6),
+                                    SizedBox(
+                                      width: 72,
+                                      child: Text(
+                                        item.name,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          fontSize: 10,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ],
-                            )
-                            .animate(delay: (e.key * 80).ms)
-                            .scale(duration: 300.ms, curve: Curves.elasticOut)
-                            .fadeIn(duration: 200.ms),
-                  );
-                }).toList(),
+                                  ],
+                                )
+                                .animate(delay: (e.key * 80).ms)
+                                .scale(
+                                  duration: 300.ms,
+                                  curve: Curves.elasticOut,
+                                )
+                                .fadeIn(duration: 200.ms),
+                      );
+                    }).toList(),
+                  ),
+                  if (outfit != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      outfit.reason ??
+                          'Fast practical pick from your wardrobe.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (outfit.score != null ||
+                        outfit.selectionFactors.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          if (outfit.score != null)
+                            _RushChip('${outfit.score!.round()} score'),
+                          ...outfit.selectionFactors
+                              .take(3)
+                              .map(
+                                (factor) =>
+                                    _RushChip(factor.replaceAll('_', ' ')),
+                              ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ],
               ),
             const SizedBox(height: 28),
             // Buttons
@@ -204,7 +246,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                     label: const Text('Reshuffle'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withOpacity(0.25)),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.25),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
@@ -236,6 +280,30 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RushChip extends StatelessWidget {
+  final String label;
+  const _RushChip(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.78),
+          fontSize: 11,
         ),
       ),
     );
