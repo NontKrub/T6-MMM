@@ -1,0 +1,25 @@
+project_id = "wardrobly"
+
+[functions.analyze-clothing-image]
+verify_jwt = true
+
+[functions.generate-outfits]
+verify_jwt = true
+
+[functions.rush-outfit]
+verify_jwt = true
+
+[functions.weather-context]
+verify_jwt = true
+
+[functions.daily-lucky-colors]
+verify_jwt = true
+
+[functions.repetition-insights]
+verify_jwt = true
+
+[functions.missing-pieces]
+verify_jwt = true
+
+[functions.fashion-chat]
+verify_jwt = true
