@@ -455,4 +455,285 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get avatarHairBob => 'Bob';
+
+  @override
+  String get repetitionStyleReminder => 'Style reminder';
+
+  @override
+  String repetitionMessage(String color) {
+    return 'You\'ve been wearing $color tones frequently. Try mixing in something different today!';
+  }
+
+  @override
+  String get outfitGeneratorTitle => 'Generate Outfit';
+
+  @override
+  String get outfitGeneratorStyleLabel => 'Style';
+
+  @override
+  String get outfitGeneratorFiltersLabel => 'Filters';
+
+  @override
+  String get outfitGeneratorUsePersonalColor => 'Use my personal color season';
+
+  @override
+  String get outfitGeneratorLuckyColor => 'Today\'s lucky color';
+
+  @override
+  String get outfitGeneratorMatchWeather => 'Match weather';
+
+  @override
+  String get outfitGeneratorWeatherOff =>
+      'Turn on Weather Location in Settings';
+
+  @override
+  String get outfitGeneratorWeatherAuto => 'Auto-detect location';
+
+  @override
+  String get outfitGeneratorGenerating => 'Generating...';
+
+  @override
+  String get outfitGeneratorGenerate => 'Generate';
+
+  @override
+  String get outfitGeneratorResults => 'Results';
+
+  @override
+  String get outfitGeneratorLockedTitle => 'AI outfit generation needs a login';
+
+  @override
+  String get outfitGeneratorLockedMessage =>
+      'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.';
+
+  @override
+  String get outfitGeneratorNoOutfits => 'No outfits were generated.';
+
+  @override
+  String get outfitGeneratorErrorNotDeployed =>
+      'Outfit generation is not deployed yet. Please try again after the backend is updated.';
+
+  @override
+  String get outfitGeneratorErrorNeedWardrobe =>
+      'Add at least one top, one bottom, and one pair of shoes first.';
+
+  @override
+  String get outfitGeneratorErrorLocationPermission =>
+      'Location permission is needed to match the weather.';
+
+  @override
+  String get outfitGeneratorErrorLocationOff =>
+      'Turn on location services to match the weather.';
+
+  @override
+  String get outfitGeneratorErrorGeneric =>
+      'Could not generate outfits. Please try again.';
+
+  @override
+  String get outfitStyleCasual => 'Casual';
+
+  @override
+  String get outfitStyleWork => 'Work';
+
+  @override
+  String get outfitStyleFormal => 'Formal';
+
+  @override
+  String get outfitStyleSport => 'Sport';
+
+  @override
+  String get outfitStyleDate => 'Date';
+
+  @override
+  String get rushTitle => 'In a Rush';
+
+  @override
+  String get rushStatusSignInRequired => 'Sign in required';
+
+  @override
+  String get rushStatusNeedsSetup => 'Needs a little setup';
+
+  @override
+  String get rushStatusReady => 'Your outfit is ready';
+
+  @override
+  String get rushLockedMessage =>
+      'Rush outfit uses backend AI. Sign in with Supabase to use it.';
+
+  @override
+  String get rushDefaultReason => 'Fast practical pick from your wardrobe.';
+
+  @override
+  String get rushReshuffle => 'Reshuffle';
+
+  @override
+  String get rushSignIn => 'Sign In';
+
+  @override
+  String get rushGotIt => 'Got It';
+
+  @override
+  String get rushWearThis => 'Wear This';
+
+  @override
+  String get rushErrorNeedWardrobe =>
+      'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.';
+
+  @override
+  String get rushErrorSignIn =>
+      'Rush outfit uses your saved backend wardrobe. Sign in to use it.';
+
+  @override
+  String get rushErrorNotDeployed =>
+      'Rush outfit is not deployed yet. Please try again after the backend is updated.';
+
+  @override
+  String get rushErrorGeneric =>
+      'Could not pick a rush outfit right now. Check your wardrobe and try again.';
+
+  @override
+  String get addItemTitle => 'Add Item';
+
+  @override
+  String get addItemCategory => 'Category';
+
+  @override
+  String get addItemNameHint => 'Item name (e.g. White Linen Shirt)';
+
+  @override
+  String get addItemBrandHint => 'Brand (optional)';
+
+  @override
+  String get addItemTags => 'Tags';
+
+  @override
+  String get addItemSaving => 'Saving...';
+
+  @override
+  String get addItemSave => 'Save to Wardrobe';
+
+  @override
+  String get addItemCamera => 'Camera';
+
+  @override
+  String get addItemPhotoLibrary => 'Photo Library';
+
+  @override
+  String get addItemTapToAddPhoto => 'Tap to add photo';
+
+  @override
+  String addItemCategoryLabel(String category) {
+    return 'Category: $category';
+  }
+
+  @override
+  String get tagCasual => 'casual';
+
+  @override
+  String get tagFormal => 'formal';
+
+  @override
+  String get tagWork => 'work';
+
+  @override
+  String get tagSport => 'sport';
+
+  @override
+  String get tagSummer => 'summer';
+
+  @override
+  String get tagWinter => 'winter';
+
+  @override
+  String get itemNotFound => 'Item not found';
+
+  @override
+  String get itemNotFoundMessage => 'This item has been removed.';
+
+  @override
+  String get itemOutfitsTitle => 'Outfits featuring this item';
+
+  @override
+  String get itemStatsTimesWorn => 'Times worn';
+
+  @override
+  String get itemStatsLastWorn => 'Last worn';
+
+  @override
+  String get itemStatsCostPerWear => 'Cost per wear';
+
+  @override
+  String get itemStatsNever => 'Never';
+
+  @override
+  String get itemStatsNotWornYet => 'Not worn yet';
+
+  @override
+  String get itemStatsToday => 'Today';
+
+  @override
+  String get itemStatsYesterday => 'Yesterday';
+
+  @override
+  String itemStatsDaysAgo(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String itemStatsWeeksAgo(int weeks) {
+    return '${weeks}w ago';
+  }
+
+  @override
+  String itemStatsMonthsAgo(int months) {
+    return '${months}mo ago';
+  }
+
+  @override
+  String get itemDeleteTitle => 'Remove Item';
+
+  @override
+  String itemDeleteMessage(String name) {
+    return 'Remove \"$name\" from your wardrobe?';
+  }
+
+  @override
+  String get itemDeleteCancel => 'Cancel';
+
+  @override
+  String get itemDeleteConfirm => 'Remove';
+
+  @override
+  String get settingsLuckyColorBirthProfile => 'Birth profile';
+
+  @override
+  String get settingsLuckyColorBirthProfileSubtitle =>
+      'Uses your saved birth date and weekday.';
+
+  @override
+  String get settingsLuckyColorRandomDaily => 'Random daily';
+
+  @override
+  String get settingsLuckyColorRandomDailySubtitle =>
+      'Uses a stable daily color set without profile data.';
+
+  @override
+  String get settingsWeatherAutoDetect => 'Auto-detect';
+
+  @override
+  String get settingsWeatherAutoDetectSubtitle =>
+      'Uses device location when weather matching is enabled.';
+
+  @override
+  String get settingsWeatherOff => 'Off';
+
+  @override
+  String get settingsWeatherOffSubtitle =>
+      'Outfit generation will skip weather matching.';
+
+  @override
+  String get settingsPrivacyContent =>
+      'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.';
+
+  @override
+  String get dialogClose => 'Close';
 }

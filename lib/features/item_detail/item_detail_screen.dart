@@ -5,6 +5,7 @@ import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/widgets/outfit_card.dart';
 import '../../shared/widgets/wardrobe_image.dart';
@@ -15,13 +16,18 @@ class ItemDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
     final item = wardrobe.where((i) => i.id == itemId).firstOrNull;
 
     if (item == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Item not found')),
-        body: const Center(child: Text('This item has been removed.')),
+        appBar: AppBar(title: Text(l10n?.itemNotFound ?? 'Item not found')),
+        body: Center(
+          child: Text(
+            l10n?.itemNotFoundMessage ?? 'This item has been removed.',
+          ),
+        ),
       );
     }
 
@@ -65,7 +71,7 @@ class ItemDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(4),
                   child: IconButton(
                     icon: const Icon(Icons.delete_outline_rounded),
-                    onPressed: () => _confirmDelete(context, ref, item),
+                    onPressed: () => _confirmDelete(context, ref, item, l10n),
                     iconSize: 20,
                   ),
                 ),
@@ -165,12 +171,13 @@ class ItemDetailScreen extends ConsumerWidget {
                 // Wear stats
                 _WearStatsCard(
                   item: item,
+                  l10n: l10n,
                 ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
                 const SizedBox(height: 20),
                 // Outfits with this item
                 if (outfitsWithItem.isNotEmpty) ...[
                   Text(
-                    'Outfits featuring this item',
+                    l10n?.itemOutfitsTitle ?? 'Outfits featuring this item',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -203,16 +210,24 @@ class ItemDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref, ClothingItem item) {
+  void _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    ClothingItem item,
+    AppLocalizations? l10n,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Remove Item'),
-        content: Text('Remove "${item.name}" from your wardrobe?'),
+        title: Text(l10n?.itemDeleteTitle ?? 'Remove Item'),
+        content: Text(
+          l10n?.itemDeleteMessage(item.name) ??
+              'Remove "${item.name}" from your wardrobe?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -221,7 +236,7 @@ class ItemDetailScreen extends ConsumerWidget {
               Navigator.pop(context);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: Text(l10n?.itemDeleteConfirm ?? 'Remove'),
           ),
         ],
       ),
@@ -231,7 +246,8 @@ class ItemDetailScreen extends ConsumerWidget {
 
 class _WearStatsCard extends StatelessWidget {
   final ClothingItem item;
-  const _WearStatsCard({required this.item});
+  final AppLocalizations? l10n;
+  const _WearStatsCard({required this.item, this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -240,31 +256,38 @@ class _WearStatsCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          _Stat(label: 'Times worn', value: '${item.wearCount}x'),
-          _Divider(),
           _Stat(
-            label: 'Last worn',
-            value: item.lastWorn != null
-                ? _formatDate(item.lastWorn!)
-                : 'Never',
+            label: l10n?.itemStatsTimesWorn ?? 'Times worn',
+            value: '${item.wearCount}x',
           ),
           _Divider(),
           _Stat(
-            label: 'Cost per wear',
-            value: item.wearCount > 0 ? '—' : 'Not worn yet',
+            label: l10n?.itemStatsLastWorn ?? 'Last worn',
+            value: item.lastWorn != null
+                ? _formatDate(item.lastWorn!, l10n)
+                : (l10n?.itemStatsNever ?? 'Never'),
+          ),
+          _Divider(),
+          _Stat(
+            label: l10n?.itemStatsCostPerWear ?? 'Cost per wear',
+            value: item.wearCount > 0
+                ? '—'
+                : (l10n?.itemStatsNotWornYet ?? 'Not worn yet'),
           ),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations? l) {
     final diff = DateTime.now().difference(date).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
-    if (diff < 7) return '$diff days ago';
-    if (diff < 30) return '${diff ~/ 7}w ago';
-    return '${diff ~/ 30}mo ago';
+    if (diff == 0) return l?.itemStatsToday ?? 'Today';
+    if (diff == 1) return l?.itemStatsYesterday ?? 'Yesterday';
+    if (diff < 7) return l?.itemStatsDaysAgo(diff) ?? '$diff days ago';
+    if (diff < 30) {
+      return l?.itemStatsWeeksAgo(diff ~/ 7) ?? '${diff ~/ 7}w ago';
+    }
+    return l?.itemStatsMonthsAgo(diff ~/ 30) ?? '${diff ~/ 30}mo ago';
   }
 }
 

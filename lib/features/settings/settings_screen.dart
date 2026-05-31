@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/locale_provider.dart';
 import '../../core/providers/theme_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -17,6 +18,7 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
+    final appSettings = ref.watch(appSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.settingsTitle ?? 'Settings')),
@@ -35,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: Switch(
               value: isDark,
               onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-              activeColor: AppColors.seedColor,
+              activeThumbColor: AppColors.seedColor,
             ),
           ).animate().fadeIn(duration: 300.ms),
 
@@ -48,24 +50,30 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: locale.languageCode == 'th'
                 ? (l10n?.settingsLanguageValue ?? 'ภาษาไทย')
                 : 'English',
-            onTap: () => context.push('/language', extra: {'fromSettings': true}),
+            onTap: () =>
+                context.push('/language', extra: {'fromSettings': true}),
           ).animate(delay: 50.ms).fadeIn(duration: 300.ms),
 
           // Personalization
-          _SectionHeader(title: l10n?.settingsPersonalization ?? 'Personalization'),
+          _SectionHeader(
+            title: l10n?.settingsPersonalization ?? 'Personalization',
+          ),
           _SettingsTile(
             icon: Icons.palette_rounded,
             iconColor: AppColors.gradientEnd,
             title: l10n?.settingsLuckyColor ?? 'Lucky Color Method',
-            subtitle: l10n?.settingsLuckyColorValue ?? 'Random daily',
-            onTap: () {},
+            subtitle: _luckyColorLabel(appSettings.luckyColorMethod, l10n),
+            onTap: () => _showLuckyColorMethodSheet(context, ref, l10n),
           ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
             icon: Icons.wb_sunny_rounded,
             iconColor: AppColors.accentGold,
             title: l10n?.settingsWeather ?? 'Weather Location',
-            subtitle: l10n?.settingsWeatherValue ?? 'Auto-detect',
-            onTap: () {},
+            subtitle: _weatherLocationLabel(
+              appSettings.weatherLocationMode,
+              l10n,
+            ),
+            onTap: () => _showWeatherLocationSheet(context, ref, l10n),
           ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
 
           // Notifications
@@ -74,20 +82,30 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.notifications_rounded,
             iconColor: const Color(0xFF34D399),
             title: l10n?.settingsDailyReminder ?? 'Daily outfit reminder',
+            subtitle: appSettings.dailyOutfitReminder
+                ? (l10n?.settingsDarkModeOn ?? 'On')
+                : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
-              value: false,
-              onChanged: (_) {},
-              activeColor: AppColors.seedColor,
+              value: appSettings.dailyOutfitReminder,
+              onChanged: (value) => ref
+                  .read(appSettingsProvider.notifier)
+                  .setDailyOutfitReminder(value),
+              activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
             icon: Icons.repeat_rounded,
             iconColor: AppColors.colorHats,
             title: l10n?.settingsRepetitionAlerts ?? 'Repetition alerts',
+            subtitle: appSettings.repetitionAlerts
+                ? (l10n?.settingsDarkModeOn ?? 'On')
+                : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
-              value: true,
-              onChanged: (_) {},
-              activeColor: AppColors.seedColor,
+              value: appSettings.repetitionAlerts,
+              onChanged: (value) => ref
+                  .read(appSettingsProvider.notifier)
+                  .setRepetitionAlerts(value),
+              activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
 
@@ -97,12 +115,15 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.auto_awesome_rounded,
             iconColor: AppColors.seedColor,
             title: l10n?.settingsLearnPreferences ?? 'Learn my preferences',
-            subtitle: l10n?.settingsLearnPreferencesSubtitle ??
+            subtitle:
+                l10n?.settingsLearnPreferencesSubtitle ??
                 'AI tracks your choices to improve suggestions',
             trailing: Switch(
-              value: true,
-              onChanged: (_) {},
-              activeColor: AppColors.seedColor,
+              value: appSettings.learnPreferences,
+              onChanged: (value) => ref
+                  .read(appSettingsProvider.notifier)
+                  .setLearnPreferences(value),
+              activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 300.ms).fadeIn(duration: 300.ms),
 
@@ -113,18 +134,183 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: Colors.grey,
             title: l10n?.settingsVersion ?? 'Version',
             subtitle: l10n?.settingsVersionValue ?? '1.0.0 (build 1)',
-            onTap: () {},
           ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             iconColor: Colors.grey,
             title: l10n?.settingsPrivacy ?? 'Privacy Policy',
-            onTap: () {},
+            subtitle: l10n?.settingsPrivacy ?? 'Privacy Policy',
+            onTap: () => _showPrivacyDialog(context, l10n),
           ).animate(delay: 400.ms).fadeIn(duration: 300.ms),
         ],
       ),
     );
   }
+
+  String _luckyColorLabel(String value, AppLocalizations? l10n) {
+    switch (value) {
+      case 'random_daily':
+        return l10n?.settingsLuckyColorRandomDaily ?? 'Random daily';
+      case 'birth_profile':
+      default:
+        return l10n?.settingsLuckyColorBirthProfile ?? 'Birth profile';
+    }
+  }
+
+  String _weatherLocationLabel(String value, AppLocalizations? l10n) {
+    switch (value) {
+      case 'off':
+        return l10n?.settingsWeatherOff ?? 'Off';
+      case 'auto_detect':
+      default:
+        return l10n?.settingsWeatherAutoDetect ?? 'Auto-detect';
+    }
+  }
+
+  void _showLuckyColorMethodSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) {
+    _showChoiceSheet(
+      context: context,
+      title: l10n?.settingsLuckyColor ?? 'Lucky Color Method',
+      currentValue: ref.read(appSettingsProvider).luckyColorMethod,
+      options: [
+        _SettingsChoice(
+          value: 'birth_profile',
+          label: l10n?.settingsLuckyColorBirthProfile ?? 'Birth profile',
+          subtitle: l10n?.settingsLuckyColorBirthProfileSubtitle ??
+              'Uses your saved birth date and weekday.',
+        ),
+        _SettingsChoice(
+          value: 'random_daily',
+          label: l10n?.settingsLuckyColorRandomDaily ?? 'Random daily',
+          subtitle: l10n?.settingsLuckyColorRandomDailySubtitle ??
+              'Uses a stable daily color set without profile data.',
+        ),
+      ],
+      onSelected: (value) =>
+          ref.read(appSettingsProvider.notifier).setLuckyColorMethod(value),
+    );
+  }
+
+  void _showWeatherLocationSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) {
+    _showChoiceSheet(
+      context: context,
+      title: l10n?.settingsWeather ?? 'Weather Location',
+      currentValue: ref.read(appSettingsProvider).weatherLocationMode,
+      options: [
+        _SettingsChoice(
+          value: 'auto_detect',
+          label: l10n?.settingsWeatherAutoDetect ?? 'Auto-detect',
+          subtitle: l10n?.settingsWeatherAutoDetectSubtitle ??
+              'Uses device location when weather matching is enabled.',
+        ),
+        _SettingsChoice(
+          value: 'off',
+          label: l10n?.settingsWeatherOff ?? 'Off',
+          subtitle: l10n?.settingsWeatherOffSubtitle ??
+              'Outfit generation will skip weather matching.',
+        ),
+      ],
+      onSelected: (value) =>
+          ref.read(appSettingsProvider.notifier).setWeatherLocationMode(value),
+    );
+  }
+
+  void _showChoiceSheet({
+    required BuildContext context,
+    required String title,
+    required String currentValue,
+    required List<_SettingsChoice> options,
+    required ValueChanged<String> onSelected,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                ...options.map((option) {
+                  final selected = option.value == currentValue;
+                  return ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onTap: () {
+                      onSelected(option.value);
+                      Navigator.pop(context);
+                    },
+                    title: Text(option.label),
+                    subtitle: Text(option.subtitle),
+                    trailing: Icon(
+                      selected
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      color: selected ? AppColors.seedColor : Colors.grey,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPrivacyDialog(BuildContext context, AppLocalizations? l10n) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        final innerL10n = AppLocalizations.of(context);
+        return AlertDialog(
+          title: Text(innerL10n?.settingsPrivacy ?? 'Privacy Policy'),
+          content: Text(
+            innerL10n?.settingsPrivacyContent ??
+                'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(innerL10n?.dialogClose ?? 'Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SettingsChoice {
+  final String value;
+  final String label;
+  final String subtitle;
+
+  const _SettingsChoice({
+    required this.value,
+    required this.label,
+    required this.subtitle,
+  });
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -138,7 +324,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
-          color: Colors.grey.withOpacity(0.5),
+          color: Colors.grey.withValues(alpha: 0.5),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -179,7 +365,7 @@ class _SettingsTile extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.15),
+            color: iconColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 18),
@@ -192,7 +378,7 @@ class _SettingsTile extends StatelessWidget {
             ? Text(
                 subtitle!,
                 style: TextStyle(
-                  color: Colors.grey.withOpacity(0.6),
+                  color: Colors.grey.withValues(alpha: 0.6),
                   fontSize: 12,
                 ),
               )
@@ -202,7 +388,7 @@ class _SettingsTile extends StatelessWidget {
             (onTap != null
                 ? Icon(
                     Icons.chevron_right_rounded,
-                    color: Colors.grey.withOpacity(0.4),
+                    color: Colors.grey.withValues(alpha: 0.4),
                   )
                 : null),
       ),

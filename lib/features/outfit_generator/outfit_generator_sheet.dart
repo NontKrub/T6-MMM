@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/widgets/outfit_card.dart';
@@ -31,6 +33,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   static const _styles = ['casual', 'work', 'formal', 'sport', 'date'];
 
   Future<void> _generate() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _loading = true;
       _error = null;
@@ -45,24 +48,70 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
             useLuckyColor: _useLuckyColor,
             matchWeather: _matchWeather,
           );
+      if (!mounted) return;
       setState(() {
         _generatedOutfits = outfits;
         _loading = false;
-        _error = outfits.isEmpty ? 'No outfits were generated.' : null;
+        _error = outfits.isEmpty
+            ? (l10n?.outfitGeneratorNoOutfits ?? 'No outfits were generated.')
+            : null;
       });
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _generatedOutfits = const [];
         _loading = false;
-        _error = error.toString();
+        _error = _friendlyGenerationError(error, l10n);
       });
+    }
+  }
+
+  String _friendlyGenerationError(Object error, AppLocalizations? l) {
+    final text = error.toString();
+    if (text.contains('NOT_FOUND') || text.contains('status: 404')) {
+      return l?.outfitGeneratorErrorNotDeployed ??
+          'Outfit generation is not deployed yet. Please try again after the backend is updated.';
+    }
+    if (text.contains('Add at least one top')) {
+      return l?.outfitGeneratorErrorNeedWardrobe ??
+          'Add at least one top, one bottom, and one pair of shoes first.';
+    }
+    if (text.contains('Location permission')) {
+      return l?.outfitGeneratorErrorLocationPermission ??
+          'Location permission is needed to match the weather.';
+    }
+    if (text.contains('Turn on location services')) {
+      return l?.outfitGeneratorErrorLocationOff ??
+          'Turn on location services to match the weather.';
+    }
+    return l?.outfitGeneratorErrorGeneric ??
+        'Could not generate outfits. Please try again.';
+  }
+
+  String _localizedStyle(AppLocalizations? l, String style) {
+    switch (style) {
+      case 'casual':
+        return l?.outfitStyleCasual ?? 'Casual';
+      case 'work':
+        return l?.outfitStyleWork ?? 'Work';
+      case 'formal':
+        return l?.outfitStyleFormal ?? 'Formal';
+      case 'sport':
+        return l?.outfitStyleSport ?? 'Sport';
+      case 'date':
+        return l?.outfitStyleDate ?? 'Date';
+      default:
+        return style[0].toUpperCase() + style.substring(1);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wardrobe = ref.watch(wardrobeProvider);
+    final appSettings = ref.watch(appSettingsProvider);
+    final weatherDisabled = appSettings.weatherLocationMode == 'off';
     final locked = ref
         .watch(sessionProvider)
         .maybeWhen(
@@ -97,19 +146,19 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Generate Outfit',
+                    l10n?.outfitGeneratorTitle ?? 'Generate Outfit',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   if (locked) ...[
                     const SizedBox(height: 20),
-                    const _LockedState(),
+                    _LockedState(l10n: l10n),
                   ] else ...[
                     const SizedBox(height: 20),
                     // Style chips
                     Text(
-                      'Style',
+                      l10n?.outfitGeneratorStyleLabel ?? 'Style',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 10),
@@ -132,7 +181,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              s[0].toUpperCase() + s.substring(1),
+                              _localizedStyle(l10n, s),
                               style: TextStyle(
                                 color: sel ? Colors.white : AppColors.seedColor,
                                 fontSize: 13,
@@ -146,24 +195,39 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                     const SizedBox(height: 20),
                     // Filters
                     Text(
-                      'Filters',
+                      l10n?.outfitGeneratorFiltersLabel ?? 'Filters',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 10),
                     _FilterToggle(
-                      label: 'Use my personal color season',
+                      label: l10n?.outfitGeneratorUsePersonalColor ??
+                          'Use my personal color season',
                       value: _usePersonalColor,
                       onChanged: (v) => setState(() => _usePersonalColor = v),
                     ),
                     _FilterToggle(
-                      label: "Today's lucky color",
+                      label: l10n?.outfitGeneratorLuckyColor ??
+                          "Today's lucky color",
+                      subtitle: appSettings.luckyColorMethod == 'random_daily'
+                          ? (l10n?.settingsLuckyColorRandomDaily ??
+                              'Random daily')
+                          : (l10n?.settingsLuckyColorBirthProfile ??
+                              'Birth profile'),
                       value: _useLuckyColor,
                       onChanged: (v) => setState(() => _useLuckyColor = v),
                     ),
                     _FilterToggle(
-                      label: 'Match weather',
-                      value: _matchWeather,
-                      onChanged: (v) => setState(() => _matchWeather = v),
+                      label: l10n?.outfitGeneratorMatchWeather ??
+                          'Match weather',
+                      subtitle: weatherDisabled
+                          ? (l10n?.outfitGeneratorWeatherOff ??
+                              'Turn on Weather Location in Settings')
+                          : (l10n?.outfitGeneratorWeatherAuto ??
+                              'Auto-detect location'),
+                      value: !weatherDisabled && _matchWeather,
+                      onChanged: weatherDisabled
+                          ? null
+                          : (v) => setState(() => _matchWeather = v),
                     ),
                     const SizedBox(height: 24),
                     // Generate button
@@ -181,7 +245,12 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                                 ),
                               )
                             : const Icon(Icons.auto_awesome_rounded, size: 18),
-                        label: Text(_loading ? 'Generating...' : 'Generate'),
+                        label: Text(
+                          _loading
+                              ? (l10n?.outfitGeneratorGenerating ??
+                                  'Generating...')
+                              : (l10n?.outfitGeneratorGenerate ?? 'Generate'),
+                        ),
                       ),
                     ),
                   ],
@@ -198,7 +267,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                   if (_generatedOutfits.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Text(
-                      'Results',
+                      l10n?.outfitGeneratorResults ?? 'Results',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -240,11 +309,13 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
 
 class _FilterToggle extends StatelessWidget {
   final String label;
+  final String? subtitle;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   const _FilterToggle({
     required this.label,
+    this.subtitle,
     required this.value,
     required this.onChanged,
   });
@@ -259,7 +330,22 @@ class _FilterToggle extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Theme.of(context).textTheme.bodyMedium),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        color: Colors.grey.withValues(alpha: 0.65),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             Switch(
               value: value,
@@ -274,7 +360,8 @@ class _FilterToggle extends StatelessWidget {
 }
 
 class _LockedState extends StatelessWidget {
-  const _LockedState();
+  final AppLocalizations? l10n;
+  const _LockedState({this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +377,8 @@ class _LockedState extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'AI outfit generation needs a login',
+            l10n?.outfitGeneratorLockedTitle ??
+                'AI outfit generation needs a login',
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -298,7 +386,8 @@ class _LockedState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.',
+            l10n?.outfitGeneratorLockedMessage ??
+                'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.',
             style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
             textAlign: TextAlign.center,
           ),

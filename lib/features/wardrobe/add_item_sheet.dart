@@ -8,6 +8,7 @@ import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 
 const _uuid = Uuid();
@@ -36,6 +37,25 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     'summer',
     'winter',
   ];
+
+  String _localizedTag(AppLocalizations? l, String tag) {
+    switch (tag) {
+      case 'casual':
+        return l?.tagCasual ?? tag;
+      case 'formal':
+        return l?.tagFormal ?? tag;
+      case 'work':
+        return l?.tagWork ?? tag;
+      case 'sport':
+        return l?.tagSport ?? tag;
+      case 'summer':
+        return l?.tagSummer ?? tag;
+      case 'winter':
+        return l?.tagWinter ?? tag;
+      default:
+        return tag;
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
@@ -89,6 +109,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -117,7 +138,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Add Item',
+                    l10n?.addItemTitle ?? 'Add Item',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -125,7 +146,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   const SizedBox(height: 20),
                   // Image picker
                   GestureDetector(
-                    onTap: () => _showSourcePicker(context),
+                    onTap: () => _showSourcePicker(context, l10n),
                     child: Container(
                       height: 160,
                       decoration: BoxDecoration(
@@ -148,7 +169,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Saving...',
+                                  l10n?.addItemSaving ?? 'Saving...',
                                   style: TextStyle(
                                     color: AppColors.seedColor,
                                     fontSize: 13,
@@ -180,7 +201,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
-                                      'Category: ${_category.label}',
+                                      l10n?.addItemCategoryLabel(
+                                            _category.label,
+                                          ) ??
+                                          'Category: ${_category.label}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,
@@ -199,7 +223,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Tap to add photo',
+                                  l10n?.addItemTapToAddPhoto ??
+                                      'Tap to add photo',
                                   style: TextStyle(
                                     color: AppColors.seedColor.withOpacity(0.7),
                                     fontSize: 14,
@@ -212,7 +237,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   const SizedBox(height: 20),
                   // Category selector
                   Text(
-                    'Category',
+                    l10n?.addItemCategory ?? 'Category',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
@@ -262,23 +287,28 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   // Name field
                   TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'Item name (e.g. White Linen Shirt)',
-                      prefixIcon: Icon(Icons.label_outline_rounded),
+                    decoration: InputDecoration(
+                      hintText: l10n?.addItemNameHint ??
+                          'Item name (e.g. White Linen Shirt)',
+                      prefixIcon:
+                          const Icon(Icons.label_outline_rounded),
                     ),
                   ),
                   const SizedBox(height: 12),
                   // Brand field
                   TextField(
                     controller: _brandController,
-                    decoration: const InputDecoration(
-                      hintText: 'Brand (optional)',
-                      prefixIcon: Icon(Icons.store_rounded),
+                    decoration: InputDecoration(
+                      hintText: l10n?.addItemBrandHint ?? 'Brand (optional)',
+                      prefixIcon: const Icon(Icons.store_rounded),
                     ),
                   ),
                   const SizedBox(height: 20),
                   // Tags
-                  Text('Tags', style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    l10n?.addItemTags ?? 'Tags',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -302,7 +332,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            tag,
+                            _localizedTag(l10n, tag),
                             style: TextStyle(
                               color: sel ? Colors.white : AppColors.seedColor,
                               fontSize: 12,
@@ -320,7 +350,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     child: FilledButton.icon(
                       onPressed: _save,
                       icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Save to Wardrobe'),
+                      label: Text(l10n?.addItemSave ?? 'Save to Wardrobe'),
                     ),
                   ),
                 ],
@@ -332,7 +362,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     );
   }
 
-  void _showSourcePicker(BuildContext context) {
+  void _showSourcePicker(BuildContext context, AppLocalizations? l10n) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -344,7 +374,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Camera'),
+              title: Text(l10n?.addItemCamera ?? 'Camera'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -352,7 +382,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Photo Library'),
+              title: Text(l10n?.addItemPhotoLibrary ?? 'Photo Library'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);

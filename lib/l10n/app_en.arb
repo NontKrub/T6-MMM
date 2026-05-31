@@ -174,5 +174,126 @@
   "avatarHairUndercut": "Undercut",
   "avatarHairLong": "Long",
   "avatarHairPonytail": "Ponytail",
-  "avatarHairBob": "Bob"
+  "avatarHairBob": "Bob",
+
+  "repetitionStyleReminder": "Style reminder",
+  "repetitionMessage": "You've been wearing {color} tones frequently. Try mixing in something different today!",
+  "@repetitionMessage": {
+    "placeholders": {
+      "color": { "type": "String" }
+    }
+  },
+
+  "outfitGeneratorTitle": "Generate Outfit",
+  "outfitGeneratorStyleLabel": "Style",
+  "outfitGeneratorFiltersLabel": "Filters",
+  "outfitGeneratorUsePersonalColor": "Use my personal color season",
+  "outfitGeneratorLuckyColor": "Today's lucky color",
+  "outfitGeneratorMatchWeather": "Match weather",
+  "outfitGeneratorWeatherOff": "Turn on Weather Location in Settings",
+  "outfitGeneratorWeatherAuto": "Auto-detect location",
+  "outfitGeneratorGenerating": "Generating...",
+  "outfitGeneratorGenerate": "Generate",
+  "outfitGeneratorResults": "Results",
+  "outfitGeneratorLockedTitle": "AI outfit generation needs a login",
+  "outfitGeneratorLockedMessage": "Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.",
+  "outfitGeneratorNoOutfits": "No outfits were generated.",
+  "outfitGeneratorErrorNotDeployed": "Outfit generation is not deployed yet. Please try again after the backend is updated.",
+  "outfitGeneratorErrorNeedWardrobe": "Add at least one top, one bottom, and one pair of shoes first.",
+  "outfitGeneratorErrorLocationPermission": "Location permission is needed to match the weather.",
+  "outfitGeneratorErrorLocationOff": "Turn on location services to match the weather.",
+  "outfitGeneratorErrorGeneric": "Could not generate outfits. Please try again.",
+  "outfitStyleCasual": "Casual",
+  "outfitStyleWork": "Work",
+  "outfitStyleFormal": "Formal",
+  "outfitStyleSport": "Sport",
+  "outfitStyleDate": "Date",
+
+  "rushTitle": "In a Rush",
+  "rushStatusSignInRequired": "Sign in required",
+  "rushStatusNeedsSetup": "Needs a little setup",
+  "rushStatusReady": "Your outfit is ready",
+  "rushLockedMessage": "Rush outfit uses backend AI. Sign in with Supabase to use it.",
+  "rushDefaultReason": "Fast practical pick from your wardrobe.",
+  "rushReshuffle": "Reshuffle",
+  "rushSignIn": "Sign In",
+  "rushGotIt": "Got It",
+  "rushWearThis": "Wear This",
+  "rushErrorNeedWardrobe": "Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.",
+  "rushErrorSignIn": "Rush outfit uses your saved backend wardrobe. Sign in to use it.",
+  "rushErrorNotDeployed": "Rush outfit is not deployed yet. Please try again after the backend is updated.",
+  "rushErrorGeneric": "Could not pick a rush outfit right now. Check your wardrobe and try again.",
+
+  "addItemTitle": "Add Item",
+  "addItemCategory": "Category",
+  "addItemNameHint": "Item name (e.g. White Linen Shirt)",
+  "addItemBrandHint": "Brand (optional)",
+  "addItemTags": "Tags",
+  "addItemSaving": "Saving...",
+  "addItemSave": "Save to Wardrobe",
+  "addItemCamera": "Camera",
+  "addItemPhotoLibrary": "Photo Library",
+  "addItemTapToAddPhoto": "Tap to add photo",
+  "addItemCategoryLabel": "Category: {category}",
+  "@addItemCategoryLabel": {
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
+  "tagCasual": "casual",
+  "tagFormal": "formal",
+  "tagWork": "work",
+  "tagSport": "sport",
+  "tagSummer": "summer",
+  "tagWinter": "winter",
+
+  "itemNotFound": "Item not found",
+  "itemNotFoundMessage": "This item has been removed.",
+  "itemOutfitsTitle": "Outfits featuring this item",
+  "itemStatsTimesWorn": "Times worn",
+  "itemStatsLastWorn": "Last worn",
+  "itemStatsCostPerWear": "Cost per wear",
+  "itemStatsNever": "Never",
+  "itemStatsNotWornYet": "Not worn yet",
+  "itemStatsToday": "Today",
+  "itemStatsYesterday": "Yesterday",
+  "itemStatsDaysAgo": "{days} days ago",
+  "@itemStatsDaysAgo": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "itemStatsWeeksAgo": "{weeks}w ago",
+  "@itemStatsWeeksAgo": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "itemStatsMonthsAgo": "{months}mo ago",
+  "@itemStatsMonthsAgo": {
+    "placeholders": {
+      "months": { "type": "int" }
+    }
+  },
+  "itemDeleteTitle": "Remove Item",
+  "itemDeleteMessage": "Remove \"{name}\" from your wardrobe?",
+  "@itemDeleteMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "itemDeleteCancel": "Cancel",
+  "itemDeleteConfirm": "Remove",
+
+  "settingsLuckyColorBirthProfile": "Birth profile",
+  "settingsLuckyColorBirthProfileSubtitle": "Uses your saved birth date and weekday.",
+  "settingsLuckyColorRandomDaily": "Random daily",
+  "settingsLuckyColorRandomDailySubtitle": "Uses a stable daily color set without profile data.",
+  "settingsWeatherAutoDetect": "Auto-detect",
+  "settingsWeatherAutoDetectSubtitle": "Uses device location when weather matching is enabled.",
+  "settingsWeatherOff": "Off",
+  "settingsWeatherOffSubtitle": "Outfit generation will skip weather matching.",
+  "settingsPrivacyContent": "Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.",
+
+  "dialogClose": "Close"
 }

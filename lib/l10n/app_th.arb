@@ -174,5 +174,126 @@
   "avatarHairUndercut": "อันเดอร์คัต",
   "avatarHairLong": "ยาว",
   "avatarHairPonytail": "มัดหางม้า",
-  "avatarHairBob": "บ็อบ"
+  "avatarHairBob": "บ็อบ",
+
+  "repetitionStyleReminder": "เตือนสไตล์",
+  "repetitionMessage": "คุณใส่โทนสี {color} บ่อยมาก ลองเปลี่ยนเป็นอะไรที่แตกต่างวันนี้สิ!",
+  "@repetitionMessage": {
+    "placeholders": {
+      "color": { "type": "String" }
+    }
+  },
+
+  "outfitGeneratorTitle": "สร้างชุด",
+  "outfitGeneratorStyleLabel": "สไตล์",
+  "outfitGeneratorFiltersLabel": "ตัวกรอง",
+  "outfitGeneratorUsePersonalColor": "ใช้ฤดูกาลสีส่วนตัวของฉัน",
+  "outfitGeneratorLuckyColor": "สีมงคลวันนี้",
+  "outfitGeneratorMatchWeather": "จับคู่สภาพอากาศ",
+  "outfitGeneratorWeatherOff": "เปิด Weather Location ในการตั้งค่า",
+  "outfitGeneratorWeatherAuto": "ตรวจจับตำแหน่งอัตโนมัติ",
+  "outfitGeneratorGenerating": "กำลังสร้าง...",
+  "outfitGeneratorGenerate": "สร้าง",
+  "outfitGeneratorResults": "ผลลัพธ์",
+  "outfitGeneratorLockedTitle": "การสร้างชุดด้วย AI ต้องเข้าสู่ระบบ",
+  "outfitGeneratorLockedMessage": "ตู้เสื้อผ้าของผู้เยี่ยมชมเก็บไว้ในเครื่อง เข้าสู่ระบบด้วย Supabase เพื่อสร้างชุดจริง จับคู่สภาพอากาศ และลุคสีมงคล",
+  "outfitGeneratorNoOutfits": "ไม่มีชุดที่ถูกสร้าง",
+  "outfitGeneratorErrorNotDeployed": "ยังไม่ได้เปิดใช้งานการสร้างชุด กรุณาลองใหม่หลังจากอัปเดตเซิร์ฟเวอร์",
+  "outfitGeneratorErrorNeedWardrobe": "เพิ่มเสื้อด้านบน กางเกง/กระโปรง และรองเท้าอย่างน้อยอย่างละ 1 ชิ้นก่อน",
+  "outfitGeneratorErrorLocationPermission": "ต้องการสิทธิ์ตำแหน่งเพื่อจับคู่สภาพอากาศ",
+  "outfitGeneratorErrorLocationOff": "เปิดบริการตำแหน่งเพื่อจับคู่สภาพอากาศ",
+  "outfitGeneratorErrorGeneric": "ไม่สามารถสร้างชุดได้ กรุณาลองใหม่อีกครั้ง",
+  "outfitStyleCasual": "แคชชวล",
+  "outfitStyleWork": "งาน",
+  "outfitStyleFormal": "ทางการ",
+  "outfitStyleSport": "กีฬา",
+  "outfitStyleDate": "เดต",
+
+  "rushTitle": "เร่งรีบ",
+  "rushStatusSignInRequired": "ต้องเข้าสู่ระบบ",
+  "rushStatusNeedsSetup": "ต้องตั้งค่าเล็กน้อย",
+  "rushStatusReady": "ชุดของคุณพร้อมแล้ว",
+  "rushLockedMessage": "ชุดเร่งรีบใช้ AI ของเซิร์ฟเวอร์ เข้าสู่ระบบด้วย Supabase เพื่อใช้งาน",
+  "rushDefaultReason": "เลือกชุดที่เหมาะสมและรวดเร็วจากตู้เสื้อผ้าของคุณ",
+  "rushReshuffle": "สุ่มใหม่",
+  "rushSignIn": "เข้าสู่ระบบ",
+  "rushGotIt": "รับทราบ",
+  "rushWearThis": "ใส่ชุดนี้",
+  "rushErrorNeedWardrobe": "ชุดเร่งรีบต้องการตู้เสื้อผ้าครบก่อน เพิ่มเสื้อด้านบน กางเกง/กระโปรง และรองเท้าอย่างละ 1 ชิ้น",
+  "rushErrorSignIn": "ชุดเร่งรีบใช้ตู้เสื้อผ้าที่บันทึกไว้ในเซิร์ฟเวอร์ เข้าสู่ระบบเพื่อใช้งาน",
+  "rushErrorNotDeployed": "ยังไม่ได้เปิดใช้งานชุดเร่งรีบ กรุณาลองใหม่หลังจากอัปเดตเซิร์ฟเวอร์",
+  "rushErrorGeneric": "ไม่สามารถเลือกชุดเร่งรีบได้ตอนนี้ ตรวจสอบตู้เสื้อผ้าและลองใหม่",
+
+  "addItemTitle": "เพิ่มชิ้น",
+  "addItemCategory": "หมวดหมู่",
+  "addItemNameHint": "ชื่อชิ้น (เช่น เสื้อลินินขาว)",
+  "addItemBrandHint": "แบรนด์ (ไม่บังคับ)",
+  "addItemTags": "แท็ก",
+  "addItemSaving": "กำลังบันทึก...",
+  "addItemSave": "บันทึกลงตู้เสื้อผ้า",
+  "addItemCamera": "กล้อง",
+  "addItemPhotoLibrary": "คลังรูปภาพ",
+  "addItemTapToAddPhoto": "แตะเพื่อเพิ่มรูปภาพ",
+  "addItemCategoryLabel": "หมวดหมู่: {category}",
+  "@addItemCategoryLabel": {
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
+  "tagCasual": "แคชชวล",
+  "tagFormal": "ทางการ",
+  "tagWork": "งาน",
+  "tagSport": "กีฬา",
+  "tagSummer": "ฤดูร้อน",
+  "tagWinter": "ฤดูหนาว",
+
+  "itemNotFound": "ไม่พบชิ้น",
+  "itemNotFoundMessage": "ชิ้นนี้ถูกลบออกแล้ว",
+  "itemOutfitsTitle": "ชุดที่มีชิ้นนี้",
+  "itemStatsTimesWorn": "ครั้งที่สวมใส่",
+  "itemStatsLastWorn": "สวมใส่ล่าสุด",
+  "itemStatsCostPerWear": "ต้นทุนต่อครั้ง",
+  "itemStatsNever": "ยังไม่เคย",
+  "itemStatsNotWornYet": "ยังไม่ได้สวมใส่",
+  "itemStatsToday": "วันนี้",
+  "itemStatsYesterday": "เมื่อวาน",
+  "itemStatsDaysAgo": "เมื่อ {days} วันที่แล้ว",
+  "@itemStatsDaysAgo": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "itemStatsWeeksAgo": "{weeks} สัปดาห์ที่แล้ว",
+  "@itemStatsWeeksAgo": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "itemStatsMonthsAgo": "{months} เดือนที่แล้ว",
+  "@itemStatsMonthsAgo": {
+    "placeholders": {
+      "months": { "type": "int" }
+    }
+  },
+  "itemDeleteTitle": "ลบชิ้น",
+  "itemDeleteMessage": "ลบ \"{name}\" ออกจากตู้เสื้อผ้าของคุณ?",
+  "@itemDeleteMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "itemDeleteCancel": "ยกเลิก",
+  "itemDeleteConfirm": "ลบ",
+
+  "settingsLuckyColorBirthProfile": "โปรไฟล์วันเกิด",
+  "settingsLuckyColorBirthProfileSubtitle": "ใช้วันเกิดและวันในสัปดาห์ที่บันทึกไว้",
+  "settingsLuckyColorRandomDaily": "สุ่มทุกวัน",
+  "settingsLuckyColorRandomDailySubtitle": "ใช้ชุดสีรายวันที่เสถียรโดยไม่ต้องใช้ข้อมูลโปรไฟล์",
+  "settingsWeatherAutoDetect": "ตรวจจับอัตโนมัติ",
+  "settingsWeatherAutoDetectSubtitle": "ใช้ตำแหน่งของอุปกรณ์เมื่อเปิดใช้การจับคู่สภาพอากาศ",
+  "settingsWeatherOff": "ปิด",
+  "settingsWeatherOffSubtitle": "การสร้างชุดจะข้ามการจับคู่สภาพอากาศ",
+  "settingsPrivacyContent": "ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase เพื่อให้ฟีเจอร์ AI สร้างคำแนะนำได้ API keys และ secrets ไม่ถูกเก็บในแอป",
+
+  "dialogClose": "ปิด"
 }

@@ -961,6 +961,510 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bob'**
   String get avatarHairBob;
+
+  /// No description provided for @repetitionStyleReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Style reminder'**
+  String get repetitionStyleReminder;
+
+  /// No description provided for @repetitionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve been wearing {color} tones frequently. Try mixing in something different today!'**
+  String repetitionMessage(String color);
+
+  /// No description provided for @outfitGeneratorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Outfit'**
+  String get outfitGeneratorTitle;
+
+  /// No description provided for @outfitGeneratorStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get outfitGeneratorStyleLabel;
+
+  /// No description provided for @outfitGeneratorFiltersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get outfitGeneratorFiltersLabel;
+
+  /// No description provided for @outfitGeneratorUsePersonalColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my personal color season'**
+  String get outfitGeneratorUsePersonalColor;
+
+  /// No description provided for @outfitGeneratorLuckyColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s lucky color'**
+  String get outfitGeneratorLuckyColor;
+
+  /// No description provided for @outfitGeneratorMatchWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Match weather'**
+  String get outfitGeneratorMatchWeather;
+
+  /// No description provided for @outfitGeneratorWeatherOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Weather Location in Settings'**
+  String get outfitGeneratorWeatherOff;
+
+  /// No description provided for @outfitGeneratorWeatherAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-detect location'**
+  String get outfitGeneratorWeatherAuto;
+
+  /// No description provided for @outfitGeneratorGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating...'**
+  String get outfitGeneratorGenerating;
+
+  /// No description provided for @outfitGeneratorGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get outfitGeneratorGenerate;
+
+  /// No description provided for @outfitGeneratorResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get outfitGeneratorResults;
+
+  /// No description provided for @outfitGeneratorLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI outfit generation needs a login'**
+  String get outfitGeneratorLockedTitle;
+
+  /// No description provided for @outfitGeneratorLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest wardrobes stay local. Sign in with Supabase to generate real outfits, weather matches, and lucky color looks.'**
+  String get outfitGeneratorLockedMessage;
+
+  /// No description provided for @outfitGeneratorNoOutfits.
+  ///
+  /// In en, this message translates to:
+  /// **'No outfits were generated.'**
+  String get outfitGeneratorNoOutfits;
+
+  /// No description provided for @outfitGeneratorErrorNotDeployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Outfit generation is not deployed yet. Please try again after the backend is updated.'**
+  String get outfitGeneratorErrorNotDeployed;
+
+  /// No description provided for @outfitGeneratorErrorNeedWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one top, one bottom, and one pair of shoes first.'**
+  String get outfitGeneratorErrorNeedWardrobe;
+
+  /// No description provided for @outfitGeneratorErrorLocationPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is needed to match the weather.'**
+  String get outfitGeneratorErrorLocationPermission;
+
+  /// No description provided for @outfitGeneratorErrorLocationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services to match the weather.'**
+  String get outfitGeneratorErrorLocationOff;
+
+  /// No description provided for @outfitGeneratorErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not generate outfits. Please try again.'**
+  String get outfitGeneratorErrorGeneric;
+
+  /// No description provided for @outfitStyleCasual.
+  ///
+  /// In en, this message translates to:
+  /// **'Casual'**
+  String get outfitStyleCasual;
+
+  /// No description provided for @outfitStyleWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get outfitStyleWork;
+
+  /// No description provided for @outfitStyleFormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Formal'**
+  String get outfitStyleFormal;
+
+  /// No description provided for @outfitStyleSport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport'**
+  String get outfitStyleSport;
+
+  /// No description provided for @outfitStyleDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get outfitStyleDate;
+
+  /// No description provided for @rushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In a Rush'**
+  String get rushTitle;
+
+  /// No description provided for @rushStatusSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required'**
+  String get rushStatusSignInRequired;
+
+  /// No description provided for @rushStatusNeedsSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a little setup'**
+  String get rushStatusNeedsSetup;
+
+  /// No description provided for @rushStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Your outfit is ready'**
+  String get rushStatusReady;
+
+  /// No description provided for @rushLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rush outfit uses backend AI. Sign in with Supabase to use it.'**
+  String get rushLockedMessage;
+
+  /// No description provided for @rushDefaultReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast practical pick from your wardrobe.'**
+  String get rushDefaultReason;
+
+  /// No description provided for @rushReshuffle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reshuffle'**
+  String get rushReshuffle;
+
+  /// No description provided for @rushSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get rushSignIn;
+
+  /// No description provided for @rushGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got It'**
+  String get rushGotIt;
+
+  /// No description provided for @rushWearThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear This'**
+  String get rushWearThis;
+
+  /// No description provided for @rushErrorNeedWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.'**
+  String get rushErrorNeedWardrobe;
+
+  /// No description provided for @rushErrorSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Rush outfit uses your saved backend wardrobe. Sign in to use it.'**
+  String get rushErrorSignIn;
+
+  /// No description provided for @rushErrorNotDeployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Rush outfit is not deployed yet. Please try again after the backend is updated.'**
+  String get rushErrorNotDeployed;
+
+  /// No description provided for @rushErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not pick a rush outfit right now. Check your wardrobe and try again.'**
+  String get rushErrorGeneric;
+
+  /// No description provided for @addItemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Item'**
+  String get addItemTitle;
+
+  /// No description provided for @addItemCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get addItemCategory;
+
+  /// No description provided for @addItemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name (e.g. White Linen Shirt)'**
+  String get addItemNameHint;
+
+  /// No description provided for @addItemBrandHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand (optional)'**
+  String get addItemBrandHint;
+
+  /// No description provided for @addItemTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get addItemTags;
+
+  /// No description provided for @addItemSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get addItemSaving;
+
+  /// No description provided for @addItemSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Wardrobe'**
+  String get addItemSave;
+
+  /// No description provided for @addItemCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get addItemCamera;
+
+  /// No description provided for @addItemPhotoLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo Library'**
+  String get addItemPhotoLibrary;
+
+  /// No description provided for @addItemTapToAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add photo'**
+  String get addItemTapToAddPhoto;
+
+  /// No description provided for @addItemCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category: {category}'**
+  String addItemCategoryLabel(String category);
+
+  /// No description provided for @tagCasual.
+  ///
+  /// In en, this message translates to:
+  /// **'casual'**
+  String get tagCasual;
+
+  /// No description provided for @tagFormal.
+  ///
+  /// In en, this message translates to:
+  /// **'formal'**
+  String get tagFormal;
+
+  /// No description provided for @tagWork.
+  ///
+  /// In en, this message translates to:
+  /// **'work'**
+  String get tagWork;
+
+  /// No description provided for @tagSport.
+  ///
+  /// In en, this message translates to:
+  /// **'sport'**
+  String get tagSport;
+
+  /// No description provided for @tagSummer.
+  ///
+  /// In en, this message translates to:
+  /// **'summer'**
+  String get tagSummer;
+
+  /// No description provided for @tagWinter.
+  ///
+  /// In en, this message translates to:
+  /// **'winter'**
+  String get tagWinter;
+
+  /// No description provided for @itemNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Item not found'**
+  String get itemNotFound;
+
+  /// No description provided for @itemNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This item has been removed.'**
+  String get itemNotFoundMessage;
+
+  /// No description provided for @itemOutfitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Outfits featuring this item'**
+  String get itemOutfitsTitle;
+
+  /// No description provided for @itemStatsTimesWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Times worn'**
+  String get itemStatsTimesWorn;
+
+  /// No description provided for @itemStatsLastWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Last worn'**
+  String get itemStatsLastWorn;
+
+  /// No description provided for @itemStatsCostPerWear.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per wear'**
+  String get itemStatsCostPerWear;
+
+  /// No description provided for @itemStatsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get itemStatsNever;
+
+  /// No description provided for @itemStatsNotWornYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not worn yet'**
+  String get itemStatsNotWornYet;
+
+  /// No description provided for @itemStatsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get itemStatsToday;
+
+  /// No description provided for @itemStatsYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get itemStatsYesterday;
+
+  /// No description provided for @itemStatsDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days ago'**
+  String itemStatsDaysAgo(int days);
+
+  /// No description provided for @itemStatsWeeksAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeks}w ago'**
+  String itemStatsWeeksAgo(int weeks);
+
+  /// No description provided for @itemStatsMonthsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{months}mo ago'**
+  String itemStatsMonthsAgo(int months);
+
+  /// No description provided for @itemDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Item'**
+  String get itemDeleteTitle;
+
+  /// No description provided for @itemDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from your wardrobe?'**
+  String itemDeleteMessage(String name);
+
+  /// No description provided for @itemDeleteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get itemDeleteCancel;
+
+  /// No description provided for @itemDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get itemDeleteConfirm;
+
+  /// No description provided for @settingsLuckyColorBirthProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth profile'**
+  String get settingsLuckyColorBirthProfile;
+
+  /// No description provided for @settingsLuckyColorBirthProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses your saved birth date and weekday.'**
+  String get settingsLuckyColorBirthProfileSubtitle;
+
+  /// No description provided for @settingsLuckyColorRandomDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Random daily'**
+  String get settingsLuckyColorRandomDaily;
+
+  /// No description provided for @settingsLuckyColorRandomDailySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses a stable daily color set without profile data.'**
+  String get settingsLuckyColorRandomDailySubtitle;
+
+  /// No description provided for @settingsWeatherAutoDetect.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-detect'**
+  String get settingsWeatherAutoDetect;
+
+  /// No description provided for @settingsWeatherAutoDetectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses device location when weather matching is enabled.'**
+  String get settingsWeatherAutoDetectSubtitle;
+
+  /// No description provided for @settingsWeatherOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get settingsWeatherOff;
+
+  /// No description provided for @settingsWeatherOffSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Outfit generation will skip weather matching.'**
+  String get settingsWeatherOffSubtitle;
+
+  /// No description provided for @settingsPrivacyContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.'**
+  String get settingsPrivacyContent;
+
+  /// No description provided for @dialogClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get dialogClose;
 }
 
 class _AppLocalizationsDelegate

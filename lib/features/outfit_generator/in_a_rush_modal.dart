@@ -6,6 +6,7 @@ import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/widgets/wardrobe_image.dart';
@@ -43,12 +44,31 @@ class _InARushModalState extends ConsumerState<InARushModal> {
       });
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _outfit = null;
-        _error = error.toString();
+        _error = _friendlyRushError(error, l10n);
         _loading = false;
       });
     }
+  }
+
+  String _friendlyRushError(Object error, AppLocalizations? l) {
+    final text = error.toString();
+    if (text.contains('Add at least one top')) {
+      return l?.rushErrorNeedWardrobe ??
+          'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.';
+    }
+    if (text.contains('Sign in') || text.contains('signed-in')) {
+      return l?.rushErrorSignIn ??
+          'Rush outfit uses your saved backend wardrobe. Sign in to use it.';
+    }
+    if (text.contains('NOT_FOUND') || text.contains('status: 404')) {
+      return l?.rushErrorNotDeployed ??
+          'Rush outfit is not deployed yet. Please try again after the backend is updated.';
+    }
+    return l?.rushErrorGeneric ??
+        'Could not pick a rush outfit right now. Check your wardrobe and try again.';
   }
 
   void _reshuffle() {
@@ -57,6 +77,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
     final locked = ref
         .watch(sessionProvider)
@@ -65,6 +86,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
           orElse: () => true,
         );
     final outfit = _outfit;
+    final hasError = _error != null;
     final items = outfit == null
         ? <ClothingItem>[]
         : outfit.itemIds
@@ -110,16 +132,22 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'In a Rush',
-                      style: TextStyle(
+                    Text(
+                      l10n?.rushTitle ?? 'In a Rush',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      locked ? 'Sign in required' : 'Your outfit is ready',
+                      locked
+                          ? (l10n?.rushStatusSignInRequired ??
+                              'Sign in required')
+                          : hasError
+                          ? (l10n?.rushStatusNeedsSetup ??
+                              'Needs a little setup')
+                          : (l10n?.rushStatusReady ?? 'Your outfit is ready'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
@@ -141,7 +169,8 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
                   locked
-                      ? 'Rush outfit uses backend AI. Sign in with Supabase to use it.'
+                      ? (l10n?.rushLockedMessage ??
+                          'Rush outfit uses backend AI. Sign in with Supabase to use it.')
                       : _error!,
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
                   textAlign: TextAlign.center,
@@ -206,7 +235,8 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                     const SizedBox(height: 16),
                     Text(
                       outfit.reason ??
-                          'Fast practical pick from your wardrobe.',
+                          (l10n?.rushDefaultReason ??
+                              'Fast practical pick from your wardrobe.'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 12,
@@ -241,9 +271,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: locked ? null : _reshuffle,
+                    onPressed: locked || _loading ? null : _reshuffle,
                     icon: const Icon(Icons.shuffle_rounded, size: 16),
-                    label: const Text('Reshuffle'),
+                    label: Text(l10n?.rushReshuffle ?? 'Reshuffle'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: BorderSide(
@@ -256,7 +286,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _outfit == null
+                    onPressed: locked
                         ? () {
                             Navigator.pop(context);
                             context.go('/auth');
@@ -270,7 +300,13 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                             Navigator.pop(context);
                           },
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: Text(_outfit == null ? 'Sign In' : 'Wear This'),
+                    label: Text(
+                      locked
+                          ? (l10n?.rushSignIn ?? 'Sign In')
+                          : _outfit == null
+                          ? (l10n?.rushGotIt ?? 'Got It')
+                          : (l10n?.rushWearThis ?? 'Wear This'),
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.seedColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),

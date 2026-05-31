@@ -451,4 +451,285 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get avatarHairBob => 'บ็อบ';
+
+  @override
+  String get repetitionStyleReminder => 'เตือนสไตล์';
+
+  @override
+  String repetitionMessage(String color) {
+    return 'คุณใส่โทนสี $color บ่อยมาก ลองเปลี่ยนเป็นอะไรที่แตกต่างวันนี้สิ!';
+  }
+
+  @override
+  String get outfitGeneratorTitle => 'สร้างชุด';
+
+  @override
+  String get outfitGeneratorStyleLabel => 'สไตล์';
+
+  @override
+  String get outfitGeneratorFiltersLabel => 'ตัวกรอง';
+
+  @override
+  String get outfitGeneratorUsePersonalColor => 'ใช้ฤดูกาลสีส่วนตัวของฉัน';
+
+  @override
+  String get outfitGeneratorLuckyColor => 'สีมงคลวันนี้';
+
+  @override
+  String get outfitGeneratorMatchWeather => 'จับคู่สภาพอากาศ';
+
+  @override
+  String get outfitGeneratorWeatherOff => 'เปิด Weather Location ในการตั้งค่า';
+
+  @override
+  String get outfitGeneratorWeatherAuto => 'ตรวจจับตำแหน่งอัตโนมัติ';
+
+  @override
+  String get outfitGeneratorGenerating => 'กำลังสร้าง...';
+
+  @override
+  String get outfitGeneratorGenerate => 'สร้าง';
+
+  @override
+  String get outfitGeneratorResults => 'ผลลัพธ์';
+
+  @override
+  String get outfitGeneratorLockedTitle => 'การสร้างชุดด้วย AI ต้องเข้าสู่ระบบ';
+
+  @override
+  String get outfitGeneratorLockedMessage =>
+      'ตู้เสื้อผ้าของผู้เยี่ยมชมเก็บไว้ในเครื่อง เข้าสู่ระบบด้วย Supabase เพื่อสร้างชุดจริง จับคู่สภาพอากาศ และลุคสีมงคล';
+
+  @override
+  String get outfitGeneratorNoOutfits => 'ไม่มีชุดที่ถูกสร้าง';
+
+  @override
+  String get outfitGeneratorErrorNotDeployed =>
+      'ยังไม่ได้เปิดใช้งานการสร้างชุด กรุณาลองใหม่หลังจากอัปเดตเซิร์ฟเวอร์';
+
+  @override
+  String get outfitGeneratorErrorNeedWardrobe =>
+      'เพิ่มเสื้อด้านบน กางเกง/กระโปรง และรองเท้าอย่างน้อยอย่างละ 1 ชิ้นก่อน';
+
+  @override
+  String get outfitGeneratorErrorLocationPermission =>
+      'ต้องการสิทธิ์ตำแหน่งเพื่อจับคู่สภาพอากาศ';
+
+  @override
+  String get outfitGeneratorErrorLocationOff =>
+      'เปิดบริการตำแหน่งเพื่อจับคู่สภาพอากาศ';
+
+  @override
+  String get outfitGeneratorErrorGeneric =>
+      'ไม่สามารถสร้างชุดได้ กรุณาลองใหม่อีกครั้ง';
+
+  @override
+  String get outfitStyleCasual => 'แคชชวล';
+
+  @override
+  String get outfitStyleWork => 'งาน';
+
+  @override
+  String get outfitStyleFormal => 'ทางการ';
+
+  @override
+  String get outfitStyleSport => 'กีฬา';
+
+  @override
+  String get outfitStyleDate => 'เดต';
+
+  @override
+  String get rushTitle => 'เร่งรีบ';
+
+  @override
+  String get rushStatusSignInRequired => 'ต้องเข้าสู่ระบบ';
+
+  @override
+  String get rushStatusNeedsSetup => 'ต้องตั้งค่าเล็กน้อย';
+
+  @override
+  String get rushStatusReady => 'ชุดของคุณพร้อมแล้ว';
+
+  @override
+  String get rushLockedMessage =>
+      'ชุดเร่งรีบใช้ AI ของเซิร์ฟเวอร์ เข้าสู่ระบบด้วย Supabase เพื่อใช้งาน';
+
+  @override
+  String get rushDefaultReason =>
+      'เลือกชุดที่เหมาะสมและรวดเร็วจากตู้เสื้อผ้าของคุณ';
+
+  @override
+  String get rushReshuffle => 'สุ่มใหม่';
+
+  @override
+  String get rushSignIn => 'เข้าสู่ระบบ';
+
+  @override
+  String get rushGotIt => 'รับทราบ';
+
+  @override
+  String get rushWearThis => 'ใส่ชุดนี้';
+
+  @override
+  String get rushErrorNeedWardrobe =>
+      'ชุดเร่งรีบต้องการตู้เสื้อผ้าครบก่อน เพิ่มเสื้อด้านบน กางเกง/กระโปรง และรองเท้าอย่างละ 1 ชิ้น';
+
+  @override
+  String get rushErrorSignIn =>
+      'ชุดเร่งรีบใช้ตู้เสื้อผ้าที่บันทึกไว้ในเซิร์ฟเวอร์ เข้าสู่ระบบเพื่อใช้งาน';
+
+  @override
+  String get rushErrorNotDeployed =>
+      'ยังไม่ได้เปิดใช้งานชุดเร่งรีบ กรุณาลองใหม่หลังจากอัปเดตเซิร์ฟเวอร์';
+
+  @override
+  String get rushErrorGeneric =>
+      'ไม่สามารถเลือกชุดเร่งรีบได้ตอนนี้ ตรวจสอบตู้เสื้อผ้าและลองใหม่';
+
+  @override
+  String get addItemTitle => 'เพิ่มชิ้น';
+
+  @override
+  String get addItemCategory => 'หมวดหมู่';
+
+  @override
+  String get addItemNameHint => 'ชื่อชิ้น (เช่น เสื้อลินินขาว)';
+
+  @override
+  String get addItemBrandHint => 'แบรนด์ (ไม่บังคับ)';
+
+  @override
+  String get addItemTags => 'แท็ก';
+
+  @override
+  String get addItemSaving => 'กำลังบันทึก...';
+
+  @override
+  String get addItemSave => 'บันทึกลงตู้เสื้อผ้า';
+
+  @override
+  String get addItemCamera => 'กล้อง';
+
+  @override
+  String get addItemPhotoLibrary => 'คลังรูปภาพ';
+
+  @override
+  String get addItemTapToAddPhoto => 'แตะเพื่อเพิ่มรูปภาพ';
+
+  @override
+  String addItemCategoryLabel(String category) {
+    return 'หมวดหมู่: $category';
+  }
+
+  @override
+  String get tagCasual => 'แคชชวล';
+
+  @override
+  String get tagFormal => 'ทางการ';
+
+  @override
+  String get tagWork => 'งาน';
+
+  @override
+  String get tagSport => 'กีฬา';
+
+  @override
+  String get tagSummer => 'ฤดูร้อน';
+
+  @override
+  String get tagWinter => 'ฤดูหนาว';
+
+  @override
+  String get itemNotFound => 'ไม่พบชิ้น';
+
+  @override
+  String get itemNotFoundMessage => 'ชิ้นนี้ถูกลบออกแล้ว';
+
+  @override
+  String get itemOutfitsTitle => 'ชุดที่มีชิ้นนี้';
+
+  @override
+  String get itemStatsTimesWorn => 'ครั้งที่สวมใส่';
+
+  @override
+  String get itemStatsLastWorn => 'สวมใส่ล่าสุด';
+
+  @override
+  String get itemStatsCostPerWear => 'ต้นทุนต่อครั้ง';
+
+  @override
+  String get itemStatsNever => 'ยังไม่เคย';
+
+  @override
+  String get itemStatsNotWornYet => 'ยังไม่ได้สวมใส่';
+
+  @override
+  String get itemStatsToday => 'วันนี้';
+
+  @override
+  String get itemStatsYesterday => 'เมื่อวาน';
+
+  @override
+  String itemStatsDaysAgo(int days) {
+    return 'เมื่อ $days วันที่แล้ว';
+  }
+
+  @override
+  String itemStatsWeeksAgo(int weeks) {
+    return '$weeks สัปดาห์ที่แล้ว';
+  }
+
+  @override
+  String itemStatsMonthsAgo(int months) {
+    return '$months เดือนที่แล้ว';
+  }
+
+  @override
+  String get itemDeleteTitle => 'ลบชิ้น';
+
+  @override
+  String itemDeleteMessage(String name) {
+    return 'ลบ \"$name\" ออกจากตู้เสื้อผ้าของคุณ?';
+  }
+
+  @override
+  String get itemDeleteCancel => 'ยกเลิก';
+
+  @override
+  String get itemDeleteConfirm => 'ลบ';
+
+  @override
+  String get settingsLuckyColorBirthProfile => 'โปรไฟล์วันเกิด';
+
+  @override
+  String get settingsLuckyColorBirthProfileSubtitle =>
+      'ใช้วันเกิดและวันในสัปดาห์ที่บันทึกไว้';
+
+  @override
+  String get settingsLuckyColorRandomDaily => 'สุ่มทุกวัน';
+
+  @override
+  String get settingsLuckyColorRandomDailySubtitle =>
+      'ใช้ชุดสีรายวันที่เสถียรโดยไม่ต้องใช้ข้อมูลโปรไฟล์';
+
+  @override
+  String get settingsWeatherAutoDetect => 'ตรวจจับอัตโนมัติ';
+
+  @override
+  String get settingsWeatherAutoDetectSubtitle =>
+      'ใช้ตำแหน่งของอุปกรณ์เมื่อเปิดใช้การจับคู่สภาพอากาศ';
+
+  @override
+  String get settingsWeatherOff => 'ปิด';
+
+  @override
+  String get settingsWeatherOffSubtitle =>
+      'การสร้างชุดจะข้ามการจับคู่สภาพอากาศ';
+
+  @override
+  String get settingsPrivacyContent =>
+      'ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase เพื่อให้ฟีเจอร์ AI สร้างคำแนะนำได้ API keys และ secrets ไม่ถูกเก็บในแอป';
+
+  @override
+  String get dialogClose => 'ปิด';
 }
