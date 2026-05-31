@@ -6,14 +6,18 @@ import '../../../core/theme/app_colors.dart';
 
 class AvatarViewer extends StatefulWidget {
   final AvatarType avatarType;
+  final AvatarBodyShape bodyShape;
   final int skinToneIndex;
   final int hairColorIndex;
+  final int hairStyleIndex;
 
   const AvatarViewer({
     super.key,
     required this.avatarType,
+    this.bodyShape = AvatarBodyShape.female,
     this.skinToneIndex = 1,
     this.hairColorIndex = 1,
+    this.hairStyleIndex = 3,
   });
 
   @override
@@ -110,7 +114,7 @@ class _AvatarViewerState extends State<AvatarViewer>
               final w = constraints.maxWidth;
               final h = constraints.maxHeight;
               final figureH = h * 0.80;
-              final figureW = figureH * 0.36;
+              final figureW = figureH * 0.55;
 
               return Stack(
                 alignment: Alignment.center,
@@ -136,7 +140,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                     ),
                   ),
 
-                  // Secondary accent glow (pink tint)
+                  // Secondary accent glow
                   Positioned(
                     right: -w * 0.1,
                     top: h * 0.2,
@@ -175,31 +179,32 @@ class _AvatarViewerState extends State<AvatarViewer>
                   // Figure
                   Positioned(
                     top: h * 0.015 + floatOffset,
-                    child:
-                        Transform(
-                              transform: _perspective(_yAngle),
-                              alignment: Alignment.center,
-                              child: SizedBox(
-                                width: figureW,
-                                height: figureH,
-                                child: CustomPaint(
-                                  painter: _FashionFigurePainter(
-                                    avatarType: widget.avatarType,
-                                    yAngle: _yAngle,
-                                    isDark: isDark,
-                                    skinToneIndex: widget.skinToneIndex,
-                                    hairColorIndex: widget.hairColorIndex,
-                                  ),
-                                ),
+                    child: Transform(
+                          transform: _perspective(_yAngle),
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: figureW,
+                            height: figureH,
+                            child: CustomPaint(
+                              painter: _FashionFigurePainter(
+                                avatarType: widget.avatarType,
+                                bodyShape: widget.bodyShape,
+                                yAngle: _yAngle,
+                                isDark: isDark,
+                                skinToneIndex: widget.skinToneIndex,
+                                hairColorIndex: widget.hairColorIndex,
+                                hairStyleIndex: widget.hairStyleIndex,
                               ),
-                            )
-                            .animate(controller: _entryController)
-                            .scale(
-                              begin: const Offset(0.70, 0.70),
-                              end: const Offset(1, 1),
-                              curve: Curves.elasticOut,
-                            )
-                            .fadeIn(duration: 500.ms),
+                            ),
+                          ),
+                        )
+                        .animate(controller: _entryController)
+                        .scale(
+                          begin: const Offset(0.70, 0.70),
+                          end: const Offset(1, 1),
+                          curve: Curves.elasticOut,
+                        )
+                        .fadeIn(duration: 500.ms),
                   ),
 
                   // Drag hint
@@ -287,7 +292,6 @@ class _PlatformPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
-    // 3 concentric ellipses (outermost → innermost)
     for (int ring = 3; ring >= 1; ring--) {
       final scale = ring / 3.0;
       final ringAlpha = (isDark ? 0.08 : 0.05) + glow * 0.08 * (4 - ring) / 3.0;
@@ -310,7 +314,6 @@ class _PlatformPainter extends CustomPainter {
       );
     }
 
-    // Centre filled glow spot
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(cx, cy),
@@ -345,45 +348,37 @@ class _DragHint extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.chevron_left_rounded,
-            size: 13,
-            color: Colors.white.withValues(alpha: 0.25),
-          ),
+          Icon(Icons.chevron_left_rounded, size: 13, color: Colors.white.withValues(alpha: 0.25)),
           Text(
             'drag to rotate',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.25),
-              fontSize: 10,
-              letterSpacing: 0.5,
-            ),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 10, letterSpacing: 0.5),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 13,
-            color: Colors.white.withValues(alpha: 0.25),
-          ),
+          Icon(Icons.chevron_right_rounded, size: 13, color: Colors.white.withValues(alpha: 0.25)),
         ],
       ),
     );
   }
 }
 
-// ─── Fashion Figure Painter ───────────────────────────────────────────────────
+// ─── Chibi Fashion Figure Painter ─────────────────────────────────────────────
 
 class _FashionFigurePainter extends CustomPainter {
   final AvatarType avatarType;
+  final AvatarBodyShape bodyShape;
   final double yAngle;
   final bool isDark;
   final int skinToneIndex;
   final int hairColorIndex;
+  final int hairStyleIndex;
 
   static const _skinPalette = [
     Color(0xFFF5E6D3), // 0: porcelain
     Color(0xFFE8C4A0), // 1: light warm
     Color(0xFFC89B6E), // 2: medium
-    Color(0xFF8B5A2B), // 3: medium-dark
-    Color(0xFF4A2F1A), // 4: deep
+    Color(0xFFB07840), // 3: medium-tan
+    Color(0xFF9A6235), // 4: medium-warm
+    Color(0xFF8B5A2B), // 5: medium-dark
+    Color(0xFF4A2F1A), // 6: deep
   ];
 
   static const _hairPalette = [
@@ -397,10 +392,12 @@ class _FashionFigurePainter extends CustomPainter {
 
   const _FashionFigurePainter({
     required this.avatarType,
+    required this.bodyShape,
     required this.yAngle,
     required this.isDark,
     required this.skinToneIndex,
     required this.hairColorIndex,
+    required this.hairStyleIndex,
   });
 
   double get _rightFactor => cos(yAngle - pi / 6).clamp(0.0, 1.0);
@@ -410,12 +407,7 @@ class _FashionFigurePainter extends CustomPainter {
     final r = (c.r + boost * _rightFactor).clamp(0.0, 1.0);
     final g = (c.g + boost * _rightFactor).clamp(0.0, 1.0);
     final b = (c.b + boost * _rightFactor).clamp(0.0, 1.0);
-    return Color.fromARGB(
-      255,
-      (r * 255).round(),
-      (g * 255).round(),
-      (b * 255).round(),
-    );
+    return Color.fromARGB(255, (r * 255).round(), (g * 255).round(), (b * 255).round());
   }
 
   Color _shadowed(Color c, {double darken = 0.0}) {
@@ -431,485 +423,457 @@ class _FashionFigurePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (avatarType == AvatarType.human) {
-      _drawHuman(canvas, size);
+      _drawHuman(canvas, size.width, size.height);
     } else {
-      _drawPet(canvas, size, isDog: avatarType == AvatarType.dog);
+      _drawPet(canvas, size.width, size.height, isDog: avatarType == AvatarType.dog);
     }
   }
 
-  void _drawHuman(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
+  // ─── Human ────────────────────────────────────────────────────────────────
 
-    final skin = _skinPalette[skinToneIndex.clamp(0, 4)];
+  void _drawHuman(Canvas canvas, double w, double h) {
+    final skin = _skinPalette[skinToneIndex.clamp(0, 6)];
     final hair = _hairPalette[hairColorIndex.clamp(0, 5)];
-    final skinL = _lit(skin, boost: 0.17);
-    final skinM = skin;
-    final skinD = _shadowed(skin, darken: 0.36);
+    final skinL = _lit(skin, boost: 0.18);
+    final skinD = _shadowed(skin, darken: 0.35);
 
-    // Outfit: elegant ivory top + warm camel trousers
+    // Chibi head geometry — large dominant circle
+    const headCx = 0.50;
+    const headCy = 0.26;
+    const headR = 0.40; // fraction of w
+
+    final hcx = w * headCx;
+    final hcy = h * headCy;
+    final hr = w * headR;
+
+    final ff = cos(yAngle).abs();
+
+    // 1 — Hair back
+    _drawHairBack(canvas, w, h, hair, hcx, hcy, hr);
+
+    // 2 — Body (behind head overlap)
+    _drawBody(canvas, w, h, skin, skinL, skinD);
+
+    // 3 — Head
+    final headRect = Rect.fromCircle(center: Offset(hcx, hcy), radius: hr);
+    canvas.drawCircle(
+      Offset(hcx, hcy),
+      hr,
+      Paint()..shader = RadialGradient(
+        center: const Alignment(0.28, -0.32),
+        radius: 0.72,
+        colors: [skinL, skin, skinD],
+        stops: const [0.0, 0.46, 1.0],
+      ).createShader(headRect),
+    );
+
+    // 4 — Face
+    if (ff > 0.15) _drawFace(canvas, w, h, skin, skinD, hair, hcx, hcy, hr, ff);
+
+    // 5 — Hair front
+    _drawHairFront(canvas, w, h, hair, hcx, hcy, hr, ff);
+  }
+
+  void _drawBody(Canvas canvas, double w, double h, Color skin, Color skinL, Color skinD) {
+    // Neck
+    final neckCy = h * 0.455;
+    final neckRect = Rect.fromCenter(center: Offset(w * 0.50, neckCy), width: w * 0.18, height: h * 0.05);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(neckRect, const Radius.circular(4)),
+      Paint()..shader = LinearGradient(
+        colors: [skinD, skinL, skinD],
+        stops: const [0.0, 0.50, 1.0],
+      ).createShader(neckRect),
+    );
+
+    if (bodyShape == AvatarBodyShape.female) {
+      _drawFemaleBody(canvas, w, h);
+    } else {
+      _drawMaleBody(canvas, w, h);
+    }
+  }
+
+  void _drawFemaleBody(Canvas canvas, double w, double h) {
+    final topBase = const Color(0xFFD4C5F5);
+    final topL = _lit(topBase, boost: 0.10);
+    final topD = _shadowed(topBase, darken: 0.22);
+    final bodyTop = h * 0.46;
+
+    // Rounded torso
+    final bodyRect = Rect.fromLTWH(0, bodyTop, w, h * 0.25);
+    final torsoPath = Path()
+      ..moveTo(w * 0.20, bodyTop)
+      ..lineTo(w * 0.80, bodyTop)
+      ..quadraticBezierTo(w * 0.90, bodyTop + h * 0.07, w * 0.87, bodyTop + h * 0.14)
+      ..quadraticBezierTo(w * 0.90, bodyTop + h * 0.20, w * 0.84, bodyTop + h * 0.24)
+      ..lineTo(w * 0.16, bodyTop + h * 0.24)
+      ..quadraticBezierTo(w * 0.10, bodyTop + h * 0.20, w * 0.13, bodyTop + h * 0.14)
+      ..quadraticBezierTo(w * 0.10, bodyTop + h * 0.07, w * 0.20, bodyTop)
+      ..close();
+    canvas.drawPath(
+      torsoPath,
+      Paint()..shader = LinearGradient(
+        colors: [topD, topL, topL, topD],
+        stops: const [0.0, 0.28, 0.72, 1.0],
+      ).createShader(bodyRect),
+    );
+
+    // Skirt
+    final skirtBase = const Color(0xFFB8A0E8);
+    final skirtL = _lit(skirtBase, boost: 0.08);
+    final skirtD = _shadowed(skirtBase, darken: 0.25);
+    final skirtTop = bodyTop + h * 0.21;
+    final skirtRect = Rect.fromLTWH(0, skirtTop, w, h * 0.30);
+    final skirtPath = Path()
+      ..moveTo(w * 0.18, skirtTop)
+      ..lineTo(w * 0.82, skirtTop)
+      ..quadraticBezierTo(w * 0.96, skirtTop + h * 0.14, w * 0.92, skirtTop + h * 0.27)
+      ..quadraticBezierTo(w * 0.88, skirtTop + h * 0.29, w * 0.50, skirtTop + h * 0.27)
+      ..quadraticBezierTo(w * 0.12, skirtTop + h * 0.29, w * 0.08, skirtTop + h * 0.27)
+      ..quadraticBezierTo(w * 0.04, skirtTop + h * 0.14, w * 0.18, skirtTop)
+      ..close();
+    canvas.drawPath(
+      skirtPath,
+      Paint()..shader = LinearGradient(
+        colors: [skirtD, skirtL, skirtL, skirtD],
+        stops: const [0.0, 0.28, 0.72, 1.0],
+      ).createShader(skirtRect),
+    );
+
+    // Legs (short, below skirt hem)
+    final legTop = skirtTop + h * 0.24;
+    final skin = _skinPalette[skinToneIndex.clamp(0, 6)];
+    final legColor = _shadowed(skin, darken: 0.10);
+    for (final isLeft in [true, false]) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(isLeft ? w * 0.28 : w * 0.58, legTop, w * 0.14, h * 0.11),
+          const Radius.circular(6),
+        ),
+        Paint()..color = legColor,
+      );
+    }
+
+    _drawShoes(canvas, w, h, legTop + h * 0.09, narrow: true);
+    _drawArms(canvas, w, h, bodyTop);
+  }
+
+  void _drawMaleBody(Canvas canvas, double w, double h) {
     final topBase = const Color(0xFFF0E4D4);
     final topL = _lit(topBase, boost: 0.10);
     final topD = _shadowed(topBase, darken: 0.22);
-
     final pantsBase = const Color(0xFFB8946A);
     final pantsL = _lit(pantsBase, boost: 0.10);
     final pantsD = _shadowed(pantsBase, darken: 0.28);
+    final bodyTop = h * 0.46;
 
-    final shoeColor = _shadowed(const Color(0xFF2C1A0E), darken: 0.1);
-
-    // 1 — Hair back
-    _paintHairBack(canvas, w, h, hair);
-
-    // 2 — Head
-    final headRect = Rect.fromCenter(
-      center: Offset(w * 0.50, h * 0.070),
-      width: w * 0.50,
-      height: h * 0.118,
-    );
-    canvas.drawOval(
-      headRect,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(0.30, -0.35),
-          radius: 0.68,
-          colors: [skinL, skinM, skinD],
-          stops: const [0.0, 0.42, 1.0],
-        ).createShader(headRect),
-    );
-
-    // 3 — Face
-    final ff = cos(yAngle).abs();
-    if (ff > 0.18) _paintFace(canvas, w, h, skinL, skinD, hair, ff);
-
-    // 4 — Neck
-    final neckRect = Rect.fromCenter(
-      center: Offset(w * 0.50, h * 0.153),
-      width: w * 0.15,
-      height: h * 0.054,
-    );
-    canvas.drawRect(
-      neckRect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [skinD, skinL, skinD],
-          stops: const [0.0, 0.50, 1.0],
-        ).createShader(neckRect),
-    );
-
-    // 5 — Outfit top
-    _paintOutfitTop(canvas, w, h, topL, topD);
-
-    // 6 — Outfit trousers
-    _paintTrousers(canvas, w, h, pantsL, pantsD);
-
-    // 7 — Shoes
-    _paintShoes(canvas, w, h, shoeColor);
-
-    // 8 — Arms (over outfit, skin-coloured)
-    _paintArm(canvas, w, h, skinL, skinM, skinD, isLeft: true);
-    _paintArm(canvas, w, h, skinL, skinM, skinD, isLeft: false);
-
-    // 9 — Hair front
-    _paintHairFront(canvas, w, h, hair, ff);
-  }
-
-  void _paintHairBack(Canvas canvas, double w, double h, Color hair) {
-    final p = Paint()..color = _shadowed(hair, darken: 0.22);
-    // Main mass
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(w * 0.50, h * 0.060),
-        width: w * 0.58,
-        height: h * 0.112,
-      ),
-      p,
-    );
-    // Side tendrils
-    for (final dx in [0.16, 0.84]) {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(w * dx, h * 0.085),
-          width: w * 0.11,
-          height: h * 0.072,
-        ),
-        p,
-      );
-    }
-  }
-
-  void _paintFace(
-    Canvas canvas,
-    double w,
-    double h,
-    Color skinL,
-    Color skinD,
-    Color hair,
-    double ff,
-  ) {
-    // Eyebrows
-    final browPaint = Paint()
-      ..color = hair.withValues(alpha: 0.72 * ff)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.9
-      ..strokeCap = StrokeCap.round;
-    for (final side in [-1, 1]) {
-      final cx = w * (side < 0 ? 0.385 : 0.615);
-      canvas.drawPath(
-        Path()
-          ..moveTo(cx - w * 0.055, h * 0.0580)
-          ..quadraticBezierTo(cx, h * 0.0530, cx + w * 0.055, h * 0.0590),
-        browPaint,
-      );
-    }
-
-    // Eyes
-    for (final side in [-1, 1]) {
-      final ex = w * (side < 0 ? 0.385 : 0.615);
-      final ey = h * 0.076;
-      final eyeW = w * 0.098;
-      final eyeH = h * 0.033;
-
-      // White
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(ex, ey), width: eyeW, height: eyeH),
-        Paint()..color = Colors.white.withValues(alpha: 0.88 * ff),
-      );
-      // Iris (warm brown)
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(ex, ey + h * 0.001),
-          width: eyeW * 0.56,
-          height: eyeH * 0.88,
-        ),
-        Paint()..color = Color.fromARGB((0.90 * ff * 255).round(), 65, 42, 28),
-      );
-      // Pupil
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(ex, ey + h * 0.001),
-          width: eyeW * 0.26,
-          height: eyeH * 0.66,
-        ),
-        Paint()..color = Colors.black.withValues(alpha: 0.88 * ff),
-      );
-      // Glint
-      canvas.drawCircle(
-        Offset(ex - eyeW * 0.14, ey - eyeH * 0.18),
-        eyeW * 0.088,
-        Paint()..color = Colors.white.withValues(alpha: 0.78 * ff),
-      );
-      // Upper lash arc
-      canvas.drawArc(
-        Rect.fromCenter(center: Offset(ex, ey), width: eyeW, height: eyeH),
-        pi,
-        pi,
-        false,
-        Paint()
-          ..color = hair.withValues(alpha: 0.78 * ff)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-
-    // Nose (very subtle)
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.50, h * 0.083)
-        ..lineTo(w * 0.488, h * 0.093)
-        ..quadraticBezierTo(w * 0.50, h * 0.097, w * 0.512, h * 0.093),
-      Paint()
-        ..color = skinD.withValues(alpha: 0.32 * ff)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.1
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Lips
-    // Upper
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.420, h * 0.1020)
-        ..quadraticBezierTo(w * 0.462, h * 0.0968, w * 0.500, h * 0.1022)
-        ..quadraticBezierTo(w * 0.538, h * 0.0968, w * 0.580, h * 0.1020)
-        ..quadraticBezierTo(w * 0.554, h * 0.1072, w * 0.500, h * 0.1065)
-        ..quadraticBezierTo(w * 0.446, h * 0.1072, w * 0.420, h * 0.1020)
-        ..close(),
-      Paint()..color = Color.fromARGB((0.72 * ff * 255).round(), 210, 138, 128),
-    );
-    // Lower
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.420, h * 0.1020)
-        ..quadraticBezierTo(w * 0.500, h * 0.1125, w * 0.580, h * 0.1020)
-        ..quadraticBezierTo(w * 0.554, h * 0.1068, w * 0.500, h * 0.1062)
-        ..quadraticBezierTo(w * 0.446, h * 0.1068, w * 0.420, h * 0.1020)
-        ..close(),
-      Paint()..color = Color.fromARGB((0.62 * ff * 255).round(), 218, 152, 142),
-    );
-
-    // Cheek blush (soft ovals, no blur — Impeller safe)
-    for (final cx in [w * 0.305, w * 0.695]) {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx, h * 0.089),
-          width: w * 0.115,
-          height: h * 0.024,
-        ),
-        Paint()..color = const Color(0xFFE8A4A0).withValues(alpha: 0.20 * ff),
-      );
-    }
-  }
-
-  void _paintOutfitTop(
-    Canvas canvas,
-    double w,
-    double h,
-    Color topL,
-    Color topD,
-  ) {
-    final rect = Rect.fromLTWH(0, h * 0.148, w, h * 0.33);
-    final path = Path()
-      ..moveTo(w * 0.08, h * 0.180)
-      ..lineTo(w * 0.92, h * 0.180)
-      ..cubicTo(w * 0.88, h * 0.305, w * 0.80, h * 0.348, w * 0.77, h * 0.464)
-      ..lineTo(w * 0.23, h * 0.464)
-      ..cubicTo(w * 0.20, h * 0.348, w * 0.12, h * 0.305, w * 0.08, h * 0.180)
+    // Trapezoid torso (wider shoulders)
+    final bodyRect = Rect.fromLTWH(0, bodyTop, w, h * 0.22);
+    final torsoPath = Path()
+      ..moveTo(w * 0.12, bodyTop)
+      ..lineTo(w * 0.88, bodyTop)
+      ..lineTo(w * 0.82, bodyTop + h * 0.22)
+      ..lineTo(w * 0.18, bodyTop + h * 0.22)
       ..close();
     canvas.drawPath(
-      path,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [topD, topL, topL, topD],
-          stops: const [0.0, 0.26, 0.74, 1.0],
-        ).createShader(rect),
-    );
-
-    // Crew-neck line
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.36, h * 0.180)
-        ..quadraticBezierTo(w * 0.50, h * 0.202, w * 0.64, h * 0.180),
-      Paint()
-        ..color = topD.withValues(alpha: 0.42)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.3
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Subtle centre seam
-    canvas.drawLine(
-      Offset(w * 0.50, h * 0.205),
-      Offset(w * 0.50, h * 0.440),
-      Paint()
-        ..color = topD.withValues(alpha: 0.12)
-        ..strokeWidth = 0.7,
-    );
-  }
-
-  void _paintTrousers(
-    Canvas canvas,
-    double w,
-    double h,
-    Color pantsL,
-    Color pantsD,
-  ) {
-    final rect = Rect.fromLTWH(0, h * 0.455, w, h * 0.44);
-    final shading = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [pantsD, pantsL, pantsL, pantsD],
+      torsoPath,
+      Paint()..shader = LinearGradient(
+        colors: [topD, topL, topL, topD],
         stops: const [0.0, 0.28, 0.72, 1.0],
-      ).createShader(rect);
-
-    // Left leg
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.23, h * 0.464)
-        ..lineTo(w * 0.50, h * 0.464)
-        ..quadraticBezierTo(w * 0.50, h * 0.512, w * 0.38, h * 0.512)
-        ..lineTo(w * 0.26, h * 0.882)
-        ..lineTo(w * 0.14, h * 0.882)
-        ..quadraticBezierTo(w * 0.13, h * 0.512, w * 0.23, h * 0.464)
-        ..close(),
-      shading,
+      ).createShader(bodyRect),
     );
 
-    // Right leg
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.77, h * 0.464)
-        ..quadraticBezierTo(w * 0.87, h * 0.512, w * 0.86, h * 0.882)
-        ..lineTo(w * 0.74, h * 0.882)
-        ..lineTo(w * 0.62, h * 0.512)
-        ..quadraticBezierTo(w * 0.50, h * 0.512, w * 0.50, h * 0.464)
-        ..lineTo(w * 0.77, h * 0.464)
-        ..close(),
-      shading,
-    );
-
+    final pantTop = bodyTop + h * 0.20;
     // Waistband
     canvas.drawRRect(
       RRect.fromRectAndCorners(
-        Rect.fromLTWH(w * 0.14, h * 0.452, w * 0.72, h * 0.024),
-        topLeft: const Radius.circular(4),
-        topRight: const Radius.circular(4),
+        Rect.fromLTWH(w * 0.14, pantTop, w * 0.72, h * 0.025),
+        topLeft: const Radius.circular(3),
+        topRight: const Radius.circular(3),
       ),
-      Paint()..color = pantsD.withValues(alpha: 0.55),
+      Paint()..color = pantsD.withValues(alpha: 0.60),
     );
 
-    // Crease lines
-    for (final pair in [
-      [w * 0.20, w * 0.215],
-      [w * 0.80, w * 0.785],
-    ]) {
-      canvas.drawLine(
-        Offset(pair[0], h * 0.515),
-        Offset(pair[1], h * 0.840),
-        Paint()
-          ..color = pantsD.withValues(alpha: 0.20)
-          ..strokeWidth = 0.7,
+    // Trouser legs
+    final pantsRect = Rect.fromLTWH(0, pantTop, w, h * 0.38);
+    final pantShading = Paint()..shader = LinearGradient(
+      colors: [pantsD, pantsL, pantsL, pantsD],
+      stops: const [0.0, 0.28, 0.72, 1.0],
+    ).createShader(pantsRect);
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.18, pantTop + h * 0.02)
+        ..lineTo(w * 0.49, pantTop + h * 0.02)
+        ..lineTo(w * 0.46, pantTop + h * 0.33)
+        ..lineTo(w * 0.16, pantTop + h * 0.33)
+        ..close(),
+      pantShading,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.51, pantTop + h * 0.02)
+        ..lineTo(w * 0.82, pantTop + h * 0.02)
+        ..lineTo(w * 0.84, pantTop + h * 0.33)
+        ..lineTo(w * 0.54, pantTop + h * 0.33)
+        ..close(),
+      pantShading,
+    );
+
+    _drawShoes(canvas, w, h, pantTop + h * 0.32, narrow: false);
+    _drawArms(canvas, w, h, bodyTop);
+  }
+
+  void _drawShoes(Canvas canvas, double w, double h, double shoeTop, {required bool narrow}) {
+    final shoeColor = _shadowed(const Color(0xFF2C1A0E), darken: 0.10);
+    final shoeW = narrow ? w * 0.22 : w * 0.26;
+    for (final isLeft in [true, false]) {
+      final sx = isLeft ? w * 0.12 : (narrow ? w * 0.50 : w * 0.53);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(sx, shoeTop, shoeW, h * 0.055), const Radius.circular(8)),
+        Paint()..color = shoeColor,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(sx + shoeW * 0.10, shoeTop + h * 0.008, shoeW * 0.44, h * 0.018), const Radius.circular(4)),
+        Paint()..color = Colors.white.withValues(alpha: 0.18),
       );
     }
   }
 
-  void _paintShoes(Canvas canvas, double w, double h, Color shoeColor) {
+  void _drawArms(Canvas canvas, double w, double h, double bodyTop) {
+    final skin = _skinPalette[skinToneIndex.clamp(0, 6)];
+    final skinL = _lit(skin, boost: 0.15);
+    final skinD = _shadowed(skin, darken: 0.30);
+
     for (final isLeft in [true, false]) {
-      final bx = isLeft ? w * 0.20 : w * 0.64;
-      final tipX = isLeft ? w * 0.06 : w * 0.94;
-      final path = Path()
-        ..moveTo(bx, h * 0.880)
-        ..lineTo(bx + (isLeft ? w * 0.14 : -w * 0.14), h * 0.880)
-        ..lineTo(tipX, h * 0.902)
-        ..quadraticBezierTo(
-          isLeft ? w * 0.04 : w * 0.96,
-          h * 0.924,
-          bx,
-          h * 0.922,
-        )
-        ..close();
-      canvas.drawPath(path, Paint()..color = shoeColor);
-      // Highlight
+      final sx = isLeft ? w * 0.14 : w * 0.86;
+      final ex = isLeft ? w * 0.05 : w * 0.95;
+      final ey = bodyTop + h * 0.24;
+      final armRect = Rect.fromLTWH(isLeft ? 0 : w * 0.50, bodyTop, w * 0.50, h * 0.28);
       canvas.drawPath(
         Path()
-          ..moveTo(bx + (isLeft ? w * 0.038 : -w * 0.038), h * 0.884)
-          ..quadraticBezierTo(
-            bx + (isLeft ? w * 0.015 : -w * 0.015),
-            h * 0.892,
-            tipX + (isLeft ? w * 0.048 : -w * 0.048),
-            h * 0.898,
-          ),
+          ..moveTo(sx, bodyTop + h * 0.04)
+          ..quadraticBezierTo(ex, bodyTop + h * 0.14, ex, ey),
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.22)
+          ..shader = LinearGradient(
+            colors: isLeft ? [skinD, skinL] : [skinL, skinD],
+          ).createShader(armRect)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
+          ..strokeWidth = w * 0.11
+          ..strokeCap = StrokeCap.round,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(ex, ey + h * 0.012), width: w * 0.10, height: w * 0.07),
+        Paint()..color = skin,
+      );
+    }
+  }
+
+  void _drawFace(Canvas canvas, double w, double h, Color skin, Color skinD, Color hair,
+      double hcx, double hcy, double hr, double ff) {
+    final eyeY = hcy + hr * 0.14;
+    final eyeSpread = hr * 0.50;
+    final eyeR = hr * 0.27;
+
+    for (final side in [-1, 1]) {
+      final ex = hcx + side * eyeSpread;
+      canvas.drawCircle(Offset(ex, eyeY), eyeR, Paint()..color = Colors.white.withValues(alpha: 0.92 * ff));
+      canvas.drawCircle(Offset(ex, eyeY + eyeR * 0.05), eyeR * 0.68,
+          Paint()..color = Color.fromARGB((0.88 * ff * 255).round(), 52, 36, 20));
+      canvas.drawCircle(Offset(ex, eyeY + eyeR * 0.05), eyeR * 0.38,
+          Paint()..color = Colors.black.withValues(alpha: 0.90 * ff));
+      canvas.drawCircle(Offset(ex - eyeR * 0.28, eyeY - eyeR * 0.28), eyeR * 0.20,
+          Paint()..color = Colors.white.withValues(alpha: 0.90 * ff));
+      // Lash arc
+      canvas.drawArc(
+        Rect.fromCenter(center: Offset(ex, eyeY), width: eyeR * 2, height: eyeR * 2),
+        pi, pi, false,
+        Paint()
+          ..color = hair.withValues(alpha: 0.70 * ff)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
           ..strokeCap = StrokeCap.round,
       );
     }
-  }
 
-  void _paintArm(
-    Canvas canvas,
-    double w,
-    double h,
-    Color skinL,
-    Color skinM,
-    Color skinD, {
-    required bool isLeft,
-  }) {
-    final sx = isLeft ? w * 0.10 : w * 0.90;
-    final ex = isLeft ? w * 0.04 : w * 0.96;
-    final ey = h * 0.355;
-    final hx = isLeft ? w * 0.10 : w * 0.90;
-    final hy = h * 0.490;
+    // Cheek blush (no blur — Impeller safe)
+    for (final side in [-1, 1]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx + side * hr * 0.65, hcy + hr * 0.38),
+            width: hr * 0.36, height: hr * 0.17),
+        Paint()..color = const Color(0xFFE8A4A0).withValues(alpha: 0.25 * ff),
+      );
+    }
 
-    final armRect = Rect.fromLTWH(
-      isLeft ? 0 : w * 0.52,
-      h * 0.18,
-      w * 0.48,
-      h * 0.35,
-    );
-
+    // Mouth
     canvas.drawPath(
       Path()
-        ..moveTo(sx, h * 0.193)
-        ..quadraticBezierTo(ex, ey, hx, hy),
+        ..moveTo(hcx - hr * 0.18, hcy + hr * 0.50)
+        ..quadraticBezierTo(hcx, hcy + hr * 0.65, hcx + hr * 0.18, hcy + hr * 0.50),
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: isLeft ? [skinD, skinL] : [skinL, skinD],
-        ).createShader(armRect)
+        ..color = const Color(0xFFD4847A).withValues(alpha: 0.80 * ff)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.088
+        ..strokeWidth = 2.0
         ..strokeCap = StrokeCap.round,
     );
-
-    // Hand oval
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(hx, hy + h * 0.015),
-        width: w * 0.082,
-        height: w * 0.056,
-      ),
-      Paint()..color = skinM,
-    );
   }
 
-  void _paintHairFront(
-    Canvas canvas,
-    double w,
-    double h,
-    Color hair,
-    double ff,
-  ) {
-    final p = Paint()..color = hair;
+  // ─── Hair Styles ──────────────────────────────────────────────────────────
 
-    // Top hairline arc
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.24, h * 0.048)
-        ..quadraticBezierTo(w * 0.50, h * 0.014, w * 0.76, h * 0.048)
-        ..quadraticBezierTo(w * 0.70, h * 0.030, w * 0.50, h * 0.025)
-        ..quadraticBezierTo(w * 0.30, h * 0.030, w * 0.24, h * 0.048)
-        ..close(),
-      p,
-    );
+  void _drawHairBack(Canvas canvas, double w, double h, Color hair, double hcx, double hcy, double hr) {
+    final style = hairStyleIndex.clamp(0, 5);
+    final dark = _shadowed(hair, darken: 0.24);
 
-    // Chignon bun
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(w * 0.50, h * 0.034),
-        width: w * 0.20,
-        height: h * 0.036,
-      ),
-      Paint()..color = _lit(hair, boost: 0.07),
-    );
+    if (style == 3) {
+      // Long straight — back panels
+      for (final side in [-1, 1]) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(hcx + side * hr * 0.98 - (side < 0 ? hr * 0.60 : 0), hcy, hr * 0.60, h * 0.44),
+            const Radius.circular(12),
+          ),
+          Paint()..color = dark,
+        );
+      }
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.30), width: hr * 2.10, height: hr * 1.20),
+        Paint()..color = dark,
+      );
+    } else if (style == 4) {
+      // Ponytail — back cap + tail
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.28), width: hr * 2.05, height: hr * 1.10),
+        Paint()..color = dark,
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.14, hcy - hr * 0.88)
+          ..quadraticBezierTo(hcx - hr * 0.22, hcy + h * 0.14, hcx + hr * 0.08, hcy + h * 0.21)
+          ..quadraticBezierTo(hcx + hr * 0.22, hcy + h * 0.14, hcx + hr * 0.14, hcy - hr * 0.88),
+        Paint()..color = dark,
+      );
+    } else if (style == 5) {
+      // Bob — back mass to chin
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.90, hcy - hr * 0.15)
+          ..quadraticBezierTo(hcx - hr * 1.05, hcy + hr * 0.60, hcx - hr * 0.85, hcy + hr * 0.88)
+          ..lineTo(hcx + hr * 0.85, hcy + hr * 0.88)
+          ..quadraticBezierTo(hcx + hr * 1.05, hcy + hr * 0.60, hcx + hr * 0.90, hcy - hr * 0.15)
+          ..quadraticBezierTo(hcx, hcy - hr * 1.08, hcx - hr * 0.90, hcy - hr * 0.15)
+          ..close(),
+        Paint()..color = dark,
+      );
+    } else {
+      // All other styles — generic back mass
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.28), width: hr * 2.10, height: hr * 1.22),
+        Paint()..color = dark,
+      );
+    }
+  }
 
-    // Face-framing wisps (visible from front)
-    if (ff > 0.28) {
-      final wispPaint = Paint()
-        ..color = hair.withValues(alpha: ff * 0.82)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.6
-        ..strokeCap = StrokeCap.round;
-      for (final isLeft in [true, false]) {
+  void _drawHairFront(Canvas canvas, double w, double h, Color hair, double hcx, double hcy, double hr, double ff) {
+    final style = hairStyleIndex.clamp(0, 5);
+    final base = Paint()..color = hair;
+    final lit = Paint()..color = _lit(hair, boost: 0.08);
+
+    // Crown coverage path (shared by most styles)
+    void crownArc() {
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(hcx, hcy - hr * 1.06, hcx + hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(hcx + hr * 0.68, hcy - hr * 0.65, hcx, hcy - hr * 0.85)
+          ..quadraticBezierTo(hcx - hr * 0.68, hcy - hr * 0.65, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..close(),
+        base,
+      );
+    }
+
+    if (style == 0) {
+      // Short Tousled — spiky crown
+      crownArc();
+      for (final dx in [-0.32, -0.05, 0.22, 0.50]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(hcx + hr * dx, hcy - hr * 0.98), width: hr * 0.30, height: hr * 0.38),
+          lit,
+        );
+      }
+    } else if (style == 1) {
+      // Side Swept — sweep over forehead
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(hcx - hr * 0.10, hcy - hr * 1.10, hcx + hr * 0.88, hcy - hr * 0.25)
+          ..quadraticBezierTo(hcx + hr * 0.60, hcy - hr * 0.72, hcx - hr * 0.10, hcy - hr * 0.85)
+          ..quadraticBezierTo(hcx - hr * 0.55, hcy - hr * 0.55, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..close(),
+        base,
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(hcx - hr * 0.70, hcy + hr * 0.05, hcx - hr * 0.55, hcy + hr * 0.22)
+          ..quadraticBezierTo(hcx - hr * 0.40, hcy - hr * 0.10, hcx - hr * 0.60, hcy - hr * 0.40)
+          ..quadraticBezierTo(hcx - hr * 0.75, hcy - hr * 0.35, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..close(),
+        lit,
+      );
+    } else if (style == 2) {
+      // Undercut — large crown puff + side strip
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.70), width: hr * 1.60, height: hr * 0.90),
+        base,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx - hr * 0.10, hcy - hr * 0.82), width: hr * 0.80, height: hr * 0.28),
+        lit,
+      );
+      for (final side in [-1, 1]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(hcx + side * hr * 0.88, hcy + hr * 0.05), width: hr * 0.30, height: hr * 0.55),
+          Paint()..color = _shadowed(hair, darken: 0.22),
+        );
+      }
+    } else if (style == 3) {
+      // Long Straight — crown + face-framing side strands
+      crownArc();
+      for (final side in [-1, 1]) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(hcx + side * hr * 0.82 - (side < 0 ? hr * 0.44 : 0), hcy + hr * 0.20, hr * 0.44, h * 0.26),
+            const Radius.circular(10),
+          ),
+          Paint()..color = hair.withValues(alpha: 0.90),
+        );
+      }
+    } else if (style == 4) {
+      // Ponytail — crown + bun highlight
+      crownArc();
+      canvas.drawCircle(Offset(hcx, hcy - hr * 1.00), hr * 0.20, lit);
+      // Bun wrap line
+      canvas.drawArc(
+        Rect.fromCenter(center: Offset(hcx, hcy - hr * 1.00), width: hr * 0.40, height: hr * 0.40),
+        pi * 0.3, pi * 1.4, false,
+        Paint()
+          ..color = _shadowed(hair, darken: 0.30)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..strokeCap = StrokeCap.round,
+      );
+    } else {
+      // Bob — crown + side panels
+      crownArc();
+      for (final side in [-1, 1]) {
         canvas.drawPath(
           Path()
-            ..moveTo(w * (isLeft ? 0.27 : 0.73), h * 0.048)
-            ..quadraticBezierTo(
-              w * (isLeft ? 0.21 : 0.79),
-              h * 0.072,
-              w * (isLeft ? 0.235 : 0.765),
-              h * 0.090,
-            ),
-          wispPaint,
+            ..moveTo(hcx + side * hr * 0.88, hcy - hr * 0.18)
+            ..quadraticBezierTo(hcx + side * hr * 1.00, hcy + hr * 0.35, hcx + side * hr * 0.90, hcy + hr * 0.84)
+            ..quadraticBezierTo(hcx + side * hr * 0.70, hcy + hr * 0.87, hcx + side * hr * 0.60, hcy + hr * 0.79)
+            ..quadraticBezierTo(hcx + side * hr * 0.74, hcy + hr * 0.40, hcx + side * hr * 0.72, hcy - hr * 0.10)
+            ..close(),
+          base,
         );
       }
     }
@@ -917,345 +881,215 @@ class _FashionFigurePainter extends CustomPainter {
 
   // ─── Pet ──────────────────────────────────────────────────────────────────
 
-  void _drawPet(Canvas canvas, Size size, {required bool isDog}) {
-    final w = size.width;
-    final h = size.height;
-
+  void _drawPet(Canvas canvas, double w, double h, {required bool isDog}) {
     final furBase = isDark
         ? (isDog ? const Color(0xFFBB9458) : const Color(0xFFCDAF96))
         : (isDog ? const Color(0xFFD4AA70) : const Color(0xFFE8D4C0));
-    final furL = _lit(furBase, boost: 0.13);
-    final furD = _shadowed(furBase, darken: 0.30);
-    final furAccent = isDog
-        ? _shadowed(const Color(0xFF6B4220), darken: 0.10)
-        : const Color(0xFF7A5C4A);
+    final furL = _lit(furBase, boost: 0.14);
+    final furD = _shadowed(furBase, darken: 0.32);
+    final accent = isDog ? _shadowed(const Color(0xFF6B4220), darken: 0.10) : const Color(0xFF7A5C4A);
 
-    // Body — slightly chunkier oval
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(w * 0.50, h * 0.54),
-        width: w * 0.62,
-        height: h * 0.40,
-      ),
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [furD, furL, furD],
-          stops: const [0.0, 0.50, 1.0],
-        ).createShader(Rect.fromLTWH(w * 0.04, h * 0.30, w * 0.92, h * 0.44)),
-    );
-
-    // Inner belly patch (lighter)
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(w * 0.50, h * 0.56),
-        width: w * 0.32,
-        height: h * 0.25,
-      ),
-      Paint()..color = furL.withValues(alpha: 0.45),
-    );
-
-    // Head
-    canvas.drawCircle(
-      Offset(w * 0.50, h * 0.195),
-      w * 0.235,
-      Paint()
-        ..shader =
-            RadialGradient(
-              center: const Alignment(0.28, -0.30),
-              radius: 0.70,
-              colors: [furL, furBase, furD],
-            ).createShader(
-              Rect.fromCenter(
-                center: Offset(w * 0.50, h * 0.195),
-                width: w * 0.48,
-                height: w * 0.48,
-              ),
-            ),
-    );
-
-    // Ears
     if (isDog) {
-      // Floppy dog ears
-      for (final isLeft in [true, false]) {
-        final ex = isLeft ? w * 0.24 : w * 0.76;
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(ex, h * 0.155),
-            width: w * 0.16,
-            height: h * 0.18,
-          ),
-          Paint()..color = furD,
-        );
-        // Inner ear
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(ex, h * 0.158),
-            width: w * 0.09,
-            height: h * 0.10,
-          ),
-          Paint()..color = furAccent.withValues(alpha: 0.55),
-        );
-      }
+      _drawChibiDog(canvas, w, h, furBase, furL, furD, accent);
     } else {
-      // Pointed cat ears with inner triangle
-      for (final isLeft in [true, false]) {
-        final tipX = w * (isLeft ? 0.29 : 0.71);
-        final baseL = w * (isLeft ? 0.20 : 0.62);
-        final baseR = w * (isLeft ? 0.38 : 0.80);
-        canvas.drawPath(
-          Path()
-            ..moveTo(baseL, h * 0.118)
-            ..lineTo(tipX, h * 0.020)
-            ..lineTo(baseR, h * 0.118)
-            ..close(),
-          Paint()..color = furD,
-        );
-        // Inner pink
-        canvas.drawPath(
-          Path()
-            ..moveTo(baseL + w * 0.022, h * 0.112)
-            ..lineTo(tipX, h * 0.038)
-            ..lineTo(baseR - w * 0.022, h * 0.112)
-            ..close(),
-          Paint()..color = const Color(0xFFE8A0B0).withValues(alpha: 0.65),
-        );
-      }
+      _drawChibiCat(canvas, w, h, furBase, furL, furD);
     }
+  }
 
-    // Face
-    final ff = cos(yAngle).abs();
-    if (ff > 0.22) {
-      // Eyes
-      for (final isLeft in [true, false]) {
-        final ex = w * (isLeft ? 0.390 : 0.610);
-        final ey = h * 0.190;
-        canvas.drawCircle(
-          Offset(ex, ey),
-          w * 0.042,
-          Paint()..color = Colors.black.withValues(alpha: 0.82 * ff),
-        );
-        // Iris colour
-        canvas.drawCircle(
-          Offset(ex, ey),
-          w * 0.028,
-          Paint()
-            ..color =
-                (isDog ? const Color(0xFF5C3A1A) : const Color(0xFF4A8C5C))
-                    .withValues(alpha: 0.90 * ff),
-        );
-        // Pupil
-        canvas.drawCircle(
-          Offset(ex, ey),
-          isDog ? w * 0.014 : w * 0.010,
-          Paint()..color = Colors.black.withValues(alpha: ff),
-        );
-        // Glint
-        canvas.drawCircle(
-          Offset(ex - w * 0.010, ey - w * 0.010),
-          w * 0.009,
-          Paint()..color = Colors.white.withValues(alpha: 0.80 * ff),
-        );
-        // Cat: almond eyelid line
-        if (!isDog) {
-          canvas.drawArc(
-            Rect.fromCenter(
-              center: Offset(ex, ey),
-              width: w * 0.086,
-              height: w * 0.054,
-            ),
-            pi,
-            pi,
-            false,
-            Paint()
-              ..color = Colors.black.withValues(alpha: 0.50 * ff)
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.4,
-          );
-        }
-      }
+  void _drawChibiDog(Canvas canvas, double w, double h, Color fur, Color furL, Color furD, Color accent) {
+    final hcx = w * 0.50;
+    final hcy = h * 0.28;
+    final hr = w * 0.42;
 
-      // Nose
-      if (isDog) {
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(w * 0.50, h * 0.225),
-            width: w * 0.100,
-            height: h * 0.040,
-          ),
-          Paint()..color = Colors.black.withValues(alpha: 0.80 * ff),
-        );
-        // Nostrils
-        for (final nx in [w * 0.465, w * 0.535]) {
-          canvas.drawCircle(
-            Offset(nx, h * 0.228),
-            w * 0.014,
-            Paint()..color = const Color(0xFF2A1A1A).withValues(alpha: ff),
-          );
-        }
-      } else {
-        // Cat nose — small triangle
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.50, h * 0.214)
-            ..lineTo(w * 0.474, h * 0.228)
-            ..lineTo(w * 0.526, h * 0.228)
-            ..close(),
-          Paint()..color = const Color(0xFFE87090).withValues(alpha: 0.90 * ff),
-        );
-        // Mouth lines
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.50, h * 0.228)
-            ..quadraticBezierTo(w * 0.464, h * 0.240, w * 0.44, h * 0.235),
-          Paint()
-            ..color = furD.withValues(alpha: 0.55 * ff)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.2
-            ..strokeCap = StrokeCap.round,
-        );
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.50, h * 0.228)
-            ..quadraticBezierTo(w * 0.536, h * 0.240, w * 0.56, h * 0.235),
-          Paint()
-            ..color = furD.withValues(alpha: 0.55 * ff)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.2
-            ..strokeCap = StrokeCap.round,
-        );
-        // Whiskers
-        for (final side in [-1, 1]) {
-          for (final angle in [-0.12, 0.0, 0.12]) {
-            final wStartX = w * (0.50 + side * 0.038);
-            final wStartY = h * 0.230;
-            canvas.drawLine(
-              Offset(wStartX, wStartY),
-              Offset(wStartX + side * w * 0.22, wStartY + angle * h),
-              Paint()
-                ..color = furBase.withValues(alpha: 0.35 * ff)
-                ..strokeWidth = 0.8,
-            );
-          }
-        }
-      }
-
-      // Dog: happy mouth
-      if (isDog) {
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.42, h * 0.245)
-            ..quadraticBezierTo(w * 0.50, h * 0.270, w * 0.58, h * 0.245),
-          Paint()
-            ..color = const Color(0xFF3A1A1A).withValues(alpha: 0.55 * ff)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5
-            ..strokeCap = StrokeCap.round,
-        );
-        // Tongue
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(w * 0.50, h * 0.268),
-            width: w * 0.090,
-            height: h * 0.032,
-          ),
-          Paint()..color = const Color(0xFFE86070).withValues(alpha: 0.85 * ff),
-        );
-      }
-    }
-
-    // Legs
-    for (final pair in [
-      [w * 0.26, h * 0.785],
-      [w * 0.42, h * 0.785],
-      [w * 0.58, h * 0.785],
-      [w * 0.74, h * 0.785],
-    ]) {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(pair[0], pair[1]),
-            width: w * 0.095,
-            height: h * 0.19,
-          ),
-          const Radius.circular(12),
-        ),
+    // Floppy ears
+    for (final isLeft in [true, false]) {
+      final ex = isLeft ? hcx - hr * 0.75 : hcx + hr * 0.75;
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(ex, hcy + hr * 0.30), width: hr * 0.58, height: hr * 1.10),
         Paint()..color = furD,
       );
-      // Paw pad
       canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(pair[0], pair[1] + h * 0.095),
-          width: w * 0.085,
-          height: h * 0.032,
-        ),
-        Paint()
-          ..color = (isDog ? const Color(0xFF7A4A28) : const Color(0xFFD4A8B0))
-              .withValues(alpha: 0.75),
+        Rect.fromCenter(center: Offset(ex, hcy + hr * 0.32), width: hr * 0.32, height: hr * 0.68),
+        Paint()..color = accent.withValues(alpha: 0.45),
+      );
+    }
+
+    // Body
+    final bodyRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.70), width: w * 0.55, height: h * 0.22);
+    canvas.drawOval(bodyRect, Paint()..shader = LinearGradient(
+      colors: [furD, furL, furD], stops: const [0.0, 0.50, 1.0],
+    ).createShader(bodyRect));
+
+    // Legs
+    for (int i = 0; i < 4; i++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(w * (0.16 + i * 0.22), h * 0.78, w * 0.14, h * 0.12), const Radius.circular(7)),
+        Paint()..color = furD,
       );
     }
 
     // Tail
-    if (isDog) {
-      canvas.drawPath(
-        Path()
-          ..moveTo(w * 0.78, h * 0.440)
-          ..quadraticBezierTo(w * 1.08, h * 0.330, w * 0.98, h * 0.195),
-        Paint()
-          ..color = furD
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.058
-          ..strokeCap = StrokeCap.round,
-      );
-    } else {
-      // Cat: elegant curved tail
-      canvas.drawPath(
-        Path()
-          ..moveTo(w * 0.76, h * 0.470)
-          ..cubicTo(
-            w * 1.05,
-            h * 0.380,
-            w * 1.10,
-            h * 0.200,
-            w * 0.82,
-            h * 0.155,
-          ),
-        Paint()
-          ..color = furD
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.048
-          ..strokeCap = StrokeCap.round,
-      );
-    }
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.84, h * 0.68)
+        ..quadraticBezierTo(w * 0.98, h * 0.58, w * 0.92, h * 0.50)
+        ..quadraticBezierTo(w * 0.88, h * 0.45, w * 0.80, h * 0.52),
+      Paint()..color = furD..style = PaintingStyle.stroke..strokeWidth = w * 0.09..strokeCap = StrokeCap.round,
+    );
+
+    // Head
+    final headRect = Rect.fromCircle(center: Offset(hcx, hcy), radius: hr);
+    canvas.drawCircle(Offset(hcx, hcy), hr, Paint()..shader = RadialGradient(
+      center: const Alignment(0.28, -0.28), radius: 0.72,
+      colors: [furL, fur, furD], stops: const [0.0, 0.50, 1.0],
+    ).createShader(headRect));
 
     // Collar
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(w * 0.50, h * 0.328),
-          width: w * 0.38,
-          height: h * 0.028,
-        ),
-        const Radius.circular(6),
+        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.88), width: hr * 0.80, height: hr * 0.18),
+        const Radius.circular(5),
       ),
-      Paint()
-        ..color = (isDog ? AppColors.accentGold : AppColors.gradientEnd)
-            .withValues(alpha: 0.90),
+      Paint()..color = const Color(0xFFE04040),
     );
-    // Collar gem
-    canvas.drawCircle(
-      Offset(w * 0.50, h * 0.328),
-      w * 0.022,
-      Paint()..color = Colors.white.withValues(alpha: 0.85),
+
+    final ff = cos(yAngle).abs();
+    if (ff > 0.15) {
+      for (final side in [-1, 1]) {
+        final ex = hcx + side * hr * 0.44;
+        final ey = hcy + hr * 0.10;
+        final er = hr * 0.22;
+        canvas.drawCircle(Offset(ex, ey), er, Paint()..color = Colors.white.withValues(alpha: 0.90 * ff));
+        canvas.drawCircle(Offset(ex, ey), er * 0.65, Paint()..color = Color.fromARGB((0.85 * ff * 255).round(), 55, 35, 15));
+        canvas.drawCircle(Offset(ex, ey), er * 0.35, Paint()..color = Colors.black.withValues(alpha: 0.88 * ff));
+        canvas.drawCircle(Offset(ex - er * 0.28, ey - er * 0.28), er * 0.20, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
+      }
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.50), width: hr * 0.32, height: hr * 0.20),
+        Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.80 * ff),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.22, hcy + hr * 0.58)
+          ..quadraticBezierTo(hcx, hcy + hr * 0.72, hcx + hr * 0.22, hcy + hr * 0.58),
+        Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.65 * ff)..style = PaintingStyle.stroke..strokeWidth = 2.0..strokeCap = StrokeCap.round,
+      );
+      for (final side in [-1, 1]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(hcx + side * hr * 0.62, hcy + hr * 0.42), width: hr * 0.30, height: hr * 0.14),
+          Paint()..color = const Color(0xFFE89090).withValues(alpha: 0.22 * ff),
+        );
+      }
+    }
+  }
+
+  void _drawChibiCat(Canvas canvas, double w, double h, Color fur, Color furL, Color furD) {
+    final hcx = w * 0.50;
+    final hcy = h * 0.26;
+    final hr = w * 0.40;
+
+    // Pointed ears
+    for (final isLeft in [true, false]) {
+      final ex = isLeft ? hcx - hr * 0.72 : hcx + hr * 0.72;
+      final tip = Offset(ex + (isLeft ? -hr * 0.18 : hr * 0.18), hcy - hr * 1.10);
+      final b1 = Offset(ex - hr * 0.30, hcy - hr * 0.35);
+      final b2 = Offset(ex + hr * 0.30, hcy - hr * 0.35);
+      canvas.drawPath(Path()..moveTo(b1.dx, b1.dy)..lineTo(tip.dx, tip.dy)..lineTo(b2.dx, b2.dy)..close(), Paint()..color = furD);
+      canvas.drawPath(
+        Path()..moveTo(b1.dx + hr * 0.08, b1.dy)..lineTo(tip.dx, tip.dy + hr * 0.14)..lineTo(b2.dx - hr * 0.08, b2.dy)..close(),
+        Paint()..color = const Color(0xFFE8A0B0).withValues(alpha: 0.70),
+      );
+    }
+
+    // Body
+    final bodyRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.68), width: w * 0.50, height: h * 0.20);
+    canvas.drawOval(bodyRect, Paint()..shader = LinearGradient(
+      colors: [furD, furL, furD], stops: const [0.0, 0.50, 1.0],
+    ).createShader(bodyRect));
+
+    // Legs
+    for (int i = 0; i < 4; i++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(w * (0.18 + i * 0.20), h * 0.76, w * 0.12, h * 0.12), const Radius.circular(6)),
+        Paint()..color = furD,
+      );
+    }
+
+    // Tail
+    canvas.drawPath(
+      Path()..moveTo(w * 0.82, h * 0.66)..cubicTo(w * 1.10, h * 0.62, w * 1.12, h * 0.48, w * 0.88, h * 0.44),
+      Paint()..color = furD..style = PaintingStyle.stroke..strokeWidth = w * 0.08..strokeCap = StrokeCap.round,
     );
+
+    // Head
+    final headRect = Rect.fromCircle(center: Offset(hcx, hcy), radius: hr);
+    canvas.drawCircle(Offset(hcx, hcy), hr, Paint()..shader = RadialGradient(
+      center: const Alignment(0.28, -0.28), radius: 0.72,
+      colors: [furL, fur, furD], stops: const [0.0, 0.50, 1.0],
+    ).createShader(headRect));
+
+    // Collar
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.88), width: hr * 0.72, height: hr * 0.16),
+        const Radius.circular(5),
+      ),
+      Paint()..color = const Color(0xFFE040A0),
+    );
+
+    final ff = cos(yAngle).abs();
+    if (ff > 0.15) {
+      for (final side in [-1, 1]) {
+        final ex = hcx + side * hr * 0.44;
+        final ey = hcy + hr * 0.08;
+        final er = hr * 0.20;
+        final eyePath = Path()
+          ..moveTo(ex - er * 1.20, ey)
+          ..quadraticBezierTo(ex, ey - er * 0.85, ex + er * 1.20, ey)
+          ..quadraticBezierTo(ex, ey + er * 0.85, ex - er * 1.20, ey)
+          ..close();
+        canvas.drawPath(eyePath, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
+        canvas.drawCircle(Offset(ex, ey), er * 0.55, Paint()..color = Color.fromARGB((0.85 * ff * 255).round(), 30, 90, 40));
+        canvas.drawCircle(Offset(ex, ey), er * 0.28, Paint()..color = Colors.black.withValues(alpha: 0.88 * ff));
+        canvas.drawCircle(Offset(ex - er * 0.24, ey - er * 0.24), er * 0.18, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
+      }
+      // Nose
+      canvas.drawPath(
+        Path()..moveTo(hcx, hcy + hr * 0.44)..lineTo(hcx - hr * 0.10, hcy + hr * 0.52)..lineTo(hcx + hr * 0.10, hcy + hr * 0.52)..close(),
+        Paint()..color = const Color(0xFFE090A0).withValues(alpha: 0.80 * ff),
+      );
+      // Whiskers
+      final wPaint = Paint()..color = furD.withValues(alpha: 0.38 * ff)..strokeWidth = 0.8..strokeCap = StrokeCap.round;
+      for (final side in [-1, 1]) {
+        for (int i = 0; i < 3; i++) {
+          final wy = hcy + hr * (0.42 + i * 0.10);
+          canvas.drawLine(Offset(hcx + side * hr * 0.10, wy), Offset(hcx + side * hr * 0.85, wy + i * hr * 0.04), wPaint);
+        }
+      }
+      // Mouth
+      canvas.drawPath(
+        Path()
+          ..moveTo(hcx - hr * 0.16, hcy + hr * 0.58)
+          ..quadraticBezierTo(hcx, hcy + hr * 0.70, hcx + hr * 0.16, hcy + hr * 0.58),
+        Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.50 * ff)..style = PaintingStyle.stroke..strokeWidth = 1.6..strokeCap = StrokeCap.round,
+      );
+      // Blush
+      for (final side in [-1, 1]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(hcx + side * hr * 0.60, hcy + hr * 0.42), width: hr * 0.28, height: hr * 0.12),
+          Paint()..color = const Color(0xFFE89090).withValues(alpha: 0.20 * ff),
+        );
+      }
+    }
   }
 
   @override
   bool shouldRepaint(_FashionFigurePainter old) =>
       old.yAngle != yAngle ||
       old.avatarType != avatarType ||
+      old.bodyShape != bodyShape ||
       old.isDark != isDark ||
       old.skinToneIndex != skinToneIndex ||
-      old.hairColorIndex != hairColorIndex;
+      old.hairColorIndex != hairColorIndex ||
+      old.hairStyleIndex != hairStyleIndex;
 }

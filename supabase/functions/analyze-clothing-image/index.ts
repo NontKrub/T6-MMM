@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       input: [{
         role: "user",
         content: [
-          { type: "input_text", text: "Categorize this clothing item for Wardrobly." },
+          { type: "input_text", text: "Categorize this clothing item for Mix Match Mood." },
           { type: "input_image", image_url: data.signedUrl },
         ],
       }],

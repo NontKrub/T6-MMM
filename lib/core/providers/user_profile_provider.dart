@@ -1,14 +1,15 @@
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/profile_repository.dart';
 import '../../shared/models/user_profile.dart';
+import 'avatar_customization_provider.dart';
 
 final userProfileProvider =
     StateNotifierProvider<UserProfileNotifier, UserProfile>((ref) {
-      return UserProfileNotifier();
+      return UserProfileNotifier(ref);
     });
 
 class UserProfileNotifier extends StateNotifier<UserProfile> {
-  UserProfileNotifier()
+  UserProfileNotifier(this._ref)
     : super(
         const UserProfile(
           id: 'mock_user',
@@ -23,12 +24,19 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     load();
   }
 
+  final dynamic _ref;
   final _repository = ProfileRepository();
 
   Future<void> load() async {
     try {
       final profile = await _repository.fetchProfile();
-      if (profile != null) state = profile;
+      if (profile != null) {
+        state = profile;
+        _ref.read(skinToneIndexProvider.notifier).state = profile.skinToneIndex;
+        _ref.read(hairColorIndexProvider.notifier).state = profile.hairColorIndex;
+        _ref.read(bodyShapeProvider.notifier).state = profile.bodyShape;
+        _ref.read(hairStyleIndexProvider.notifier).state = profile.hairStyleIndex;
+      }
     } catch (_) {}
   }
 
@@ -76,6 +84,26 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
       colorSeason: colorSeason,
       brandTier: brandTier,
     );
+    _persist();
+  }
+
+  void updateBodyShape(AvatarBodyShape shape) {
+    state = state.copyWith(bodyShape: shape);
+    _persist();
+  }
+
+  void updateSkinToneIndex(int i) {
+    state = state.copyWith(skinToneIndex: i);
+    _persist();
+  }
+
+  void updateHairColorIndex(int i) {
+    state = state.copyWith(hairColorIndex: i);
+    _persist();
+  }
+
+  void updateHairStyleIndex(int i) {
+    state = state.copyWith(hairStyleIndex: i);
     _persist();
   }
 }

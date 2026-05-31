@@ -2,6 +2,15 @@ enum ColorSeason { spring, summer, autumn, winter }
 
 enum AvatarType { human, dog, cat }
 
+enum AvatarBodyShape { male, female }
+
+AvatarBodyShape avatarBodyShapeFromString(String value) {
+  return AvatarBodyShape.values.firstWhere(
+    (s) => s.name == value.toLowerCase(),
+    orElse: () => AvatarBodyShape.female,
+  );
+}
+
 ColorSeason colorSeasonFromString(String value) {
   return ColorSeason.values.firstWhere(
     (season) => season.name == value.toLowerCase(),
@@ -57,6 +66,10 @@ class UserProfile {
   final double brandTier;
   final DateTime? birthDate;
   final int? birthWeekday;
+  final AvatarBodyShape bodyShape;
+  final int skinToneIndex;
+  final int hairColorIndex;
+  final int hairStyleIndex;
 
   const UserProfile({
     required this.id,
@@ -71,6 +84,10 @@ class UserProfile {
     this.brandTier = 0.3,
     this.birthDate,
     this.birthWeekday,
+    this.bodyShape = AvatarBodyShape.female,
+    this.skinToneIndex = 1,
+    this.hairColorIndex = 1,
+    this.hairStyleIndex = 3,
   });
 
   factory UserProfile.fromJson(
@@ -80,7 +97,7 @@ class UserProfile {
   }) {
     return UserProfile(
       id: json['id'] as String,
-      name: json['display_name'] as String? ?? 'Wardrobly User',
+      name: json['display_name'] as String? ?? 'MMM User',
       avatarUrl: json['avatar_url'] as String?,
       colorSeason: colorSeasonFromString(
         json['color_season'] as String? ?? 'spring',
@@ -97,6 +114,12 @@ class UserProfile {
           ? DateTime.tryParse(json['birth_date'] as String)
           : null,
       birthWeekday: json['birth_weekday'] as int?,
+      bodyShape: avatarBodyShapeFromString(
+        json['body_shape'] as String? ?? 'female',
+      ),
+      skinToneIndex: (json['skin_tone_index'] as int?) ?? 1,
+      hairColorIndex: (json['hair_color_index'] as int?) ?? 1,
+      hairStyleIndex: (json['hair_style_index'] as int?) ?? 3,
     );
   }
 
@@ -112,6 +135,10 @@ class UserProfile {
       'brand_tier': brandTier,
       'birth_date': birthDate?.toIso8601String().split('T').first,
       'birth_weekday': birthWeekday,
+      'body_shape': bodyShape.name,
+      'skin_tone_index': skinToneIndex,
+      'hair_color_index': hairColorIndex,
+      'hair_style_index': hairStyleIndex,
     };
   }
 
@@ -127,6 +154,10 @@ class UserProfile {
     double? brandTier,
     DateTime? birthDate,
     int? birthWeekday,
+    AvatarBodyShape? bodyShape,
+    int? skinToneIndex,
+    int? hairColorIndex,
+    int? hairStyleIndex,
   }) {
     return UserProfile(
       id: id,
@@ -141,6 +172,10 @@ class UserProfile {
       brandTier: brandTier ?? this.brandTier,
       birthDate: birthDate ?? this.birthDate,
       birthWeekday: birthWeekday ?? this.birthWeekday,
+      bodyShape: bodyShape ?? this.bodyShape,
+      skinToneIndex: skinToneIndex ?? this.skinToneIndex,
+      hairColorIndex: hairColorIndex ?? this.hairColorIndex,
+      hairStyleIndex: hairStyleIndex ?? this.hairStyleIndex,
     );
   }
 }

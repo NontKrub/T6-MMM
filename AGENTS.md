@@ -2,13 +2,13 @@
 
 ## Project Structure & Module Organization
 
-This is a Flutter app named `wardrobly`. App code lives in `lib/`: `features/` contains screen-level flows, `core/` contains shared services, providers, navigation, config, and theme, and `shared/` contains reusable models, widgets, and mock data. Tests live in `test/`, currently starting with `widget_test.dart`. Static app assets are declared in `pubspec.yaml` under `assets/avatars/`, `assets/images/`, and `assets/images/mock_clothes/`. Native shells are in `android/` and `ios/`. Supabase backend code lives in `supabase/`, with SQL migrations in `supabase/migrations/` and Edge Functions in `supabase/functions/`.
+This is a Flutter app named `Mix Match Mood` (`MMM` for short). The Dart package is `mix_match_mood`. App code lives in `lib/`: `features/` contains screen-level flows, `core/` contains shared services, providers, navigation, config, and theme, and `shared/` contains reusable models, widgets, and mock data. Tests live in `test/`, currently starting with `widget_test.dart`. Static app assets are declared in `pubspec.yaml` under `assets/avatars/`, `assets/images/`, and `assets/images/mock_clothes/`. Native shells are in `android/` and `ios/`. Supabase backend code lives in `supabase/`, with SQL migrations in `supabase/migrations/` and Edge Functions in `supabase/functions/`.
 
 ## Build, Test, and Development Commands
 
 - `flutter pub get`: install Dart and Flutter dependencies.
 - `flutter run`: run the app locally, using mock/guest mode if backend defines are absent.
-- `flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=AUTH_REDIRECT_URL=wardrobly://login-callback`: run against Supabase.
+- `flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=AUTH_REDIRECT_URL=mmm://login-callback`: run against Supabase.
 - `flutter analyze`: run static analysis using `analysis_options.yaml`.
 - `flutter test`: run the Flutter test suite.
 - `dart format lib test`: format Dart source and tests.

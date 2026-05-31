@@ -22,18 +22,18 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const ProviderScope(child: WardroblyApp()));
+  runApp(const ProviderScope(child: MixMatchMoodApp()));
 }
 
-class WardroblyApp extends ConsumerWidget {
-  const WardroblyApp({super.key});
+class MixMatchMoodApp extends ConsumerWidget {
+  const MixMatchMoodApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Wardrobly',
+      title: 'Mix Match Mood',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

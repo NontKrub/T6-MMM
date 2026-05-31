@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   .fadeIn(duration: 400.ms),
               const SizedBox(height: 20),
               Text(
-                    'wardrobly',
+                    'Mix Match Mood',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   .slideY(begin: 0.3, end: 0),
               const SizedBox(height: 8),
               Text(
-                'dress smarter, effortlessly',
+                'match your wardrobe to your mood',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.5),
                   fontSize: 14,

@@ -21,6 +21,8 @@ class HomeScreen extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider);
     final skinTone = ref.watch(skinToneIndexProvider);
     final hairColor = ref.watch(hairColorIndexProvider);
+    final bodyShape = ref.watch(bodyShapeProvider);
+    final hairStyle = ref.watch(hairStyleIndexProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -122,8 +124,10 @@ class HomeScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 36),
                         child: AvatarViewer(
                           avatarType: profile.avatarType,
+                          bodyShape: bodyShape,
                           skinToneIndex: skinTone,
                           hairColorIndex: hairColor,
+                          hairStyleIndex: hairStyle,
                         ),
                       ),
                       // Customize button — top-right corner of avatar area
@@ -273,11 +277,13 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
   const _AvatarCustomizeSheet({required this.ref});
 
   static const _skinTones = [
-    Color(0xFFF5E6D3),
-    Color(0xFFE8C4A0),
-    Color(0xFFC89B6E),
-    Color(0xFF8B5A2B),
-    Color(0xFF4A2F1A),
+    Color(0xFFF5E6D3), // 0: porcelain
+    Color(0xFFE8C4A0), // 1: light warm
+    Color(0xFFC89B6E), // 2: medium
+    Color(0xFFB07840), // 3: medium-tan
+    Color(0xFF9A6235), // 4: medium-warm
+    Color(0xFF8B5A2B), // 5: medium-dark
+    Color(0xFF4A2F1A), // 6: deep
   ];
 
   static const _hairColors = [
@@ -304,11 +310,22 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
     (AvatarType.cat, Icons.catching_pokemon_rounded, 'Cat'),
   ];
 
+  static const _bodyShapeMeta = [
+    (AvatarBodyShape.female, Icons.woman_rounded, 'Female'),
+    (AvatarBodyShape.male, Icons.man_rounded, 'Male'),
+  ];
+
+  static const _hairStyleLabels = [
+    'Tousled', 'Side Swept', 'Undercut', 'Long', 'Ponytail', 'Bob',
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
     final profile = widgetRef.watch(userProfileProvider);
     final skinTone = widgetRef.watch(skinToneIndexProvider);
     final hairColor = widgetRef.watch(hairColorIndexProvider);
+    final bodyShape = widgetRef.watch(bodyShapeProvider);
+    final hairStyle = widgetRef.watch(hairStyleIndexProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final sheetBg = isDark
@@ -321,11 +338,14 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
           color: sheetBg,
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 36),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 36 + MediaQuery.of(context).padding.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // Drag handle
               Center(
                 child: Container(
@@ -431,19 +451,104 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                 }).toList(),
               ),
 
-              // Skin & hair only for human
+              // Human-only customization
               if (profile.avatarType == AvatarType.human) ...[
                 const SizedBox(height: 24),
-                _SectionLabel(label: 'Skin Tone'),
+
+                // Body shape
+                _SectionLabel(label: 'Body Shape'),
                 const SizedBox(height: 10),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: _bodyShapeMeta.map((meta) {
+                    final (shape, icon, label) = meta;
+                    final sel = bodyShape == shape;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          widgetRef.read(bodyShapeProvider.notifier).state = shape;
+                          widgetRef.read(userProfileProvider.notifier).updateBodyShape(shape);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: sel ? const LinearGradient(
+                              colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                              begin: Alignment.topLeft, end: Alignment.bottomRight,
+                            ) : null,
+                            color: sel ? null : AppColors.seedColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: sel ? null : Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                            boxShadow: sel ? [BoxShadow(color: AppColors.seedColor.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))] : null,
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(icon, size: 26, color: sel ? Colors.white : AppColors.seedColor.withValues(alpha: 0.70)),
+                              const SizedBox(height: 6),
+                              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : Colors.grey)),
+                              if (sel) ...[const SizedBox(height: 4), Container(width: 4, height: 4, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white))],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 22),
+
+                // Hair style
+                _SectionLabel(label: 'Hair Style'),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(_hairStyleLabels.length, (i) {
+                    final sel = hairStyle == i;
+                    return GestureDetector(
+                      onTap: () {
+                        widgetRef.read(hairStyleIndexProvider.notifier).state = i;
+                        widgetRef.read(userProfileProvider.notifier).updateHairStyleIndex(i);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: sel ? const LinearGradient(
+                            colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                            begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          ) : null,
+                          color: sel ? null : AppColors.seedColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: sel ? null : Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                          boxShadow: sel ? [BoxShadow(color: AppColors.seedColor.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 2))] : null,
+                        ),
+                        child: Text(
+                          _hairStyleLabels[i],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                            color: sel ? Colors.white : Colors.grey,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 22),
+
+                _SectionLabel(label: 'Skin Tone'),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: List.generate(_skinTones.length, (i) {
                     final sel = skinTone == i;
                     return GestureDetector(
-                      onTap: () =>
-                          widgetRef.read(skinToneIndexProvider.notifier).state =
-                              i,
+                      onTap: () {
+                        widgetRef.read(skinToneIndexProvider.notifier).state = i;
+                        widgetRef.read(userProfileProvider.notifier).updateSkinToneIndex(i);
+                      },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: 44,
@@ -488,11 +593,10 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   children: List.generate(_hairColors.length, (i) {
                     final sel = hairColor == i;
                     return GestureDetector(
-                      onTap: () =>
-                          widgetRef
-                                  .read(hairColorIndexProvider.notifier)
-                                  .state =
-                              i,
+                      onTap: () {
+                        widgetRef.read(hairColorIndexProvider.notifier).state = i;
+                        widgetRef.read(userProfileProvider.notifier).updateHairColorIndex(i);
+                      },
                       child: Column(
                         children: [
                           AnimatedContainer(
@@ -544,29 +648,31 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   }),
                 ),
               ],
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.seedColor,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.seedColor,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

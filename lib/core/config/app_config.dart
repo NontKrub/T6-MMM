@@ -3,7 +3,7 @@ class AppConfig {
   static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const authRedirectUrl = String.fromEnvironment(
     'AUTH_REDIRECT_URL',
-    defaultValue: 'wardrobly://login-callback',
+    defaultValue: 'mmm://login-callback',
   );
 
   static bool get isSupabaseConfigured =>

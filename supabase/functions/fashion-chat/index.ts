@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
 
     const result = await openAiJson<{ reply: string; title: string }>({
       instructions:
-        "You are Wardrobly's fashion assistant. Answer conversationally, identify style names when asked, and use the user's wardrobe context only when relevant. Keep advice concise and actionable.",
+        "You are Mix Match Mood's fashion assistant. Answer conversationally, identify style names when asked, and use the user's wardrobe context only when relevant. Keep advice concise and actionable.",
       input: [{
         role: "user",
         content: [{

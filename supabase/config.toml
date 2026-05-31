@@ -1,4 +1,4 @@
-project_id = "wardrobly"
+project_id = "mix_match_mood"
 
 [functions.analyze-clothing-image]
 verify_jwt = true

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 flutter run \
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY \
-  --dart-define=AUTH_REDIRECT_URL=wardrobly://login-callback
+  --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
 
 # Run in guest/mock mode (no backend)
 flutter run

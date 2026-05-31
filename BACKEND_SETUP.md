@@ -1,4 +1,4 @@
-# Wardrobly Backend Setup
+# Mix Match Mood Backend Setup
 
 ## Required Services
 
@@ -17,7 +17,7 @@ Run Flutter with compile-time environment values:
 flutter run \
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY \
-  --dart-define=AUTH_REDIRECT_URL=wardrobly://login-callback
+  --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
 ```
 
 If `SUPABASE_URL` or `SUPABASE_ANON_KEY` is missing, the app stays in local
@@ -29,7 +29,7 @@ In Supabase Dashboard > Authentication > URL Configuration, add this redirect
 URL:
 
 ```txt
-wardrobly://login-callback
+mmm://login-callback
 ```
 
 In Supabase Dashboard > Authentication > Providers, enable Google and Facebook
@@ -45,7 +45,7 @@ https://YOUR_PROJECT.supabase.co/auth/v1/callback
 Set Edge Function secrets:
 
 ```sh
-supabase secrets set OPENROUTER_API_KEY=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
+supabase secrets set OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
 supabase secrets set OPENROUTER_MODEL=openai/gpt-oss-120b:free
 supabase secrets set WEATHER_API_URL=https://api.open-meteo.com/v1/forecast
 ```

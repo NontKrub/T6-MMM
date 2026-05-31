@@ -82,7 +82,7 @@ async function openRouterJson<T>(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "X-Title": "Wardrobly",
+        "X-Title": "Mix Match Mood",
       },
       body: JSON.stringify({
         model: params.model ?? Deno.env.get("OPENROUTER_MODEL") ??

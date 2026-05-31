@@ -135,7 +135,7 @@ class OnboardingScreen extends ConsumerWidget {
                         notifier.nextStep();
                       }
                     },
-                    child: Text(isLastStep ? 'Enter Wardrobly' : 'Continue'),
+                    child: Text(isLastStep ? 'Enter MMM' : 'Continue'),
                   ),
                 ),
               ),

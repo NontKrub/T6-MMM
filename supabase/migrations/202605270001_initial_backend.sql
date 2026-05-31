@@ -20,7 +20,7 @@ end $$;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  display_name text not null default 'Wardrobly User',
+  display_name text not null default 'MMM User',
   avatar_url text,
   avatar_type public.avatar_type not null default 'human',
   color_season public.color_season not null default 'spring',
@@ -127,7 +127,7 @@ create table if not exists public.chat_messages (
 
 create index if not exists clothing_items_user_category_idx on public.clothing_items(user_id, category) where archived_at is null;
 create index if not exists clothing_items_search_idx on public.clothing_items using gin (
-  to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(brand, '') || ' ' || array_to_string(tags, ' '))
+  to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(brand, ''))
 );
 create index if not exists outfits_user_created_idx on public.outfits(user_id, created_at desc);
 create index if not exists wear_events_user_worn_idx on public.wear_events(user_id, worn_at desc);
@@ -163,7 +163,7 @@ begin
   insert into public.profiles (id, display_name, avatar_url)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', 'Wardrobly User'),
+    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', 'MMM User'),
     new.raw_user_meta_data->>'avatar_url'
   )
   on conflict (id) do nothing;
