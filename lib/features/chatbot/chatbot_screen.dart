@@ -204,7 +204,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           height: 44,
                           decoration: BoxDecoration(
                             color: AppColors.seedColor,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                           child: const Icon(
                             Icons.send_rounded,

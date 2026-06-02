@@ -45,17 +45,22 @@ class OutfitRepository {
     bool usePersonalColor = false,
     bool useLuckyColor = false,
     bool matchWeather = false,
+    bool learnPreferences = true,
+    String luckyColorMethod = 'birth_profile',
+    String weatherLocationMode = 'auto_detect',
   }) async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) {
       throw StateError('Sign in to generate AI outfits.');
     }
 
-    final weather = matchWeather
+    final shouldMatchWeather =
+        matchWeather && weatherLocationMode == 'auto_detect';
+    final weather = shouldMatchWeather
         ? await _weatherContext.currentFromDeviceLocation()
         : null;
     final luckyColors = useLuckyColor
-        ? await _recommendations.dailyLuckyColors()
+        ? await _recommendations.dailyLuckyColors(method: luckyColorMethod)
         : const <String>[];
 
     final response = await client.functions.invoke(
@@ -64,15 +69,42 @@ class OutfitRepository {
         'style': style,
         'use_personal_color': usePersonalColor,
         'use_lucky_color': useLuckyColor,
-        'match_weather': matchWeather,
+        'match_weather': shouldMatchWeather,
         'weather': weather,
         'lucky_colors': luckyColors,
+        'learn_preferences': learnPreferences,
+        'lucky_color_method': luckyColorMethod,
+        'weather_location_mode': weatherLocationMode,
       },
     );
     final data = Map<String, dynamic>.from(response.data as Map);
     return (data['outfits'] as List? ?? const [])
         .map((row) => Outfit.fromJson(Map<String, dynamic>.from(row as Map)))
         .toList();
+  }
+
+  Future<void> recordPreferenceEvent({
+    required Outfit outfit,
+    required List<String> itemIds,
+    required List<String> tags,
+    required List<String> colors,
+    required String source,
+  }) async {
+    final client = SupabaseService.client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) return;
+
+    await client.from('outfit_preference_events').insert({
+      'user_id': user.id,
+      'outfit_id': outfit.id,
+      'style': outfit.style,
+      'clothing_item_ids': itemIds,
+      'tags': tags,
+      'colors': colors,
+      'selection_factors': outfit.selectionFactors,
+      'score': outfit.score,
+      'source': source,
+    });
   }
 
   Future<Outfit?> rushOutfit({String style = 'rush'}) async {

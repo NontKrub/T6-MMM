@@ -1,8 +1,10 @@
 import {
   buildValidOutfitCandidates,
   ClothingItemRow,
+  GeneratedOutfitDraft,
   OutfitCandidate,
-  scoreOutfitCandidate,
+  PreferenceEventRow,
+  selectUsableOutfitsFromGenerated,
   WearEventRow,
 } from "../_shared/domain.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
@@ -16,6 +18,7 @@ type Body = {
   match_weather?: boolean;
   weather?: Record<string, unknown>;
   lucky_colors?: string[];
+  learn_preferences?: boolean;
 };
 
 Deno.serve(async (req) => {
@@ -27,24 +30,40 @@ Deno.serve(async (req) => {
     const body = await readJson<Body>(req);
     const style = body.style ?? "casual";
 
-    const [{ data: profile }, { data: items }, { data: events }] = await Promise
+    const learnPreferences = body.learn_preferences ?? true;
+
+    const [{ data: profile }, { data: stylePreferencesRows }, { data: items }, {
+      data: events,
+    }, { data: preferenceEvents }] = await Promise
       .all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
+        supabase.from("style_preferences").select("kind,value"),
         supabase.from("clothing_items")
           .select(
-            "id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn",
+            "id,name,brand,category,tags,dominant_colors,primary_color,detected_attributes,ai_confidence,wear_count,last_worn",
           )
           .is("archived_at", null)
           .order("last_worn", { ascending: true, nullsFirst: true }),
         supabase.from("wear_events").select(
           "style,colors,worn_at,clothing_item_ids",
         ).order("worn_at", { ascending: false }).limit(20),
+        supabase.from("outfit_preference_events").select(
+          "style,tags,colors,selection_factors,score,created_at",
+        ).order("created_at", { ascending: false }).limit(40),
       ]);
 
     const wardrobe = (items ?? []) as ClothingItemRow[];
     const recentEvents = (events ?? []) as WearEventRow[];
+    const learnedEvents = (preferenceEvents ?? []) as PreferenceEventRow[];
+    const stylePreferences = (stylePreferencesRows ?? [])
+      .filter((row) =>
+        (!row.kind || row.kind === "style") && typeof row.value === "string"
+      )
+      .map((row) => String(row.value).trim().toLowerCase())
+      .filter(Boolean);
     const scoreOptions = {
       style,
+      stylePreferences,
       usePersonalColor: body.use_personal_color ?? false,
       colorSeason: typeof profile?.color_season === "string"
         ? profile.color_season
@@ -52,6 +71,8 @@ Deno.serve(async (req) => {
       luckyColors: body.use_lucky_color ? body.lucky_colors ?? [] : [],
       weather: body.match_weather ? body.weather ?? null : null,
       recentEvents,
+      preferenceEvents: learnPreferences ? learnedEvents : [],
+      learnPreferences,
     };
     const candidates = buildValidOutfitCandidates(wardrobe, scoreOptions);
     if (candidates.length === 0) {
@@ -101,6 +122,7 @@ Deno.serve(async (req) => {
               profile: {
                 color_season: profile?.color_season ?? null,
                 body_type: profile?.body_type ?? null,
+                style_preferences: stylePreferences,
               },
               candidates: candidates.slice(0, 16).map((candidate) => ({
                 name: candidate.name,
@@ -120,6 +142,8 @@ Deno.serve(async (req) => {
                       category: item.category,
                       color: item.primary_color,
                       tags: item.tags,
+                      detected_attributes: item.detected_attributes ?? {},
+                      ai_confidence: item.ai_confidence ?? null,
                     }
                     : null;
                 }).filter(Boolean),
@@ -145,8 +169,19 @@ Deno.serve(async (req) => {
       generated?.outfits ?? [],
       candidates,
       wardrobe,
-      scoreOptions,
     );
+    const generationContext = {
+      requested_style: style,
+      style_preferences: stylePreferences,
+      use_personal_color: body.use_personal_color ?? false,
+      use_lucky_color: body.use_lucky_color ?? false,
+      match_weather: body.match_weather ?? false,
+      weather: scoreOptions.weather,
+      lucky_colors: scoreOptions.luckyColors,
+      color_season: scoreOptions.colorSeason,
+      learn_preferences: learnPreferences,
+    };
+
     const saved = [];
     for (const outfit of selected.slice(0, 5)) {
       const itemIds = outfit.item_ids.filter((id) => validIds.has(id));
@@ -158,7 +193,7 @@ Deno.serve(async (req) => {
         reason: outfit.reason,
         score: outfit.score,
         selection_factors: outfit.selection_factors,
-        generation_context: body,
+        generation_context: generationContext,
       }).select().single();
       if (error || !inserted) continue;
 
@@ -190,61 +225,9 @@ Deno.serve(async (req) => {
 });
 
 function selectUsableOutfits(
-  generated: Array<
-    {
-      name: string;
-      item_ids: string[];
-      style: string;
-      reason: string;
-      score: number;
-    }
-  >,
+  generated: GeneratedOutfitDraft[],
   candidates: OutfitCandidate[],
   wardrobe: ClothingItemRow[],
-  scoreOptions: Parameters<typeof scoreOutfitCandidate>[1],
 ) {
-  const validIds = new Set(wardrobe.map((item) => item.id));
-  const selected: OutfitCandidate[] = [];
-  const seen = new Set<string>();
-
-  for (const outfit of generated) {
-    const itemIds = [
-      ...new Set(outfit.item_ids.filter((id) => validIds.has(id))),
-    ];
-    const candidateItems = itemIds
-      .map((id) => wardrobe.find((item) => item.id === id))
-      .filter(Boolean) as ClothingItemRow[];
-    const categories = new Set(candidateItems.map((item) => item.category));
-    if (
-      !categories.has("top") || !categories.has("pants") ||
-      !categories.has("shoes")
-    ) continue;
-
-    const key = itemIds.slice().sort().join("|");
-    if (seen.has(key)) continue;
-    const exact = candidates.find((candidate) =>
-      candidate.item_ids.slice().sort().join("|") === key
-    );
-    const scored = exact ?? scoreOutfitCandidate(candidateItems, scoreOptions);
-    selected.push({
-      ...scored,
-      name: outfit.name || scored.name,
-      style: outfit.style || scored.style,
-      reason: outfit.reason || scored.reason,
-      score: Math.round(
-        Math.max(
-          0,
-          Math.min(100, (outfit.score + scored.score) / 2 || scored.score),
-        ),
-      ),
-      item_ids: itemIds,
-    });
-    seen.add(key);
-  }
-
-  if (selected.length > 0) {
-    return selected.sort((a, b) => b.score - a.score);
-  }
-
-  return candidates.slice(0, 5);
+  return selectUsableOutfitsFromGenerated(generated, candidates, wardrobe);
 }

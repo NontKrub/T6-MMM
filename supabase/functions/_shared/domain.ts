@@ -6,6 +6,8 @@ export type ClothingItemRow = {
   tags: string[];
   dominant_colors: string[];
   primary_color: string | null;
+  detected_attributes?: Record<string, unknown> | null;
+  ai_confidence?: number | null;
   wear_count: number;
   last_worn: string | null;
 };
@@ -15,6 +17,15 @@ export type WearEventRow = {
   colors: string[];
   worn_at: string;
   clothing_item_ids?: string[] | null;
+};
+
+export type PreferenceEventRow = {
+  style: string | null;
+  tags: string[];
+  colors: string[];
+  selection_factors: string[];
+  score: number | null;
+  created_at: string;
 };
 
 export type OutfitCandidate = {
@@ -27,14 +38,26 @@ export type OutfitCandidate = {
   selection_factors: string[];
 };
 
+export type GeneratedOutfitDraft = {
+  name: string;
+  item_ids: string[];
+  style: string;
+  reason: string;
+  score: number;
+};
+
 type ScoreOptions = {
   style?: string;
+  stylePreferences?: string[];
   usePersonalColor?: boolean;
   colorSeason?: string | null;
   luckyColors?: string[];
   weather?: Record<string, unknown> | null;
   recentEvents?: WearEventRow[];
+  preferenceEvents?: PreferenceEventRow[];
+  learnPreferences?: boolean;
   rush?: boolean;
+  metadataQualityBaseline?: number;
 };
 
 const seasonColors: Record<string, string[]> = {
@@ -82,7 +105,7 @@ export function buildValidOutfitCandidates(
   const accessories = [null, ...groups.accessory.slice(0, 2)] as Array<
     ClothingItemRow | null
   >;
-  const candidates: OutfitCandidate[] = [];
+  const candidateItemSets: ClothingItemRow[][] = [];
 
   for (const top of tops) {
     for (const bottom of pants) {
@@ -92,12 +115,23 @@ export function buildValidOutfitCandidates(
             const candidateItems = [top, bottom, shoe, hat, accessory].filter(
               Boolean,
             ) as ClothingItemRow[];
-            candidates.push(scoreOutfitCandidate(candidateItems, options));
+            candidateItemSets.push(candidateItems);
           }
         }
       }
     }
   }
+
+  const metadataQualityBaseline = candidateItemSets.reduce(
+    (best, candidate) => Math.max(best, metadataQualityScore(candidate)),
+    0,
+  );
+  const candidates = candidateItemSets.map((candidateItems) =>
+    scoreOutfitCandidate(candidateItems, {
+      ...options,
+      metadataQualityBaseline,
+    })
+  );
 
   return candidates
     .sort((a, b) => b.score - a.score)
@@ -114,27 +148,66 @@ export function scoreOutfitCandidate(
   options: ScoreOptions = {},
 ): OutfitCandidate {
   const style = options.style ?? "casual";
+  const styleLower = style.toLowerCase();
+  const stylePreferences = (options.stylePreferences ?? [])
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
   const factors = new Set<string>();
   let score = 58;
   const colors = normalizedColors(items);
-  const text = items.flatMap((item) => [
-    item.name,
-    item.brand ?? "",
-    item.primary_color ?? "",
-    ...item.dominant_colors,
-    ...item.tags,
-  ]).join(" ").toLowerCase();
-
-  if (
-    items.some((item) =>
-      item.tags.some((tag) => tag.toLowerCase() === style.toLowerCase())
+  const metadataTokens = items.flatMap(itemMetadataTokens);
+  const text = metadataTokens.join(" ");
+  const tokenSet = new Set(metadataTokens);
+  const genericCount = items.filter((item) => isGenericName(item.name)).length;
+  const matchedByTag = items.some((item) =>
+    item.tags.some((tag) => tag.toLowerCase() === styleLower)
+  );
+  const matchedByAttribute = items.some((item) =>
+    flattenAttributeValues(item.detected_attributes).some((value) =>
+      value === styleLower
     )
-  ) {
-    score += 10;
+  );
+
+  if (matchedByTag || matchedByAttribute) {
+    score += 14;
     factors.add("style_match");
-  } else if (text.includes(style.toLowerCase())) {
+  } else if (text.includes(styleLower)) {
+    score += 8;
+    factors.add("style_match");
+  }
+  if ((matchedByTag || matchedByAttribute) && genericCount > 0) {
     score += 6;
-    factors.add("style_match");
+    factors.add("ai_metadata");
+  }
+
+  const preferenceMatches = stylePreferences.filter((preference) =>
+    text.includes(preference)
+  );
+  if (preferenceMatches.length > 0) {
+    score += Math.min(12, preferenceMatches.length * 4);
+    factors.add("style_preferences");
+  }
+
+  if (options.learnPreferences ?? true) {
+    const learned = deriveLearnedPreferenceTokens(options.preferenceEvents ?? []);
+    const learnedTagMatches = learned.tags.filter((tag) => tokenSet.has(tag))
+      .length;
+    const learnedColorMatches = learned.colors.filter((color) =>
+      colors.includes(color)
+    ).length;
+    const learnedAttributeMatches = learned.attributes.filter((token) =>
+      tokenSet.has(token)
+    ).length;
+    const styleWeight = learned.styles.get(styleLower) ?? 0;
+
+    const learnedScore = styleWeight * 1.4 +
+      learnedTagMatches * 1.8 +
+      learnedColorMatches * 1.6 +
+      learnedAttributeMatches * 1.2;
+    if (learnedScore > 0) {
+      score += Math.min(20, learnedScore);
+      factors.add("learned_preferences");
+    }
   }
 
   const luckyColors = (options.luckyColors ?? []).map(normalizeColor);
@@ -223,6 +296,18 @@ export function scoreOutfitCandidate(
     score -= 4;
   }
 
+  if (
+    typeof options.metadataQualityBaseline === "number" &&
+    options.metadataQualityBaseline > metadataQualityScore(items) + 0.15
+  ) {
+    const lowConfidenceItems = items.filter((item) => isLowConfidence(item))
+      .length;
+    if (hasNeedsReview(items) || lowConfidenceItems > 0) {
+      score -= Math.min(8, 4 + lowConfidenceItems * 2);
+      factors.add("metadata_quality");
+    }
+  }
+
   const boundedScore = Math.max(0, Math.min(100, Math.round(score)));
   return {
     id: "",
@@ -248,12 +333,149 @@ export function explainScoreFactors(
   if (factors.includes("personal_color")) {
     labels.push("works with your color season");
   }
+  if (factors.includes("style_preferences")) {
+    labels.push("aligns with your saved style preferences");
+  }
+  if (factors.includes("learned_preferences")) {
+    labels.push("aligns with outfits you actually wear");
+  }
+  if (factors.includes("ai_metadata")) {
+    labels.push("uses AI-detected clothing details");
+  }
   if (factors.includes("low_repetition")) {
     labels.push("keeps recent repeats low");
+  }
+  if (factors.includes("metadata_quality")) {
+    labels.push("avoids items with uncertain metadata");
   }
   return labels.length
     ? labels.join(", ")
     : "Complete outfit balanced across your wardrobe.";
+}
+
+type LearnedTokens = {
+  tags: string[];
+  colors: string[];
+  attributes: string[];
+  styles: Map<string, number>;
+};
+
+function deriveLearnedPreferenceTokens(events: PreferenceEventRow[]): LearnedTokens {
+  const nowMs = Date.now();
+  const tagWeights = new Map<string, number>();
+  const colorWeights = new Map<string, number>();
+  const attributeWeights = new Map<string, number>();
+  const styleWeights = new Map<string, number>();
+
+  for (const [index, event] of events.slice(0, 40).entries()) {
+    const ageDays = Math.max(
+      0,
+      (nowMs - new Date(event.created_at).getTime()) / (24 * 60 * 60 * 1000),
+    );
+    const recencyWeight = Math.exp(-ageDays / 12);
+    const rankWeight = Math.max(0.35, 1 - index * 0.03);
+    const scoreWeight = typeof event.score === "number"
+      ? Math.max(0.6, Math.min(1.4, event.score / 70))
+      : 1;
+    const weight = recencyWeight * rankWeight * scoreWeight;
+
+    for (const tag of event.tags ?? []) {
+      const token = normalizeToken(tag);
+      if (!token) continue;
+      tagWeights.set(token, (tagWeights.get(token) ?? 0) + weight);
+    }
+    for (const color of event.colors ?? []) {
+      const token = normalizeColor(color);
+      if (!token) continue;
+      colorWeights.set(token, (colorWeights.get(token) ?? 0) + weight);
+    }
+    for (const factor of event.selection_factors ?? []) {
+      const token = normalizeToken(factor);
+      if (!token) continue;
+      attributeWeights.set(
+        token,
+        (attributeWeights.get(token) ?? 0) + weight * 0.8,
+      );
+    }
+    const style = normalizeToken(event.style ?? "");
+    if (style) {
+      styleWeights.set(style, (styleWeights.get(style) ?? 0) + weight * 1.1);
+    }
+  }
+
+  return {
+    tags: topWeightedTokens(tagWeights, 12),
+    colors: topWeightedTokens(colorWeights, 8),
+    attributes: topWeightedTokens(attributeWeights, 10),
+    styles: styleWeights,
+  };
+}
+
+function topWeightedTokens(map: Map<string, number>, limit: number) {
+  return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit).map((
+    [key],
+  ) => key);
+}
+
+export function selectUsableOutfitsFromGenerated(
+  generated: GeneratedOutfitDraft[],
+  candidates: OutfitCandidate[],
+  wardrobe: ClothingItemRow[],
+) {
+  const byKey = new Map<string, OutfitCandidate>();
+  for (const candidate of candidates) {
+    byKey.set(candidateKey(candidate.item_ids), candidate);
+  }
+
+  const wardrobeById = new Map(wardrobe.map((item) => [item.id, item]));
+  const selected: OutfitCandidate[] = [];
+  const seen = new Set<string>();
+
+  for (const outfit of generated) {
+    const itemIds = [
+      ...new Set(outfit.item_ids.filter((id) => wardrobeById.has(id))),
+    ];
+    const key = candidateKey(itemIds);
+    if (seen.has(key)) continue;
+
+    const exact = byKey.get(key);
+    if (!exact) continue;
+
+    const categorySet = new Set(
+      exact.item_ids
+        .map((id) => wardrobeById.get(id)?.category)
+        .filter(Boolean),
+    );
+    if (
+      !categorySet.has("top") || !categorySet.has("pants") ||
+      !categorySet.has("shoes")
+    ) continue;
+
+    selected.push({
+      ...exact,
+      name: outfit.name || exact.name,
+      style: outfit.style || exact.style,
+      reason: outfit.reason || exact.reason,
+      // Keep AI influence, but never allow non-finite scores into persisted rows.
+      score: Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            (exact.score +
+              (Number.isFinite(outfit.score) ? outfit.score : exact.score)) / 2,
+          ),
+        ),
+      ),
+    });
+    seen.add(key);
+  }
+
+  if (selected.length > 0) {
+    return selected.sort((a, b) => b.score - a.score);
+  }
+
+  return candidates.slice(0, 5);
 }
 
 export function leastRecentlyWornOutfit(
@@ -330,6 +552,106 @@ function sortedByPracticality(items: ClothingItemRow[]) {
     if (!Number.isFinite(bDays)) return 1;
     return bDays - aDays;
   });
+}
+
+function candidateKey(itemIds: string[]) {
+  return [...itemIds].sort().join("|");
+}
+
+function metadataQualityScore(items: ClothingItemRow[]) {
+  if (items.length === 0) return 0;
+
+  let total = 0;
+  for (const item of items) {
+    const confidence = boundedConfidence(item.ai_confidence);
+    const tags = item.tags.length > 0 ? 0.15 : 0;
+    const colors = item.primary_color || item.dominant_colors.length > 0
+      ? 0.15
+      : 0;
+    const attributes = hasUsableAttributes(item.detected_attributes) ? 0.2 : 0;
+    const reviewPenalty = hasNeedsReview([item]) ? 0.2 : 0;
+    total += Math.max(
+      0,
+      confidence * 0.5 + tags + colors + attributes -
+        reviewPenalty,
+    );
+  }
+
+  return total / items.length;
+}
+
+function boundedConfidence(value: number | null | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function isLowConfidence(item: ClothingItemRow) {
+  return boundedConfidence(item.ai_confidence) > 0 &&
+    boundedConfidence(item.ai_confidence) < 0.55;
+}
+
+function hasNeedsReview(items: ClothingItemRow[]) {
+  return items.some((item) => {
+    if (item.tags.some((tag) => normalizeToken(tag) === "needs-review")) {
+      return true;
+    }
+    const attrs = item.detected_attributes ?? {};
+    const value = attrs["needs_review"];
+    return value === true;
+  });
+}
+
+function hasUsableAttributes(
+  attributes: Record<string, unknown> | null | undefined,
+) {
+  if (!attributes || typeof attributes !== "object") return false;
+  return flattenAttributeValues(attributes).length > 0;
+}
+
+function itemMetadataTokens(item: ClothingItemRow) {
+  return [
+    normalizeToken(item.name),
+    normalizeToken(item.brand ?? ""),
+    normalizeToken(item.primary_color ?? ""),
+    ...item.dominant_colors.map(normalizeToken),
+    ...item.tags.map(normalizeToken),
+    ...flattenAttributeValues(item.detected_attributes),
+  ].filter(Boolean);
+}
+
+function flattenAttributeValues(
+  value: Record<string, unknown> | unknown[] | unknown | null | undefined,
+): string[] {
+  if (value == null) return [];
+  if (typeof value === "string") return [normalizeToken(value)];
+  if (typeof value === "number" || typeof value === "boolean") {
+    return [String(value)];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => flattenAttributeValues(entry));
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    return entries.flatMap(([key, nested]) => [
+      normalizeToken(key),
+      ...flattenAttributeValues(nested),
+    ]);
+  }
+  return [];
+}
+
+function normalizeToken(token: string) {
+  return token.trim().toLowerCase();
+}
+
+function isGenericName(name: string) {
+  const normalized = name.trim().toLowerCase();
+  return normalized === "item" ||
+    normalized === "wardrobe item" ||
+    normalized === "top" ||
+    normalized === "pants" ||
+    normalized === "shoes" ||
+    normalized === "accessory";
 }
 
 function normalizedColors(items: ClothingItemRow[]) {

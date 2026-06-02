@@ -1,4 +1,9 @@
-import { buildValidOutfitCandidates, scoreOutfitCandidate } from "./domain.ts";
+import {
+  buildValidOutfitCandidates,
+  repetitionInsights,
+  scoreOutfitCandidate,
+  selectUsableOutfitsFromGenerated,
+} from "./domain.ts";
 import type { ClothingItemRow } from "./domain.ts";
 
 const baseItem = (overrides: Partial<ClothingItemRow>): ClothingItemRow => ({
@@ -9,6 +14,8 @@ const baseItem = (overrides: Partial<ClothingItemRow>): ClothingItemRow => ({
   tags: overrides.tags ?? [],
   dominant_colors: overrides.dominant_colors ?? [],
   primary_color: overrides.primary_color ?? null,
+  detected_attributes: overrides.detected_attributes ?? {},
+  ai_confidence: overrides.ai_confidence ?? 0.9,
   wear_count: overrides.wear_count ?? 0,
   last_worn: overrides.last_worn ?? null,
 });
@@ -35,6 +42,59 @@ Deno.test("scoreOutfitCandidate boosts lucky and personal colors", () => {
 
   assert(candidate.selection_factors.includes("lucky_color"));
   assert(candidate.selection_factors.includes("personal_color"));
+});
+
+Deno.test("scoreOutfitCandidate boosts selected style exact matches", () => {
+  const matching = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["streetwear"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], { style: "streetwear" });
+  const plain = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["minimal"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], { style: "streetwear" });
+
+  assert(matching.score > plain.score);
+});
+
+Deno.test("scoreOutfitCandidate boosts saved profile style preferences", () => {
+  const matching = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["minimal", "clean"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], { stylePreferences: ["minimal"] });
+  const plain = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["sport"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], { stylePreferences: ["minimal"] });
+
+  assert(matching.score > plain.score);
+  assert(matching.selection_factors.includes("style_preferences"));
+});
+
+Deno.test("scoreOutfitCandidate uses AI attributes when names are generic", () => {
+  const metadataMatch = scoreOutfitCandidate([
+    baseItem({
+      id: "top",
+      category: "top",
+      name: "Wardrobe item",
+      tags: ["minimal"],
+      detected_attributes: { style: ["minimal"], material: "linen" },
+    }),
+    baseItem({ id: "pants", category: "pants", name: "Wardrobe item" }),
+    baseItem({ id: "shoes", category: "shoes", name: "Wardrobe item" }),
+  ], { style: "minimal" });
+  const noMetadata = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", name: "Wardrobe item", tags: [] }),
+    baseItem({ id: "pants", category: "pants", name: "Wardrobe item" }),
+    baseItem({ id: "shoes", category: "shoes", name: "Wardrobe item" }),
+  ], { style: "minimal" });
+
+  assert(metadataMatch.score > noMetadata.score);
+  assert(metadataMatch.selection_factors.includes("ai_metadata"));
 });
 
 Deno.test("scoreOutfitCandidate prefers rainy-weather practical items", () => {
@@ -71,6 +131,296 @@ Deno.test("scoreOutfitCandidate penalizes recent item repetition", () => {
   const fresh = scoreOutfitCandidate(items, { recentEvents: [] });
 
   assert(fresh.score > repeated.score);
+});
+
+Deno.test("learned preference tokens boost matching candidates", () => {
+  const matching = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["minimal"], primary_color: "black" }),
+    baseItem({ id: "pants", category: "pants", tags: ["clean"] }),
+    baseItem({ id: "shoes", category: "shoes", tags: ["leather"] }),
+  ], {
+    style: "minimal",
+    preferenceEvents: [{
+      style: "minimal",
+      tags: ["minimal", "clean"],
+      colors: ["black"],
+      selection_factors: ["style_match"],
+      score: 88,
+      created_at: new Date().toISOString(),
+    }],
+  });
+  const plain = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["sport"], primary_color: "orange" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], {
+    style: "minimal",
+    preferenceEvents: [{
+      style: "minimal",
+      tags: ["minimal", "clean"],
+      colors: ["black"],
+      selection_factors: ["style_match"],
+      score: 88,
+      created_at: new Date().toISOString(),
+    }],
+  });
+
+  assert(matching.score > plain.score);
+});
+
+Deno.test("recent learned events weigh more than older events", () => {
+  const minimalCandidate = [
+    baseItem({ id: "top", category: "top", tags: ["minimal"] }),
+    baseItem({ id: "pants", category: "pants", primary_color: "black" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ];
+  const minimalRecent = scoreOutfitCandidate(minimalCandidate, {
+    style: "casual",
+    preferenceEvents: [
+      {
+        style: "minimal",
+        tags: ["minimal"],
+        colors: ["black"],
+        selection_factors: [],
+        score: 80,
+        created_at: new Date().toISOString(),
+      },
+      {
+        style: "sport",
+        tags: ["sport"],
+        colors: ["orange"],
+        selection_factors: [],
+        score: 80,
+        created_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000)
+          .toISOString(),
+      },
+    ],
+  });
+  const sportRecent = scoreOutfitCandidate(minimalCandidate, {
+    style: "casual",
+    preferenceEvents: [
+      {
+        style: "minimal",
+        tags: ["minimal"],
+        colors: ["black"],
+        selection_factors: [],
+        score: 80,
+        created_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000)
+          .toISOString(),
+      },
+      {
+        style: "sport",
+        tags: ["sport"],
+        colors: ["orange"],
+        selection_factors: [],
+        score: 80,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  });
+
+  assert(minimalRecent.score >= sportRecent.score);
+});
+
+Deno.test("explicit style still beats weak learned noise", () => {
+  const explicitMatch = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["formal"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], {
+    style: "formal",
+    preferenceEvents: [{
+      style: "sport",
+      tags: ["sport"],
+      colors: ["orange"],
+      selection_factors: [],
+      score: 62,
+      created_at: new Date().toISOString(),
+    }],
+  });
+  const noiseOnly = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["sport"] }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], {
+    style: "formal",
+    preferenceEvents: [{
+      style: "sport",
+      tags: ["sport"],
+      colors: ["orange"],
+      selection_factors: [],
+      score: 62,
+      created_at: new Date().toISOString(),
+    }],
+  });
+
+  assert(explicitMatch.score > noiseOnly.score);
+});
+
+Deno.test("learned events can be disabled", () => {
+  const withLearn = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["minimal"] }),
+    baseItem({ id: "pants", category: "pants", primary_color: "black" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], {
+    preferenceEvents: [{
+      style: "minimal",
+      tags: ["minimal"],
+      colors: ["black"],
+      selection_factors: [],
+      score: 80,
+      created_at: new Date().toISOString(),
+    }],
+    learnPreferences: true,
+  });
+  const disabled = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", tags: ["minimal"] }),
+    baseItem({ id: "pants", category: "pants", primary_color: "black" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], {
+    preferenceEvents: [{
+      style: "minimal",
+      tags: ["minimal"],
+      colors: ["black"],
+      selection_factors: [],
+      score: 80,
+      created_at: new Date().toISOString(),
+    }],
+    learnPreferences: false,
+  });
+  assert(withLearn.score > disabled.score);
+});
+
+Deno.test("low confidence is penalized only when stronger metadata alternatives exist", () => {
+  const highConfidence = [
+    baseItem({
+      id: "top",
+      category: "top",
+      tags: ["casual"],
+      ai_confidence: 0.95,
+      detected_attributes: { material: "cotton" },
+    }),
+    baseItem({
+      id: "pants",
+      category: "pants",
+      tags: ["casual"],
+      ai_confidence: 0.95,
+      detected_attributes: { fit: "regular" },
+    }),
+    baseItem({
+      id: "shoes",
+      category: "shoes",
+      tags: ["casual"],
+      ai_confidence: 0.95,
+      detected_attributes: { material: "leather" },
+    }),
+  ];
+
+  const lowConfidence = [
+    baseItem({
+      id: "top-low",
+      category: "top",
+      tags: ["needs-review"],
+      ai_confidence: 0.3,
+      detected_attributes: { needs_review: true },
+    }),
+    baseItem({
+      id: "pants-low",
+      category: "pants",
+      tags: ["casual"],
+      ai_confidence: 0.35,
+      detected_attributes: {},
+    }),
+    baseItem({
+      id: "shoes-low",
+      category: "shoes",
+      tags: ["casual"],
+      ai_confidence: 0.4,
+      detected_attributes: {},
+    }),
+  ];
+
+  const onlyLowAvailable = scoreOutfitCandidate(lowConfidence, {
+    style: "casual",
+    metadataQualityBaseline: 0.4,
+  });
+  const lowWhenHighExists = scoreOutfitCandidate(lowConfidence, {
+    style: "casual",
+    metadataQualityBaseline: 1,
+  });
+  const high = scoreOutfitCandidate(highConfidence, {
+    style: "casual",
+    metadataQualityBaseline: 1,
+  });
+
+  assert(
+    lowWhenHighExists.score < onlyLowAvailable.score,
+    "low confidence should only lose points when better metadata exists",
+  );
+  assert(high.score > lowWhenHighExists.score);
+});
+
+Deno.test("generated outfit selection rejects invalid ids and incomplete combinations", () => {
+  const wardrobe = [
+    baseItem({ id: "top", category: "top" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+    baseItem({ id: "hat", category: "hat" }),
+  ];
+  const candidates = buildValidOutfitCandidates(wardrobe, { style: "casual" });
+  const target = candidates[0];
+  const invalid = ["top", "pants", "ghost-id"];
+  const incomplete = target.item_ids.filter((id) => id !== "shoes");
+
+  const selected = selectUsableOutfitsFromGenerated(
+    [
+      {
+        name: "invalid ids",
+        item_ids: invalid,
+        style: "casual",
+        reason: "bad",
+        score: 90,
+      },
+      {
+        name: "incomplete",
+        item_ids: incomplete,
+        style: "casual",
+        reason: "bad",
+        score: 90,
+      },
+      {
+        name: "valid",
+        item_ids: target.item_ids,
+        style: "casual",
+        reason: "ok",
+        score: 88,
+      },
+    ],
+    candidates,
+    wardrobe,
+  );
+
+  assertEquals(
+    selected[0].item_ids.slice().sort(),
+    target.item_ids.slice().sort(),
+  );
+});
+
+Deno.test("repetition insights alert only at threshold", () => {
+  const below = repetitionInsights([
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+    { style: "work", colors: ["white"], worn_at: new Date().toISOString() },
+  ]);
+  const atThreshold = repetitionInsights([
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+    { style: "casual", colors: ["black"], worn_at: new Date().toISOString() },
+  ]);
+
+  assert(below.alert === false);
+  assert(atThreshold.alert === true);
 });
 
 function assert(value: unknown, message = "Assertion failed") {

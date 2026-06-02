@@ -9,6 +9,10 @@
   chat.
 - Open-Meteo forecast API for weather-aware outfit context.
 
+Facebook OAuth is intentionally out of scope for this build. Do not add a
+Facebook provider, login button, redirect setup, or related secrets unless that
+scope changes later.
+
 ## Flutter Runtime Config
 
 Run Flutter with compile-time environment values:
@@ -58,6 +62,13 @@ supported as a fallback if `OPENROUTER_API_KEY` is not set.
 
 ## Deploy
 
+This checkout is intended to deploy to the linked Supabase project
+`khrurzvtmpwaxclznnhk`. Confirm the link before pushing changes:
+
+```sh
+supabase projects list
+```
+
 ```sh
 supabase db push
 supabase functions deploy analyze-clothing-image
@@ -73,13 +84,20 @@ supabase functions deploy fashion-chat
 ## Backend Surface
 
 - `analyze-clothing-image`: signs a wardrobe image, sends it to the configured
-  AI model, and returns category/color/tag metadata.
+  AI model, and returns category/color/tag metadata. If the AI request fails,
+  it returns conservative metadata marked with `needs-review` instead of
+  blocking wardrobe entry creation.
 - `generate-outfits`: creates ranked outfit rows from wardrobe, profile,
-  weather, lucky colors, and wear history.
+  weather, lucky colors, and wear history. If AI ranking fails, it falls back
+  to deterministic outfit scoring.
 - `rush-outfit`: returns one practical least-recently-worn outfit.
 - `weather-context`: normalizes weather into outfit constraints.
 - `daily-lucky-colors`: computes colors from profile birth data and date.
+  `birth_weekday` is derived automatically from `birth_date` by a database
+  trigger when the profile is saved.
 - `repetition-insights`: detects repeated colors/styles from recent wear events.
-- `missing-pieces`: generates wardrobe gap recommendations.
+- `missing-pieces`: generates wardrobe gap recommendations, replaces previous
+  active recommendations to avoid duplicates, and supports dismissing a
+  recommendation through the existing `dismissed_at` column.
 - `fashion-chat`: stores user/assistant messages and replies with wardrobe-aware
   fashion advice.

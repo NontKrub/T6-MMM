@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/models/clothing_item.dart';
 import '../services/outfit_repository.dart';
+import 'app_settings_provider.dart';
+import 'repetition_insight_provider.dart';
 import 'wardrobe_provider.dart';
 
 final outfitsProvider = StateNotifierProvider<OutfitNotifier, List<Outfit>>((
@@ -29,15 +31,65 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     } catch (_) {}
   }
 
-  void selectOutfit(Outfit outfit, WidgetRef ref) {
+  Future<void> selectOutfit(Outfit outfit, WidgetRef ref) async {
     ref.read(currentOutfitProvider.notifier).state = outfit;
-    ref
+    await ref
         .read(wardrobeProvider.notifier)
         .markOutfitWorn(
           outfitId: outfit.id,
           itemIds: outfit.itemIds,
           style: outfit.style,
         );
+
+    if (ref.read(appSettingsProvider).learnPreferences) {
+      await _recordPreferenceSelection(outfit, ref);
+    }
+    ref.invalidate(repetitionInsightProvider);
+  }
+
+  Future<void> _recordPreferenceSelection(Outfit outfit, WidgetRef ref) async {
+    if (!_isLearnableSelection(outfit, ref)) return;
+
+    final selectedItems = ref
+        .read(wardrobeProvider)
+        .where((item) => outfit.itemIds.contains(item.id))
+        .toList();
+    if (selectedItems.isEmpty) return;
+
+    final tags = <String>{};
+    final colors = <String>{};
+    for (final item in selectedItems) {
+      tags.addAll(item.tags.map((tag) => tag.trim().toLowerCase()));
+      final color = item.color?.trim().toLowerCase();
+      if (color != null && color.isNotEmpty) {
+        colors.add(color);
+      }
+    }
+
+    await _repository.recordPreferenceEvent(
+      outfit: outfit,
+      itemIds: selectedItems.map((item) => item.id).toList(),
+      tags: tags.toList(),
+      colors: colors.toList(),
+      source: _sourceFor(outfit),
+    );
+  }
+
+  bool _isLearnableSelection(Outfit outfit, WidgetRef ref) {
+    final isRush = (outfit.style ?? '').trim().toLowerCase() == 'rush';
+    if (isRush) return true;
+    final fromCurrentGeneration = ref
+        .read(generatedOutfitsProvider)
+        .any((entry) => entry.id == outfit.id);
+    final looksGenerated =
+        outfit.selectionFactors.isNotEmpty && outfit.itemIds.length >= 3;
+    return fromCurrentGeneration || looksGenerated;
+  }
+
+  String _sourceFor(Outfit outfit) {
+    final style = (outfit.style ?? '').trim().toLowerCase();
+    if (style == 'rush') return 'rush';
+    return 'generated';
   }
 
   Future<List<Outfit>> generateBackendOutfits(
@@ -47,11 +99,15 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     bool useLuckyColor = false,
     bool matchWeather = false,
   }) async {
+    final appSettings = ref.read(appSettingsProvider);
     final generated = await _repository.generateOutfits(
       style: style,
       usePersonalColor: usePersonalColor,
       useLuckyColor: useLuckyColor,
       matchWeather: matchWeather,
+      luckyColorMethod: appSettings.luckyColorMethod,
+      weatherLocationMode: appSettings.weatherLocationMode,
+      learnPreferences: appSettings.learnPreferences,
     );
     state = [...generated, ...state];
     ref.read(generatedOutfitsProvider.notifier).state = generated;

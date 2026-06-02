@@ -1,6 +1,11 @@
-import { handleOptions, jsonResponse } from "../_shared/http.ts";
-import { recommendationsSchema, openAiJson } from "../_shared/openai.ts";
+import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { openAiJson, recommendationsSchema } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
+
+type MissingPiecesBody = {
+  action?: "generate" | "dismiss";
+  id?: string;
+};
 
 Deno.serve(async (req) => {
   const options = handleOptions(req);
@@ -8,23 +13,51 @@ Deno.serve(async (req) => {
 
   try {
     const { supabase, userId } = await requireUser(req);
-    const [{ data: profile }, { data: preferences }, { data: wardrobe }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).single(),
-      supabase.from("style_preferences").select("kind,value"),
-      supabase.from("clothing_items")
-        .select("id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn")
-        .is("archived_at", null),
-    ]);
+    const body = await readJson<MissingPiecesBody>(req);
+
+    if (body.action === "dismiss") {
+      if (!body.id) {
+        return jsonResponse({
+          error: "id is required to dismiss a recommendation.",
+        }, 400);
+      }
+
+      const { data, error } = await supabase.from(
+        "missing_piece_recommendations",
+      )
+        .update({ dismissed_at: new Date().toISOString() })
+        .eq("id", body.id)
+        .eq("user_id", userId)
+        .is("dismissed_at", null)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+
+      return jsonResponse({ recommendation: data });
+    }
+
+    const [{ data: profile }, { data: preferences }, { data: wardrobe }] =
+      await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).single(),
+        supabase.from("style_preferences").select("kind,value"),
+        supabase.from("clothing_items")
+          .select(
+            "id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn",
+          )
+          .is("archived_at", null),
+      ]);
 
     let result;
     try {
-      result = await openAiJson<{ recommendations: Array<{
-        category: "hat" | "top" | "pants" | "shoes" | "accessory";
-        title: string;
-        reason: string;
-        suggestion: string;
-        priority: string;
-      }> }>({
+      result = await openAiJson<{
+        recommendations: Array<{
+          category: "hat" | "top" | "pants" | "shoes" | "accessory";
+          title: string;
+          reason: string;
+          suggestion: string;
+          priority: string;
+        }>;
+      }>({
         instructions:
           "Recommend missing wardrobe pieces. Be concrete, useful, and avoid recommending items the user already owns.",
         input: [{
@@ -41,27 +74,25 @@ Deno.serve(async (req) => {
           strict: true,
         },
       });
-    } catch {
-      const categories = new Set((wardrobe ?? []).map((item) => item.category));
-      result = {
-        recommendations: [
-          !categories.has("shoes")
-            ? {
-              category: "shoes",
-              title: "Everyday neutral shoes",
-              reason: "A reliable shoe category unlocks more complete outfits.",
-              suggestion: "Try white sneakers or simple loafers.",
-              priority: "essential",
-            }
-            : {
-              category: "top",
-              title: "Versatile layering top",
-              reason: "A clean neutral top pairs across your existing wardrobe.",
-              suggestion: "Try a white shirt, ribbed tee, or lightweight knit.",
-              priority: "high_impact",
-            },
-        ],
-      };
+    } catch (error) {
+      console.error(
+        error instanceof Error
+          ? error.message
+          : "AI missing-piece recommendations failed.",
+      );
+      result = fallbackRecommendations(wardrobe ?? []);
+    }
+
+    const { error: clearError } = await supabase.from(
+      "missing_piece_recommendations",
+    )
+      .update({ dismissed_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("dismissed_at", null);
+    if (clearError) throw clearError;
+
+    if (result.recommendations.length === 0) {
+      result = fallbackRecommendations(wardrobe ?? []);
     }
 
     const rows = result.recommendations.map((rec) => ({
@@ -73,13 +104,46 @@ Deno.serve(async (req) => {
       priority: rec.priority,
       metadata: { source: "edge_function" },
     }));
-    const { data: inserted, error } = await supabase.from("missing_piece_recommendations")
+    const { data: inserted, error } = await supabase.from(
+      "missing_piece_recommendations",
+    )
       .insert(rows)
       .select();
     if (error) throw error;
 
     return jsonResponse({ recommendations: inserted ?? [] });
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : "Unknown error" }, 500);
+    return jsonResponse({
+      error: error instanceof Error ? error.message : "Unknown error",
+    }, 500);
   }
 });
+
+function fallbackRecommendations(
+  wardrobe: Array<{ category: unknown }>,
+) {
+  const categories = new Set(
+    wardrobe
+      .map((item) => item.category)
+      .filter((category): category is string => typeof category === "string"),
+  );
+  return {
+    recommendations: [
+      !categories.has("shoes")
+        ? {
+          category: "shoes" as const,
+          title: "Everyday neutral shoes",
+          reason: "A reliable shoe category unlocks more complete outfits.",
+          suggestion: "Try white sneakers or simple loafers.",
+          priority: "essential",
+        }
+        : {
+          category: "top" as const,
+          title: "Versatile layering top",
+          reason: "A clean neutral top pairs across your existing wardrobe.",
+          suggestion: "Try a white shirt, ribbed tee, or lightweight knit.",
+          priority: "high_impact",
+        },
+    ],
+  };
+}

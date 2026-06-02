@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/image_pick_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -14,7 +16,16 @@ import '../../shared/models/clothing_item.dart';
 const _uuid = Uuid();
 
 class AddItemSheet extends ConsumerStatefulWidget {
-  const AddItemSheet({super.key});
+  const AddItemSheet({
+    super.key,
+    this.imagePickService,
+    this.fileExists,
+    this.quickPickSource,
+  });
+
+  final ImagePickService? imagePickService;
+  final Future<bool> Function(String path)? fileExists;
+  final ImageSource? quickPickSource;
 
   @override
   ConsumerState<AddItemSheet> createState() => _AddItemSheetState();
@@ -28,6 +39,11 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
   final List<String> _tags = [];
+
+  ImagePickService get _imagePickService =>
+      widget.imagePickService ?? ref.read(imagePickServiceProvider);
+  Future<bool> _fileExists(String path) =>
+      widget.fileExists?.call(path) ?? File(path).exists();
 
   static const _tagOptions = [
     'casual',
@@ -57,21 +73,80 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _restoreLostImage();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _brandController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _restoreLostImage() async {
+    try {
+      final file = await _imagePickService.retrieveLostImage();
+      if (file == null) return;
+      await _setPickedFile(file);
+    } on PlatformException catch (error) {
+      _showPickerError(error, fromCamera: true);
+    } catch (_) {
+      _showError('Unable to recover your last camera photo.');
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: source, imageQuality: 80);
-    if (file == null) return;
+    try {
+      final file = await _imagePickService.pickImage(source: source);
+      if (file == null) return;
+      await _setPickedFile(file);
+    } on PlatformException catch (error) {
+      _showPickerError(error, fromCamera: source == ImageSource.camera);
+    } catch (_) {
+      _showError(
+        source == ImageSource.camera
+            ? 'Could not open the camera.'
+            : 'Could not open the photo library.',
+      );
+    }
+  }
+
+  Future<void> _setPickedFile(XFile file) async {
+    final path = file.path;
+    if (path.isEmpty) {
+      _showError('Image path is unavailable. Please try again.');
+      return;
+    }
+    final exists = await _fileExists(path);
+    if (!exists) {
+      _showError(
+        'Selected photo is no longer available. Please pick or take another photo.',
+      );
+      return;
+    }
+    if (!mounted) return;
 
     setState(() {
       _pickedFile = file;
-      _imagePath = file.path;
+      _imagePath = path;
     });
   }
 
   Future<void> _save() async {
-    if (_nameController.text.isEmpty) return;
+    if (_saving) return;
+    if (_pickedFile == null || _imagePath == null) {
+      _showError('Please add a photo before saving.');
+      return;
+    }
 
-    if (_pickedFile != null && SupabaseService.isSignedIn) {
+    final trimmedName = _nameController.text.trim();
+    final itemName = trimmedName.isNotEmpty ? trimmedName : 'Wardrobe item';
+    final brand = _brandController.text.trim();
+
+    if (SupabaseService.isSignedIn) {
       setState(() => _saving = true);
       try {
         await ref
@@ -79,32 +154,66 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
             .addUploadedItem(
               bytes: await _pickedFile!.readAsBytes(),
               fileName: _pickedFile!.name,
-              name: _nameController.text,
-              brand: _brandController.text.isEmpty
-                  ? null
-                  : _brandController.text,
+              name: trimmedName,
+              brand: brand.isEmpty ? null : brand,
               fallbackCategory: _category,
               tags: _tags,
             );
         if (!mounted) return;
         Navigator.pop(context);
         return;
-      } catch (_) {
-        setState(() => _saving = false);
+      } catch (error) {
+        if (mounted) {
+          _showError('Could not save item: $error');
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _saving = false);
+        }
       }
     }
 
     final item = ClothingItem(
       id: _uuid.v4(),
-      name: _nameController.text,
-      brand: _brandController.text.isEmpty ? null : _brandController.text,
+      name: itemName,
+      brand: brand.isEmpty ? null : brand,
       category: _category,
-      imageUrl: _imagePath ?? '',
+      imageUrl: _imagePath!,
       tags: _tags,
     );
 
     ref.read(wardrobeProvider.notifier).addItem(item);
     Navigator.pop(context);
+  }
+
+  bool _isPermissionError(PlatformException error) {
+    final code = error.code.toLowerCase();
+    return code.contains('access_denied') ||
+        code.contains('permission') ||
+        code.contains('denied');
+  }
+
+  void _showPickerError(PlatformException error, {required bool fromCamera}) {
+    if (_isPermissionError(error)) {
+      _showError(
+        fromCamera
+            ? 'Camera permission is denied. Enable camera access in Settings.'
+            : 'Photo library permission is denied. Enable photo access in Settings.',
+      );
+      return;
+    }
+    _showError(
+      fromCamera
+          ? 'Could not capture photo (${error.code}).'
+          : 'Could not select photo (${error.code}).',
+    );
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -146,7 +255,15 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   const SizedBox(height: 20),
                   // Image picker
                   GestureDetector(
-                    onTap: () => _showSourcePicker(context, l10n),
+                    key: const Key('add-item-image-picker'),
+                    onTap: () {
+                      final source = widget.quickPickSource;
+                      if (source != null) {
+                        _pickImage(source);
+                        return;
+                      }
+                      _showSourcePicker(context, l10n);
+                    },
                     child: Container(
                       height: 160,
                       decoration: BoxDecoration(
@@ -179,6 +296,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             )
                           : _imagePath != null
                           ? Stack(
+                              key: const Key('add-item-preview-image'),
                               alignment: Alignment.center,
                               children: [
                                 ClipRRect(
@@ -288,10 +406,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      hintText: l10n?.addItemNameHint ??
+                      hintText:
+                          l10n?.addItemNameHint ??
                           'Item name (e.g. White Linen Shirt)',
-                      prefixIcon:
-                          const Icon(Icons.label_outline_rounded),
+                      prefixIcon: const Icon(Icons.label_outline_rounded),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -348,7 +466,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: _save,
+                      key: const Key('add-item-save'),
+                      onPressed: _saving ? null : _save,
                       icon: const Icon(Icons.check_rounded, size: 18),
                       label: Text(l10n?.addItemSave ?? 'Save to Wardrobe'),
                     ),
@@ -366,29 +485,34 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => GlassContainer(
-        margin: const EdgeInsets.all(16),
-        borderRadius: 20,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
-              title: Text(l10n?.addItemCamera ?? 'Camera'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: Text(l10n?.addItemPhotoLibrary ?? 'Photo Library'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
+      useRootNavigator: true,
+      builder: (sheetContext) => SafeArea(
+        child: GlassContainer(
+          margin: const EdgeInsets.all(16),
+          borderRadius: 20,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                key: const Key('add-item-source-camera'),
+                leading: const Icon(Icons.camera_alt_rounded),
+                title: Text(l10n?.addItemCamera ?? 'Camera'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                key: const Key('add-item-source-gallery'),
+                leading: const Icon(Icons.photo_library_rounded),
+                title: Text(l10n?.addItemPhotoLibrary ?? 'Photo Library'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

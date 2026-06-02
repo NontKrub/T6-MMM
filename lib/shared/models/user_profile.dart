@@ -124,6 +124,10 @@ class UserProfile {
   }
 
   Map<String, dynamic> toProfileJson() {
+    final derivedBirthWeekday = birthDate == null
+        ? null
+        : (birthWeekday ?? birthDate!.weekday);
+
     return {
       'id': id,
       'display_name': name,
@@ -134,7 +138,7 @@ class UserProfile {
       'body_type': bodyType,
       'brand_tier': brandTier,
       'birth_date': birthDate?.toIso8601String().split('T').first,
-      'birth_weekday': birthWeekday,
+      'birth_weekday': derivedBirthWeekday,
       'body_shape': bodyShape.name,
       'skin_tone_index': skinToneIndex,
       'hair_color_index': hairColorIndex,

@@ -1,5 +1,31 @@
 import 'supabase_service.dart';
 
+class RepetitionInsight {
+  final bool alert;
+  final String? dominantColor;
+  final int dominantColorCount;
+  final String? dominantStyle;
+  final int dominantStyleCount;
+
+  const RepetitionInsight({
+    required this.alert,
+    this.dominantColor,
+    required this.dominantColorCount,
+    this.dominantStyle,
+    required this.dominantStyleCount,
+  });
+
+  factory RepetitionInsight.fromJson(Map<String, dynamic> json) {
+    return RepetitionInsight(
+      alert: json['alert'] == true,
+      dominantColor: json['dominant_color'] as String?,
+      dominantColorCount: json['dominant_color_count'] as int? ?? 0,
+      dominantStyle: json['dominant_style'] as String?,
+      dominantStyleCount: json['dominant_style_count'] as int? ?? 0,
+    );
+  }
+}
+
 class MissingPieceRecommendation {
   final String id;
   final String category;
@@ -48,17 +74,35 @@ class RecommendationRepository {
         .toList();
   }
 
-  Future<Map<String, dynamic>?> repetitionInsights() async {
+  Future<void> dismissMissingPiece(String recommendationId) async {
+    final client = SupabaseService.client;
+    if (client == null || client.auth.currentUser == null) return;
+
+    await client.functions.invoke(
+      'missing-pieces',
+      body: {'action': 'dismiss', 'id': recommendationId},
+    );
+  }
+
+  Future<RepetitionInsight?> repetitionInsights() async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) return null;
     final response = await client.functions.invoke(
       'repetition-insights',
       body: const {},
     );
-    return Map<String, dynamic>.from(response.data as Map);
+    return RepetitionInsight.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
-  Future<List<String>> dailyLuckyColors() async {
+  Future<List<String>> dailyLuckyColors({
+    String method = 'birth_profile',
+  }) async {
+    if (method == 'random_daily') {
+      return _randomDailyLuckyColors(DateTime.now());
+    }
+
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) return const [];
     final response = await client.functions.invoke(
@@ -67,5 +111,23 @@ class RecommendationRepository {
     );
     final data = Map<String, dynamic>.from(response.data as Map);
     return (data['colors'] as List? ?? const []).whereType<String>().toList();
+  }
+
+  List<String> _randomDailyLuckyColors(DateTime date) {
+    const palettes = [
+      ['white', 'silver', 'sky blue'],
+      ['yellow', 'cream', 'gold'],
+      ['pink', 'coral', 'rose'],
+      ['green', 'olive', 'mint'],
+      ['orange', 'tan', 'brown'],
+      ['blue', 'navy', 'teal'],
+      ['purple', 'black', 'charcoal'],
+    ];
+    final daySeed = DateTime.utc(
+      date.year,
+      date.month,
+      date.day,
+    ).difference(DateTime.utc(2024)).inDays;
+    return palettes[daySeed % palettes.length];
   }
 }

@@ -75,7 +75,7 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
   }
 
   void updateBirthDate(DateTime date) {
-    state = state.copyWith(birthDate: date);
+    state = state.copyWith(birthDate: date, birthWeekday: date.weekday);
     _persist();
   }
 

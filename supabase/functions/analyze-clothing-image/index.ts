@@ -9,6 +9,16 @@ type Body = {
   tags?: string[];
 };
 
+type ClothingAnalysis = {
+  category: "hat" | "top" | "pants" | "shoes" | "accessory";
+  suggested_name: string;
+  dominant_colors: string[];
+  primary_color: string;
+  tags: string[];
+  attributes: Record<string, unknown>;
+  confidence: number;
+};
+
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
@@ -25,43 +35,135 @@ Deno.serve(async (req) => {
       .from("wardrobe-images")
       .createSignedUrl(body.image_path, 60);
     if (error || !data?.signedUrl) {
-      return jsonResponse({ error: error?.message ?? "Unable to read uploaded image." }, 400);
+      return jsonResponse({
+        error: error?.message ?? "Unable to read uploaded image.",
+      }, 400);
     }
 
-    const analysis = await openAiJson<{
-      category: "hat" | "top" | "pants" | "shoes" | "accessory";
-      suggested_name: string;
-      dominant_colors: string[];
-      primary_color: string;
-      tags: string[];
-      attributes: Record<string, unknown>;
-      confidence: number;
-    }>({
-      instructions:
-        "Analyze the clothing item photo for a wardrobe app. Return only practical metadata. Use short lowercase tags and simple color names.",
-      input: [{
-        role: "user",
-        content: [
-          { type: "input_text", text: "Categorize this clothing item for Mix Match Mood." },
-          { type: "input_image", image_url: data.signedUrl },
-        ],
-      }],
-      responseFormat: {
-        type: "json_schema",
-        name: "clothing_analysis",
-        schema: clothingAnalysisSchema,
-        strict: true,
-      },
-    });
+    let analysis: ClothingAnalysis;
+
+    try {
+      analysis = await openAiJson<ClothingAnalysis>({
+        instructions:
+          "Analyze this single clothing item for outfit generation. Return practical metadata only: category, primary and dominant colors, concise lowercase tags, confidence 0..1, and detected attributes helpful for style/weather matching (material, fit, formality, seasonality, weather suitability, details).",
+        input: [{
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: "Categorize this clothing item for Mix Match Mood.",
+            },
+            { type: "input_image", image_url: data.signedUrl },
+          ],
+        }],
+        responseFormat: {
+          type: "json_schema",
+          name: "clothing_analysis",
+          schema: clothingAnalysisSchema,
+          strict: true,
+        },
+      });
+    } catch (error) {
+      console.error(
+        error instanceof Error ? error.message : "AI clothing analysis failed.",
+      );
+      analysis = fallbackAnalysis(body);
+    }
+    analysis = normalizeAnalysis(analysis);
 
     return jsonResponse({
       user_id: userId,
       ...analysis,
       suggested_name: body.name?.trim() || analysis.suggested_name,
-      tags: [...new Set([...(body.tags ?? []), ...analysis.tags])],
+      tags: [
+        ...new Set(
+          [...(body.tags ?? []), ...analysis.tags]
+            .map((tag) => normalizeWord(tag))
+            .filter(Boolean),
+        ),
+      ].slice(0, 8),
       brand: body.brand ?? null,
     });
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : "Unknown error" }, 500);
+    return jsonResponse({
+      error: error instanceof Error ? error.message : "Unknown error",
+    }, 500);
   }
 });
+
+function fallbackAnalysis(body: Body) {
+  const nameText = `${body.name ?? ""} ${(body.tags ?? []).join(" ")}`
+    .toLowerCase();
+  const category = inferCategory(nameText);
+  const tags = [
+    ...new Set(
+      ["needs-review", ...(body.tags ?? [])]
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ].slice(0, 8);
+
+  return {
+    category,
+    suggested_name: body.name?.trim() || "Wardrobe item",
+    dominant_colors: [],
+    primary_color: "unknown",
+    tags,
+    attributes: { ai_fallback: true },
+    confidence: 0,
+  };
+}
+
+function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
+  const normalizedPrimary = normalizeWord(analysis.primary_color) || "unknown";
+  const normalizedDominant = [
+    ...new Set(
+      analysis.dominant_colors
+        .map(normalizeWord)
+        .filter(Boolean),
+    ),
+  ].slice(0, 5);
+  const tags = [
+    ...new Set(analysis.tags.map(normalizeWord).filter(Boolean)),
+  ].slice(0, 8);
+  const attributes = analysis.attributes &&
+      typeof analysis.attributes === "object" &&
+      !Array.isArray(analysis.attributes)
+    ? analysis.attributes
+    : {};
+  const confidence = Math.max(
+    0,
+    Math.min(1, Number.isFinite(analysis.confidence) ? analysis.confidence : 0),
+  );
+
+  return {
+    ...analysis,
+    category: analysis.category,
+    suggested_name: analysis.suggested_name.trim() || "Wardrobe item",
+    primary_color: normalizedPrimary,
+    dominant_colors: normalizedDominant.length > 0
+      ? normalizedDominant
+      : normalizedPrimary === "unknown"
+      ? []
+      : [normalizedPrimary],
+    tags,
+    attributes,
+    confidence,
+  };
+}
+
+function normalizeWord(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function inferCategory(
+  text: string,
+): "hat" | "top" | "pants" | "shoes" | "accessory" {
+  if (/\b(cap|hat|beanie)\b/.test(text)) return "hat";
+  if (/\b(shoe|sneaker|boot|loafer|heel|sandal)\b/.test(text)) return "shoes";
+  if (/\b(pant|jean|trouser|short|skirt)\b/.test(text)) return "pants";
+  if (/\b(bag|belt|watch|scarf|necklace|bracelet|ring)\b/.test(text)) {
+    return "accessory";
+  }
+  return "top";
+}
