@@ -98,7 +98,7 @@ class OnboardingScreen extends ConsumerWidget {
                     value: (state.step + 1) / steps.length,
                     backgroundColor: Colors.white.withOpacity(0.1),
                     valueColor: const AlwaysStoppedAnimation(
-                      AppColors.seedColor,
+                      AppColors.accentGold,
                     ),
                     minHeight: 4,
                   ),
@@ -230,7 +230,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.dark(
-            primary: AppColors.seedColor,
+            primary: AppColors.accentGold,
             onPrimary: Colors.white,
             surface: Color(0xFF1A0E2E),
             onSurface: Colors.white,
@@ -300,7 +300,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.seedColor),
+                borderSide: const BorderSide(color: AppColors.accentGold),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -329,7 +329,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: hasDob
-                      ? AppColors.seedColor
+                      ? AppColors.accentGold
                       : Colors.white.withOpacity(0.15),
                 ),
               ),
@@ -338,7 +338,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
                   Icon(
                     Icons.calendar_today_rounded,
                     color: hasDob
-                        ? AppColors.seedColor
+                        ? AppColors.accentGold
                         : Colors.white.withOpacity(0.4),
                     size: 18,
                   ),
@@ -501,12 +501,12 @@ class _StyleAndBodyStep extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.seedColor
+                        ? AppColors.accentGold
                         : Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: sel
-                          ? AppColors.seedColor
+                          ? AppColors.accentGold
                           : Colors.white.withOpacity(0.15),
                     ),
                   ),
@@ -553,12 +553,12 @@ class _StyleAndBodyStep extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.seedColor
+                        ? AppColors.accentGold
                         : Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: sel
-                          ? AppColors.seedColor
+                          ? AppColors.accentGold
                           : Colors.white.withOpacity(0.15),
                     ),
                   ),
@@ -645,12 +645,12 @@ class _ColorSeasonStep extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: sel
-                      ? AppColors.seedColor.withOpacity(0.2)
+                      ? AppColors.accentGold.withOpacity(0.2)
                       : Colors.white.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: sel
-                        ? AppColors.seedColor
+                        ? AppColors.accentGold
                         : Colors.white.withOpacity(0.12),
                     width: sel ? 2 : 1,
                   ),
@@ -685,7 +685,7 @@ class _ColorSeasonStep extends StatelessWidget {
                       const Spacer(),
                       const Icon(
                         Icons.check_circle_rounded,
-                        color: AppColors.seedColor,
+                        color: AppColors.accentGold,
                         size: 20,
                       ),
                     ],
@@ -760,12 +760,12 @@ class _OccasionStep extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.seedColor
+                        ? AppColors.accentGold
                         : Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: sel
-                          ? AppColors.seedColor
+                          ? AppColors.accentGold
                           : Colors.white.withOpacity(0.12),
                     ),
                   ),

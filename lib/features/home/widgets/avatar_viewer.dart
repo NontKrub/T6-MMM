@@ -128,7 +128,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                           center: const Alignment(0, -0.20),
                           radius: 0.88,
                           colors: [
-                            AppColors.seedColor.withValues(
+                            AppColors.accentGold.withValues(
                               alpha: isDark
                                   ? 0.11 + _glowController.value * 0.08
                                   : 0.05 + _glowController.value * 0.03,
@@ -151,7 +151,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            AppColors.gradientEnd.withValues(
+                            AppColors.accentGold.withValues(
                               alpha: isDark
                                   ? 0.07 + _glowController.value * 0.04
                                   : 0.03,
@@ -247,7 +247,7 @@ class _AvatarViewerState extends State<AvatarViewer>
           height: i.isEven ? 3 : 2,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: (i.isEven ? AppColors.seedColor : AppColors.gradientEnd)
+            color: (i.isEven ? AppColors.accentGold : AppColors.accentGold)
                 .withValues(alpha: isDark ? alpha * 0.55 : alpha * 0.28),
           ),
         ),
@@ -305,8 +305,8 @@ class _PlatformPainter extends CustomPainter {
         Paint()
           ..shader = RadialGradient(
             colors: [
-              AppColors.seedColor.withValues(alpha: ringAlpha * 1.6),
-              AppColors.gradientEnd.withValues(alpha: ringAlpha * 0.4),
+              AppColors.accentGold.withValues(alpha: ringAlpha * 1.6),
+              AppColors.accentGold.withValues(alpha: ringAlpha * 0.4),
             ],
           ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
           ..style = PaintingStyle.stroke
@@ -323,7 +323,7 @@ class _PlatformPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            AppColors.seedColor.withValues(alpha: 0.22 + glow * 0.14),
+            AppColors.accentGold.withValues(alpha: 0.22 + glow * 0.14),
             Colors.transparent,
           ],
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),

@@ -24,7 +24,7 @@ class ClothingItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.seedColor : Colors.transparent,
+            color: selected ? AppColors.accentGold : Colors.transparent,
             width: 2,
           ),
         ),

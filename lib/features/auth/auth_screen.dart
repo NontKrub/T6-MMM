@@ -103,7 +103,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             top: -80,
             right: -60,
             child: _GlowOrb(
-              color: AppColors.seedColor.withOpacity(0.3),
+              color: AppColors.accentGold.withOpacity(0.3),
               size: 280,
             ),
           ),
@@ -111,7 +111,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             bottom: -100,
             left: -80,
             child: _GlowOrb(
-              color: AppColors.gradientEnd.withOpacity(0.2),
+              color: AppColors.accentGold.withOpacity(0.2),
               size: 320,
             ),
           ),
@@ -130,8 +130,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
+                          AppColors.accentGold,
+                          AppColors.accentGold,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),

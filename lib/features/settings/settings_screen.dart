@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: Switch(
               value: isDark,
               onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: AppColors.accentGold,
             ),
           ).animate().fadeIn(duration: 300.ms),
 
@@ -45,7 +45,7 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader(title: l10n?.settingsLanguage ?? 'Language'),
           _SettingsTile(
             icon: Icons.language_rounded,
-            iconColor: AppColors.seedColor,
+            iconColor: AppColors.accentGold,
             title: l10n?.settingsLanguage ?? 'Language',
             subtitle: locale.languageCode == 'th'
                 ? (l10n?.settingsLanguageValue ?? 'ภาษาไทย')
@@ -60,7 +60,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _SettingsTile(
             icon: Icons.palette_rounded,
-            iconColor: AppColors.gradientEnd,
+            iconColor: AppColors.accentGold,
             title: l10n?.settingsLuckyColor ?? 'Lucky Color Method',
             subtitle: _luckyColorLabel(appSettings.luckyColorMethod, l10n),
             onTap: () => _showLuckyColorMethodSheet(context, ref, l10n),
@@ -90,7 +90,7 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) => ref
                   .read(appSettingsProvider.notifier)
                   .setDailyOutfitReminder(value),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: AppColors.accentGold,
             ),
           ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
@@ -105,7 +105,7 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) => ref
                   .read(appSettingsProvider.notifier)
                   .setRepetitionAlerts(value),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: AppColors.accentGold,
             ),
           ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
 
@@ -113,7 +113,7 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader(title: l10n?.settingsAI ?? 'AI Features'),
           _SettingsTile(
             icon: Icons.auto_awesome_rounded,
-            iconColor: AppColors.seedColor,
+            iconColor: AppColors.accentGold,
             title: l10n?.settingsLearnPreferences ?? 'Learn my preferences',
             subtitle:
                 l10n?.settingsLearnPreferencesSubtitle ??
@@ -123,7 +123,7 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) => ref
                   .read(appSettingsProvider.notifier)
                   .setLearnPreferences(value),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: AppColors.accentGold,
             ),
           ).animate(delay: 300.ms).fadeIn(duration: 300.ms),
 
@@ -266,7 +266,7 @@ class SettingsScreen extends ConsumerWidget {
                       selected
                           ? Icons.radio_button_checked_rounded
                           : Icons.radio_button_unchecked_rounded,
-                      color: selected ? AppColors.seedColor : Colors.grey,
+                      color: selected ? AppColors.accentGold : Colors.grey,
                     ),
                   );
                 }),

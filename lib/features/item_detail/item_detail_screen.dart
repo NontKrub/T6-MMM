@@ -153,13 +153,13 @@ class ItemDetailScreen extends ConsumerWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.seedColor.withOpacity(0.1),
+                              color: AppColors.accentGold.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               tag,
                               style: TextStyle(
-                                color: AppColors.seedColor,
+                                color: AppColors.accentGold,
                                 fontSize: 12,
                               ),
                             ),

@@ -21,7 +21,7 @@ class CategoryTabs extends StatelessWidget {
         itemBuilder: (context, i) {
           final cat = all[i];
           final isSelected = cat == selected;
-          final color = cat?.color ?? AppColors.seedColor;
+          final color = cat?.color ?? AppColors.accentGold;
           final label = cat?.label ?? 'All';
 
           return GestureDetector(

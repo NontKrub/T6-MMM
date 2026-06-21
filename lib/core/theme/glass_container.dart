@@ -32,10 +32,10 @@ class GlassContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final glassTint =
-        tint ?? (isDark ? AppColors.glassDark : AppColors.glassLight);
+        tint ?? (isDark ? AppColors.backgroundSurface : AppColors.backgroundSurface);
     final borderColor = isDark
-        ? AppColors.glassBorderDark
-        : AppColors.glassBorder;
+        ? AppColors.borderSubtle
+        : AppColors.borderSubtle;
 
     Widget glass = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),

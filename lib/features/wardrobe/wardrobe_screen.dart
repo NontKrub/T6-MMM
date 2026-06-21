@@ -137,7 +137,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
             backgroundColor: Colors.transparent,
             builder: (_) => const AddItemSheet(),
           ),
-          backgroundColor: AppColors.seedColor,
+          backgroundColor: AppColors.accentGold,
           child: const Icon(Icons.add_rounded, color: Colors.white),
         ),
       ),

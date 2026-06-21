@@ -54,7 +54,7 @@ class HomeScreen extends ConsumerWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.seedColor.withValues(alpha: 0.15),
+                    AppColors.accentGold.withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -80,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
                             children: [
                               CircleAvatar(
                                 radius: 14,
-                                backgroundColor: AppColors.seedColor,
+                                backgroundColor: AppColors.accentGold,
                                 child: Text(
                                   profile.name.isNotEmpty
                                       ? profile.name[0]
@@ -150,7 +150,7 @@ class HomeScreen extends ConsumerWidget {
                                 Icon(
                                   Icons.auto_fix_high_rounded,
                                   size: 14,
-                                  color: AppColors.seedColor,
+                                  color: AppColors.accentGold,
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
@@ -158,7 +158,7 @@ class HomeScreen extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.seedColor,
+                                    color: AppColors.accentGold,
                                   ),
                                 ),
                               ],
@@ -222,7 +222,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               label: Text(l10n?.homeGenerateOutfit ?? 'Generate Outfit'),
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.seedColor,
+                                backgroundColor: AppColors.accentGold,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
                                 ),
@@ -426,8 +426,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           gradient: selected
                               ? const LinearGradient(
                                   colors: [
-                                    AppColors.gradientStart,
-                                    AppColors.gradientEnd,
+                                    AppColors.accentGold,
+                                    AppColors.accentGold,
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -435,7 +435,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               : null,
                           color: selected
                               ? null
-                              : AppColors.seedColor.withValues(alpha: 0.08),
+                              : AppColors.accentGold.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
                           border: selected
                               ? null
@@ -445,7 +445,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           boxShadow: selected
                               ? [
                                   BoxShadow(
-                                    color: AppColors.seedColor.withValues(
+                                    color: AppColors.accentGold.withValues(
                                       alpha: 0.35,
                                     ),
                                     blurRadius: 12,
@@ -461,7 +461,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               size: 26,
                               color: selected
                                   ? Colors.white
-                                  : AppColors.seedColor.withValues(alpha: 0.70),
+                                  : AppColors.accentGold.withValues(alpha: 0.70),
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -514,17 +514,17 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
                             gradient: sel ? const LinearGradient(
-                              colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                              colors: [AppColors.accentGold, AppColors.accentGold],
                               begin: Alignment.topLeft, end: Alignment.bottomRight,
                             ) : null,
-                            color: sel ? null : AppColors.seedColor.withValues(alpha: 0.08),
+                            color: sel ? null : AppColors.accentGold.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(16),
                             border: sel ? null : Border.all(color: Colors.grey.withValues(alpha: 0.18)),
-                            boxShadow: sel ? [BoxShadow(color: AppColors.seedColor.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))] : null,
+                            boxShadow: sel ? [BoxShadow(color: AppColors.accentGold.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))] : null,
                           ),
                           child: Column(
                             children: [
-                              Icon(icon, size: 26, color: sel ? Colors.white : AppColors.seedColor.withValues(alpha: 0.70)),
+                              Icon(icon, size: 26, color: sel ? Colors.white : AppColors.accentGold.withValues(alpha: 0.70)),
                               const SizedBox(height: 6),
                               Text(_localizedBodyShapeLabel(l10n, label), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : Colors.grey)),
                               if (sel) ...[const SizedBox(height: 4), Container(width: 4, height: 4, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white))],
@@ -555,13 +555,13 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           gradient: sel ? const LinearGradient(
-                            colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                            colors: [AppColors.accentGold, AppColors.accentGold],
                             begin: Alignment.topLeft, end: Alignment.bottomRight,
                           ) : null,
-                          color: sel ? null : AppColors.seedColor.withValues(alpha: 0.08),
+                          color: sel ? null : AppColors.accentGold.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                           border: sel ? null : Border.all(color: Colors.grey.withValues(alpha: 0.18)),
-                          boxShadow: sel ? [BoxShadow(color: AppColors.seedColor.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 2))] : null,
+                          boxShadow: sel ? [BoxShadow(color: AppColors.accentGold.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 2))] : null,
                         ),
                         child: Text(
                           _localizedHairStyle(l10n, _hairStyleKeys[i]),
@@ -597,7 +597,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           shape: BoxShape.circle,
                           color: _skinTones[i],
                           border: sel
-                              ? Border.all(color: AppColors.seedColor, width: 3)
+                              ? Border.all(color: AppColors.accentGold, width: 3)
                               : Border.all(
                                   color: Colors.grey.withValues(alpha: 0.20),
                                   width: 1.5,
@@ -648,7 +648,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               color: _hairColors[i],
                               border: sel
                                   ? Border.all(
-                                      color: AppColors.seedColor,
+                                      color: AppColors.accentGold,
                                       width: 3,
                                     )
                                   : Border.all(
@@ -675,7 +675,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 9,
                               color: sel
-                                  ? AppColors.seedColor
+                                  ? AppColors.accentGold
                                   : Colors.grey.withValues(alpha: 0.55),
                               fontWeight: sel
                                   ? FontWeight.w700
@@ -694,7 +694,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   child: FilledButton(
                     onPressed: () => Navigator.pop(context),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.seedColor,
+                      backgroundColor: AppColors.accentGold,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

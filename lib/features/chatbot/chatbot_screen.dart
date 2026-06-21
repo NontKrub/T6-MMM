@@ -73,8 +73,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
+                          AppColors.accentGold,
+                          AppColors.accentGold,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -136,16 +136,16 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.seedColor.withOpacity(0.12),
+                        color: AppColors.accentGold.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.seedColor.withOpacity(0.2),
+                          color: AppColors.accentGold.withOpacity(0.2),
                         ),
                       ),
                       child: Text(
                         prompts[i],
                         style: TextStyle(
-                          color: AppColors.seedColor,
+                          color: AppColors.accentGold,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -203,7 +203,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.seedColor,
+                            color: AppColors.accentGold,
                             borderRadius: BorderRadius.circular(22),
                           ),
                           child: const Icon(
@@ -243,7 +243,7 @@ class _LockedAiState extends StatelessWidget {
             children: [
               const Icon(
                 Icons.lock_outline_rounded,
-                color: AppColors.seedColor,
+                color: AppColors.accentGold,
                 size: 36,
               ),
               const SizedBox(height: 12),
@@ -289,7 +289,7 @@ class _MessageBubble extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.seedColor,
+                  color: AppColors.accentGold,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(18),
                     topRight: Radius.circular(18),
@@ -339,7 +339,7 @@ class _TypingBubble extends StatelessWidget {
                       height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.seedColor,
+                        color: AppColors.accentGold,
                         shape: BoxShape.circle,
                       ),
                     )

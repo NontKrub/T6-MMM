@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const seedColor = Color(0xFF8B5CF6);
-  static const accentGold = Color(0xFFF59E0B);
-
-  static const surfaceLight = Color(0xFFF8F7FF);
-  static const surfaceDark = Color(0xFF0F0E1A);
-
-  // Glass tints
-  static const glassLight = Color(0x26FFFFFF);
-  static const glassDark = Color(0x14FFFFFF);
-  static const glassBorder = Color(0x40FFFFFF);
-  static const glassBorderDark = Color(0x1AFFFFFF);
+  // Backgrounds
+  static const backgroundBase = Color(0xFF0A0A0A);
+  static const backgroundSurface = Color(0xFF111111);
+  static const backgroundElevated = Color(0xFF1A1A1A);
 
   // Text
-  static const textPrimaryLight = Color(0xFF1A1A2E);
-  static const textPrimaryDark = Color(0xFFF0EEFF);
-  static const textSecondaryLight = Color(0xFF6B6B8A);
-  static const textSecondaryDark = Color(0xFFAAAACC);
+  static const textPrimary = Color(0xFFF2EDE4);
+  static const textSecondary = Color(0xFF8C8984);
+  static const textTertiary = Color(0xFF4A4846);
 
-  // Gradient stops
-  static const gradientStart = Color(0xFF8B5CF6);
-  static const gradientEnd = Color(0xFFEC4899);
+  // Accent — single gold
+  static const accentGold = Color(0xFFC9A84C);
+  static const accentGoldDim = Color(0xFF8A6B28);
+  static const accentGoldFaint = Color(0x1AC9A84C);
 
-  // Category colors
-  static const colorHats = Color(0xFFE879F9);
-  static const colorTops = Color(0xFF818CF8);
-  static const colorPants = Color(0xFF34D399);
-  static const colorShoes = Color(0xFFFBBF24);
-  static const colorAccessories = Color(0xFFF87171);
+  // Borders
+  static const borderSubtle = Color(0xFF242424);
+  static const borderMedium = Color(0xFF333333);
+
+  // Category colors — editorial neutrals
+  static const colorHats = Color(0xFF8C7A6B);
+  static const colorTops = Color(0xFF6B7A8C);
+  static const colorPants = Color(0xFF6B8C7A);
+  static const colorShoes = Color(0xFFC9A84C);
+  static const colorAccessories = Color(0xFF8C6B7A);
 }

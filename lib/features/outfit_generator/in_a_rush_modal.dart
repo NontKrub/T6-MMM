@@ -308,7 +308,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                           : (l10n?.rushWearThis ?? 'Wear This'),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.seedColor,
+                      backgroundColor: AppColors.accentGold,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),

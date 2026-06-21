@@ -30,7 +30,7 @@ class OutfitCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         color: isDark ? const Color(0xFF1A1628) : Colors.white,
         border: Border.all(
-          color: isSelected ? AppColors.seedColor : Colors.transparent,
+          color: isSelected ? AppColors.accentGold : Colors.transparent,
           width: 2,
         ),
         boxShadow: [
@@ -141,13 +141,13 @@ class _ScorePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.seedColor.withValues(alpha: 0.14),
+        color: AppColors.accentGold.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         score.round().toString(),
         style: const TextStyle(
-          color: AppColors.seedColor,
+          color: AppColors.accentGold,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
@@ -165,13 +165,13 @@ class _FactorChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.seedColor.withValues(alpha: 0.15),
+        color: AppColors.accentGold.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label.replaceAll('_', ' '),
         style: const TextStyle(
-          color: AppColors.seedColor,
+          color: AppColors.accentGold,
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),

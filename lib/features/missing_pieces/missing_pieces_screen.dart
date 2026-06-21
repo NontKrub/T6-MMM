@@ -86,7 +86,7 @@ class MissingPiecesScreen extends ConsumerWidget {
                       error: (error, _) => _ErrorState(error: error),
                       loading: () => const Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.seedColor,
+                          color: AppColors.accentGold,
                         ),
                       ),
                     ),
@@ -166,7 +166,7 @@ class _CenteredMessage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: AppColors.seedColor, size: 36),
+              Icon(icon, color: AppColors.accentGold, size: 36),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -238,7 +238,7 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                     Text(
                       rec.priority,
                       style: const TextStyle(
-                        color: AppColors.seedColor,
+                        color: AppColors.accentGold,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -261,7 +261,7 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                         : (AppLocalizations.of(context)?.missingWhyExpand ??
                               'Why?'),
                     style: const TextStyle(
-                      color: AppColors.seedColor,
+                      color: AppColors.accentGold,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -270,7 +270,7 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                     _expanded
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.seedColor,
+                    color: AppColors.accentGold,
                     size: 18,
                   ),
                 ],

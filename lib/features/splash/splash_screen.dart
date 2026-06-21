@@ -64,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
+                          AppColors.accentGold,
+                          AppColors.accentGold,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.seedColor.withOpacity(0.4),
+                          color: AppColors.accentGold.withOpacity(0.4),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),
@@ -116,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 32,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.seedColor.withOpacity(0.6),
+                  color: AppColors.accentGold.withOpacity(0.6),
                 ),
               ).animate(delay: 800.ms).fadeIn(duration: 400.ms),
             ],

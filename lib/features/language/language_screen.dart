@@ -52,7 +52,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
             top: -80,
             right: -60,
             child: _GlowOrb(
-              color: AppColors.seedColor.withOpacity(0.3),
+              color: AppColors.accentGold.withOpacity(0.3),
               size: 280,
             ),
           ),
@@ -60,7 +60,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
             bottom: -100,
             left: -80,
             child: _GlowOrb(
-              color: AppColors.gradientEnd.withOpacity(0.2),
+              color: AppColors.accentGold.withOpacity(0.2),
               size: 320,
             ),
           ),
@@ -79,14 +79,14 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [
-                              AppColors.gradientStart,
-                              AppColors.gradientEnd,
+                              AppColors.accentGold,
+                              AppColors.accentGold,
                             ],
                           ),
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.seedColor.withOpacity(0.4),
+                              color: AppColors.accentGold.withOpacity(0.4),
                               blurRadius: 24,
                               spreadRadius: 4,
                             ),
@@ -177,7 +177,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                                   }
                                 },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.seedColor,
+                            backgroundColor: AppColors.accentGold,
                             disabledBackgroundColor:
                                 Colors.white.withOpacity(0.1),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -236,12 +236,12 @@ class _LanguageCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.seedColor.withOpacity(0.2)
+              ? AppColors.accentGold.withOpacity(0.2)
               : Colors.white.withOpacity(0.06),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: selected
-                ? AppColors.seedColor
+                ? AppColors.accentGold
                 : Colors.white.withOpacity(0.12),
             width: selected ? 2 : 1,
           ),
@@ -265,7 +265,7 @@ class _LanguageCard extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: const BoxDecoration(
-                  color: AppColors.seedColor,
+                  color: AppColors.accentGold,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

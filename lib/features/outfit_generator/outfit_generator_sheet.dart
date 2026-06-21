@@ -176,14 +176,14 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: sel
-                                  ? AppColors.seedColor
-                                  : AppColors.seedColor.withValues(alpha: 0.1),
+                                  ? AppColors.accentGold
+                                  : AppColors.accentGold.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               _localizedStyle(l10n, s),
                               style: TextStyle(
-                                color: sel ? Colors.white : AppColors.seedColor,
+                                color: sel ? Colors.white : AppColors.accentGold,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -350,7 +350,7 @@ class _FilterToggle extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: AppColors.accentGold,
             ),
           ],
         ),
@@ -372,7 +372,7 @@ class _LockedState extends StatelessWidget {
         children: [
           const Icon(
             Icons.lock_outline_rounded,
-            color: AppColors.seedColor,
+            color: AppColors.accentGold,
             size: 34,
           ),
           const SizedBox(height: 10),

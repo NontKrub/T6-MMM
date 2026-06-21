@@ -91,14 +91,14 @@ class _NavItem extends StatelessWidget {
         height: 52,
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.seedColor.withOpacity(0.2)
+              ? AppColors.accentGold.withOpacity(0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
           size: 24,
-          color: selected ? AppColors.seedColor : Colors.grey,
+          color: selected ? AppColors.accentGold : Colors.grey,
         ),
       ),
     );

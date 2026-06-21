@@ -39,8 +39,8 @@ class ProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
+                          AppColors.accentGold,
+                          AppColors.accentGold,
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -120,12 +120,12 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.seedColor.withOpacity(0.15)
+                        ? AppColors.accentGold.withOpacity(0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: sel
-                          ? AppColors.seedColor
+                          ? AppColors.accentGold
                           : Colors.grey.withOpacity(0.2),
                       width: sel ? 2 : 1,
                     ),
@@ -155,7 +155,7 @@ class ProfileScreen extends ConsumerWidget {
                       if (sel)
                         const Icon(
                           Icons.check_circle_rounded,
-                          color: AppColors.seedColor,
+                          color: AppColors.accentGold,
                           size: 20,
                         ),
                     ],
@@ -182,13 +182,13 @@ class ProfileScreen extends ConsumerWidget {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.seedColor.withOpacity(0.12),
+                          color: AppColors.accentGold.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           s,
                           style: TextStyle(
-                            color: AppColors.seedColor,
+                            color: AppColors.accentGold,
                             fontSize: 13,
                           ),
                         ),

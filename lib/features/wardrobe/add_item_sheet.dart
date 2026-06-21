@@ -272,7 +272,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             : const Color(0xFFEDE9FF),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.seedColor.withOpacity(0.3),
+                          color: AppColors.accentGold.withOpacity(0.3),
                           style: BorderStyle.solid,
                         ),
                       ),
@@ -281,14 +281,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const CircularProgressIndicator(
-                                  color: AppColors.seedColor,
+                                  color: AppColors.accentGold,
                                   strokeWidth: 2,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   l10n?.addItemSaving ?? 'Saving...',
                                   style: TextStyle(
-                                    color: AppColors.seedColor,
+                                    color: AppColors.accentGold,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -337,14 +337,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 Icon(
                                   Icons.add_photo_alternate_rounded,
                                   size: 36,
-                                  color: AppColors.seedColor.withOpacity(0.6),
+                                  color: AppColors.accentGold.withOpacity(0.6),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   l10n?.addItemTapToAddPhoto ??
                                       'Tap to add photo',
                                   style: TextStyle(
-                                    color: AppColors.seedColor.withOpacity(0.7),
+                                    color: AppColors.accentGold.withOpacity(0.7),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -445,14 +445,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           ),
                           decoration: BoxDecoration(
                             color: sel
-                                ? AppColors.seedColor
-                                : AppColors.seedColor.withOpacity(0.1),
+                                ? AppColors.accentGold
+                                : AppColors.accentGold.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             _localizedTag(l10n, tag),
                             style: TextStyle(
-                              color: sel ? Colors.white : AppColors.seedColor,
+                              color: sel ? Colors.white : AppColors.accentGold,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
