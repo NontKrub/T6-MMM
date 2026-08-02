@@ -60,7 +60,7 @@ class _Fallback extends StatelessWidget {
       child: Center(
         child: Icon(
           item.category.icon,
-          color: item.category.color.withOpacity(muted ? 0.5 : 1),
+          color: item.category.color.withValues(alpha: muted ? 0.5 : 1),
           size: 36,
         ),
       ),

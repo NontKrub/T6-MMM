@@ -55,7 +55,7 @@ class MissingPiecesScreen extends ConsumerWidget {
                         : (l10n?.missingSubtitleUnlocked ??
                               'Curated to fill the gaps in your collection'),
                     style: TextStyle(
-                      color: Colors.grey.withOpacity(0.6),
+                      color: Colors.grey.withValues(alpha: 0.6),
                       fontSize: 13,
                     ),
                   ),
@@ -178,7 +178,7 @@ class _CenteredMessage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 message,
-                style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+                style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -218,7 +218,7 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.15),
+                  color: category.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(category.icon, color: category.color, size: 20),
@@ -283,7 +283,7 @@ class _RecommendationCardState extends State<_RecommendationCard> {
             const SizedBox(height: 8),
             Text(
               rec.suggestion,
-              style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+              style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
             ),
           ],
         ],

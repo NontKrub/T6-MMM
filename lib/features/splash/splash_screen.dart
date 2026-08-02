@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.seedColor.withOpacity(0.4),
+                          color: AppColors.seedColor.withValues(alpha: 0.4),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),
@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 builder: (ctx) => Text(
                   _tagline(ctx),
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 14,
                   ),
                 ),
@@ -116,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 32,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.seedColor.withOpacity(0.6),
+                  color: AppColors.seedColor.withValues(alpha: 0.6),
                 ),
               ).animate(delay: 800.ms).fadeIn(duration: 400.ms),
             ],

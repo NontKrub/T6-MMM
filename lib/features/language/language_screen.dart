@@ -52,7 +52,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
             top: -80,
             right: -60,
             child: _GlowOrb(
-              color: AppColors.seedColor.withOpacity(0.3),
+              color: AppColors.seedColor.withValues(alpha: 0.3),
               size: 280,
             ),
           ),
@@ -60,7 +60,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
             bottom: -100,
             left: -80,
             child: _GlowOrb(
-              color: AppColors.gradientEnd.withOpacity(0.2),
+              color: AppColors.gradientEnd.withValues(alpha: 0.2),
               size: 320,
             ),
           ),
@@ -86,7 +86,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.seedColor.withOpacity(0.4),
+                              color: AppColors.seedColor.withValues(alpha: 0.4),
                               blurRadius: 24,
                               spreadRadius: 4,
                             ),
@@ -119,7 +119,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                   Text(
                         'เลือกภาษา',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 16,
                         ),
                         textAlign: TextAlign.center,
@@ -179,7 +179,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.seedColor,
                             disabledBackgroundColor:
-                                Colors.white.withOpacity(0.1),
+                                Colors.white.withValues(alpha: 0.1),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           child: Text(
@@ -188,7 +188,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                                 : 'Continue',
                             style: TextStyle(
                               color: _selected == null
-                                  ? Colors.white.withOpacity(0.3)
+                                  ? Colors.white.withValues(alpha: 0.3)
                                   : Colors.white,
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -236,13 +236,13 @@ class _LanguageCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.seedColor.withOpacity(0.2)
-              : Colors.white.withOpacity(0.06),
+              ? AppColors.seedColor.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: selected
                 ? AppColors.seedColor
-                : Colors.white.withOpacity(0.12),
+                : Colors.white.withValues(alpha: 0.12),
             width: selected ? 2 : 1,
           ),
         ),

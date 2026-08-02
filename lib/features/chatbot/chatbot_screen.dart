@@ -101,7 +101,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                             ? (l10n?.chatStatusLocked ?? 'Sign in required')
                             : (l10n?.chatStatusUnlocked ?? 'Always styled'),
                         style: TextStyle(
-                          color: Colors.grey.withOpacity(0.6),
+                          color: Colors.grey.withValues(alpha: 0.6),
                           fontSize: 12,
                         ),
                       ),
@@ -136,10 +136,10 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.seedColor.withOpacity(0.12),
+                        color: AppColors.seedColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.seedColor.withOpacity(0.2),
+                          color: AppColors.seedColor.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Text(
@@ -257,7 +257,7 @@ class _LockedAiState extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 message,
-                style: TextStyle(color: Colors.grey.withOpacity(0.7)),
+                style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
                 textAlign: TextAlign.center,
               ),
             ],

@@ -82,7 +82,7 @@ class OnboardingScreen extends ConsumerWidget {
                           ) ??
                           '${state.step + 1} / ${steps.length}',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
                     ),
@@ -96,7 +96,7 @@ class OnboardingScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: (state.step + 1) / steps.length,
-                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
                     valueColor: const AlwaysStoppedAnimation(
                       AppColors.seedColor,
                     ),
@@ -268,14 +268,14 @@ class _UserInfoStepState extends State<_UserInfoStep> {
           Text(
             l10n?.onboardingUserInfoSubtitle ??
                 'We use this to personalise your experience.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 40),
           // Name field
           Text(
             l10n?.onboardingYourName ?? 'Your name',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -287,16 +287,16 @@ class _UserInfoStepState extends State<_UserInfoStep> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: l10n?.onboardingNameHint ?? 'e.g. Alex',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.08),
+              fillColor: Colors.white.withValues(alpha: 0.08),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -313,7 +313,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
           Text(
             l10n?.onboardingDateOfBirth ?? 'Date of birth',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -325,12 +325,12 @@ class _UserInfoStepState extends State<_UserInfoStep> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: hasDob
                       ? AppColors.seedColor
-                      : Colors.white.withOpacity(0.15),
+                      : Colors.white.withValues(alpha: 0.15),
                 ),
               ),
               child: Row(
@@ -339,7 +339,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
                     Icons.calendar_today_rounded,
                     color: hasDob
                         ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                     size: 18,
                   ),
                   const SizedBox(width: 12),
@@ -348,7 +348,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
                     style: TextStyle(
                       color: hasDob
                           ? Colors.white
-                          : Colors.white.withOpacity(0.3),
+                          : Colors.white.withValues(alpha: 0.3),
                       fontSize: 15,
                     ),
                   ),
@@ -361,7 +361,7 @@ class _UserInfoStepState extends State<_UserInfoStep> {
             l10n?.onboardingDobHint ??
                 'Optional — helps us tailor lucky colour predictions.',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.35),
+              color: Colors.white.withValues(alpha: 0.35),
               fontSize: 12,
             ),
           ),
@@ -472,14 +472,14 @@ class _StyleAndBodyStep extends StatelessWidget {
           Text(
             l10n?.onboardingStyleSubtitle ??
                 'Pick your body type and the vibes that resonate.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 32),
           // Body type section
           Text(
             l10n?.onboardingBodyType ?? 'BODY TYPE',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
@@ -502,12 +502,12 @@ class _StyleAndBodyStep extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: sel
                         ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.08),
+                        : Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: sel
                           ? AppColors.seedColor
-                          : Colors.white.withOpacity(0.15),
+                          : Colors.white.withValues(alpha: 0.15),
                     ),
                   ),
                   child: Text(
@@ -526,7 +526,7 @@ class _StyleAndBodyStep extends StatelessWidget {
           Text(
             l10n?.onboardingStyleVibes ?? 'STYLE VIBES',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
@@ -535,7 +535,7 @@ class _StyleAndBodyStep extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             l10n?.onboardingStyleVibesHint ?? 'Pick everything that resonates.',
-            style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 12),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -554,12 +554,12 @@ class _StyleAndBodyStep extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: sel
                         ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.08),
+                        : Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: sel
                           ? AppColors.seedColor
-                          : Colors.white.withOpacity(0.15),
+                          : Colors.white.withValues(alpha: 0.15),
                     ),
                   ),
                   child: Text(
@@ -632,7 +632,7 @@ class _ColorSeasonStep extends StatelessWidget {
           Text(
             l10n?.onboardingColorSeasonSubtitle ??
                 'Determines which color palette flatters you most.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 32),
           ...(_seasons.map((s) {
@@ -645,13 +645,13 @@ class _ColorSeasonStep extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: sel
-                      ? AppColors.seedColor.withOpacity(0.2)
-                      : Colors.white.withOpacity(0.06),
+                      ? AppColors.seedColor.withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: sel
                         ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.12),
+                        : Colors.white.withValues(alpha: 0.12),
                     width: sel ? 2 : 1,
                   ),
                 ),
@@ -743,7 +743,7 @@ class _OccasionStep extends StatelessWidget {
           Text(
             l10n?.onboardingLifestyleSubtitle ??
                 'What occasions do you dress for?',
-            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 32),
           GridView.count(
@@ -761,12 +761,12 @@ class _OccasionStep extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: sel
                         ? AppColors.seedColor
-                        : Colors.white.withOpacity(0.08),
+                        : Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: sel
                           ? AppColors.seedColor
-                          : Colors.white.withOpacity(0.12),
+                          : Colors.white.withValues(alpha: 0.12),
                     ),
                   ),
                   child: Column(

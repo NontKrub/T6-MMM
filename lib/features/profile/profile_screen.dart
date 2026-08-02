@@ -67,9 +67,9 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    profile.colorSeason.label + ' · ' + profile.avatarType.name,
+                    '${profile.colorSeason.label} · ${profile.avatarType.name}',
                     style: TextStyle(
-                      color: Colors.grey.withOpacity(0.6),
+                      color: Colors.grey.withValues(alpha: 0.6),
                       fontSize: 13,
                     ),
                   ),
@@ -120,13 +120,13 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.seedColor.withOpacity(0.15)
+                        ? AppColors.seedColor.withValues(alpha: 0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: sel
                           ? AppColors.seedColor
-                          : Colors.grey.withOpacity(0.2),
+                          : Colors.grey.withValues(alpha: 0.2),
                       width: sel ? 2 : 1,
                     ),
                   ),
@@ -145,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                             Text(
                               season.description,
                               style: TextStyle(
-                                color: Colors.grey.withOpacity(0.6),
+                                color: Colors.grey.withValues(alpha: 0.6),
                                 fontSize: 12,
                               ),
                             ),
@@ -182,7 +182,7 @@ class ProfileScreen extends ConsumerWidget {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.seedColor.withOpacity(0.12),
+                          color: AppColors.seedColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -206,8 +206,8 @@ class ProfileScreen extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: Text(l10n?.profileSignOut ?? 'Sign Out'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red.withOpacity(0.8),
-                  side: BorderSide(color: Colors.red.withOpacity(0.3)),
+                  foregroundColor: Colors.red.withValues(alpha: 0.8),
+                  side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
@@ -254,7 +254,7 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: Colors.grey.withOpacity(0.6),
+                color: Colors.grey.withValues(alpha: 0.6),
                 fontSize: 12,
               ),
             ),

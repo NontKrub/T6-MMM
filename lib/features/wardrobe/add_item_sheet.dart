@@ -235,7 +235,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -272,7 +272,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             : const Color(0xFFEDE9FF),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.seedColor.withOpacity(0.3),
+                          color: AppColors.seedColor.withValues(alpha: 0.3),
                           style: BorderStyle.solid,
                         ),
                       ),
@@ -315,7 +315,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: Colors.black.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
@@ -337,14 +337,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 Icon(
                                   Icons.add_photo_alternate_rounded,
                                   size: 36,
-                                  color: AppColors.seedColor.withOpacity(0.6),
+                                  color: AppColors.seedColor.withValues(alpha: 0.6),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   l10n?.addItemTapToAddPhoto ??
                                       'Tap to add photo',
                                   style: TextStyle(
-                                    color: AppColors.seedColor.withOpacity(0.7),
+                                    color: AppColors.seedColor.withValues(alpha: 0.7),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -375,7 +375,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           decoration: BoxDecoration(
                             color: sel
                                 ? cat.color
-                                : cat.color.withOpacity(0.12),
+                                : cat.color.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -446,7 +446,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           decoration: BoxDecoration(
                             color: sel
                                 ? AppColors.seedColor
-                                : AppColors.seedColor.withOpacity(0.1),
+                                : AppColors.seedColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(

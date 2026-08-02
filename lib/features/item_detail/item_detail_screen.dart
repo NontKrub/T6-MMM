@@ -100,7 +100,7 @@ class ItemDetailScreen extends ConsumerWidget {
                             Text(
                               item.brand!,
                               style: TextStyle(
-                                color: Colors.grey.withOpacity(0.7),
+                                color: Colors.grey.withValues(alpha: 0.7),
                                 fontSize: 15,
                               ),
                             ),
@@ -114,7 +114,7 @@ class ItemDetailScreen extends ConsumerWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: item.category.color.withOpacity(0.15),
+                        color: item.category.color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -153,7 +153,7 @@ class ItemDetailScreen extends ConsumerWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.seedColor.withOpacity(0.1),
+                              color: AppColors.seedColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -308,7 +308,7 @@ class _Stat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 11),
+            style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],
@@ -323,7 +323,7 @@ class _Divider extends StatelessWidget {
     return Container(
       width: 1,
       height: 36,
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.grey.withValues(alpha: 0.2),
       margin: const EdgeInsets.symmetric(horizontal: 8),
     );
   }

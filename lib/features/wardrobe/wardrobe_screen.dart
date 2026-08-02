@@ -56,7 +56,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                         l10n?.wardrobeItemCount(allItems.length) ??
                             '${allItems.length} items',
                         style: TextStyle(
-                          color: Colors.grey.withOpacity(0.7),
+                          color: Colors.grey.withValues(alpha: 0.7),
                           fontSize: 13,
                         ),
                       ),
@@ -159,21 +159,21 @@ class _EmptyState extends StatelessWidget {
           Icon(
             hasSearch ? Icons.search_off_rounded : Icons.checkroom_outlined,
             size: 56,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 12),
           Text(
             hasSearch
                 ? (l10n?.wardrobeNoResults ?? 'No items found')
                 : (l10n?.wardrobeEmpty ?? 'Your wardrobe is empty'),
-            style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 15),
+            style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontSize: 15),
           ),
           if (!hasSearch) ...[
             const SizedBox(height: 6),
             Text(
               l10n?.wardrobeEmptyHint ?? 'Tap + to add your first item',
               style: TextStyle(
-                color: Colors.grey.withOpacity(0.4),
+                color: Colors.grey.withValues(alpha: 0.4),
                 fontSize: 13,
               ),
             ),

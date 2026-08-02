@@ -103,7 +103,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             top: -80,
             right: -60,
             child: _GlowOrb(
-              color: AppColors.seedColor.withOpacity(0.3),
+              color: AppColors.seedColor.withValues(alpha: 0.3),
               size: 280,
             ),
           ),
@@ -111,7 +111,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             bottom: -100,
             left: -80,
             child: _GlowOrb(
-              color: AppColors.gradientEnd.withOpacity(0.2),
+              color: AppColors.gradientEnd.withValues(alpha: 0.2),
               size: 320,
             ),
           ),
@@ -160,7 +160,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     l10n?.authHeroSubtitle ??
                         'AI-powered outfit suggestions,\npersonalized just for you.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 16,
                       height: 1.5,
                     ),
@@ -197,7 +197,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 l10n?.authContinueAsGuest ??
                                     'Continue as guest',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   fontSize: 13,
                                 ),
                                 textAlign: TextAlign.center,
@@ -238,7 +238,7 @@ class _SocialButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
