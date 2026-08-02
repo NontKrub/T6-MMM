@@ -1,3 +1,8 @@
+---
+name: ai-memory
+description: Set up local long-term session search and short-term project hot-cache memory for AI workflows. Use when the user wants cross-session context, searchable past conversations, or an automatically refreshed project-state summary.
+---
+
 # AI Memory — Give Your AI a Past and a Present
 
 AI doesn't remember anything between sessions. Every new chat starts blank — no history, no context, no idea what you shipped yesterday.

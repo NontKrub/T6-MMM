@@ -1,3 +1,8 @@
+---
+name: steal-digest
+description: Scan GitHub Trending for reusable product and engineering ideas, then summarize what to adapt and the implementation difficulty. Use when the user wants a GitHub trend digest, ideas to borrow, or a pre-feature landscape scan.
+---
+
 # Steal Digest — Cherry-Pick Ideas From GitHub Trending
 
 Stop scrolling GitHub trending aimlessly. Let AI scan it daily and tell you which repos have ideas worth stealing for your project.

@@ -1,3 +1,8 @@
+---
+name: product-taste
+description: Evaluate product features and ideas through user pain, replacement behavior, core-loop impact, cost of being right, and essentiality. Use when deciding what to build, defer, or cut.
+---
+
 # Product Taste — What to Build, What to Cut
 
 Taste isn't opinion. It's pattern recognition compressed into instinct. This skill builds product taste by forcing structured evaluation before enthusiasm or inertia makes the decision for you.

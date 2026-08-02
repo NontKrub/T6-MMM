@@ -1,3 +1,8 @@
+---
+name: accountability-nag
+description: Track recurring personal commitments and deliver escalating accountability check-ins based on missed deadlines and skips. Use when the user wants reminders, an accountability check, or an honest review of avoidance patterns.
+---
+
 # Accountability Nag — The AI That Won't Let You Lie to Yourself
 
 Personal commitments tracker with escalating confrontation. This isn't a reminder app — it's a mirror that shows you the pattern of avoidance.

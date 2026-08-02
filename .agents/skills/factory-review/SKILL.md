@@ -1,3 +1,8 @@
+---
+name: factory-review
+description: Use a second AI model as an adversarial editor for content, specifications, architecture, code, and factual claims. Use when the user wants cross-model critique, a fact check, or an independent review before finalizing work.
+---
+
 # Factory Review — Cross-Model Adversarial Critique
 
 Use a **different AI model** to review anything your primary AI produced. Same-model self-review falls into local minima. A different model catches different blind spots.

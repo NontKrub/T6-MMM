@@ -1,3 +1,8 @@
+---
+name: decision-decay
+description: Audit past decisions for stale assumptions, changing conditions, and decay risk. Use when the user wants to revisit an old decision, review architectural choices, or check whether a decision still fits current reality.
+---
+
 # Decision Decay — When Past Decisions Go Stale
 
 Decisions are perishable. A choice that was correct in January may be wrong in March — not because the reasoning was flawed, but because the inputs changed. This skill detects when the world has moved and a past decision hasn't moved with it.

@@ -1,3 +1,8 @@
+---
+name: occam
+description: Apply a minimum-change audit to proposed fixes and designs, comparing the smallest viable solution with larger and more defensive alternatives. Use when the user asks whether a change is necessary, feels a solution is too complex, or wants a simpler approach.
+---
+
 # Occam — The Simpler-Thing Test
 
 You proposed a fix. Before it ships, prove the smaller version doesn't work.

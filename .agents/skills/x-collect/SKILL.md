@@ -1,3 +1,8 @@
+---
+name: x-collect
+description: Research Twitter/X content before drafting to identify high-performing posts, saturated angles, content gaps, hook patterns, and promising writing angles. Use when planning or writing content and wanting a differentiated angle.
+---
+
 # X Collect — Scout the Landscape Before You Write
 
 Before writing about any topic, find out what's already been said. What performed? What angle is missing? Where's the gap you can fill?

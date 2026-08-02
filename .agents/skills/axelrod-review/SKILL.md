@@ -1,3 +1,8 @@
+---
+name: axelrod-review
+description: Run repeated AI review rounds with a tit-for-tat trust ledger to improve drafts and expose recurring blind spots. Use for iterative content reviews, code reviews, architecture reviews, or any repeated review workflow with the same reviewer.
+---
+
 # Axelrod Review — Game Theory for AI Review Loops
 
 AI reviews are stateless. Same prompt, same depth, every time. Your reviewer doesn't know it flagged the same issue last round. It doesn't know you fixed everything it asked for. It treats every draft like it's meeting you for the first time.

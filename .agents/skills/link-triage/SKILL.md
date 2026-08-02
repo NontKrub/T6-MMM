@@ -1,3 +1,8 @@
+---
+name: link-triage
+description: Read and triage URLs into concise summaries, categories, relevance scores, and reading recommendations. Use when the user sends links, wants a reading queue, or needs to decide what online content is worth reading.
+---
+
 # Link Triage — AI Reads So You Don't Have To
 
 You save 30 links a day. You read maybe 2. The rest rot in bookmarks until you forget they exist.

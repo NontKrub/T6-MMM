@@ -1,3 +1,8 @@
+---
+name: ai-slop-detection
+description: Review interfaces for recognizable AI-generated design patterns and identify ways to make the visual design more distinctive. Use when the user wants a UI critique, frontend polish, or an assessment of whether a design looks AI-generated.
+---
+
 # AI Slop Detection — Does Your UI Look AI-Generated?
 
 The fingerprint test: if you showed your interface to someone and said "AI made this," would they believe you immediately? If yes, the design has failed.
