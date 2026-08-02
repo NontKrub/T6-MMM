@@ -357,7 +357,9 @@ class _SettingsTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       borderRadius: 16,
       padding: EdgeInsets.zero,
-      child: ListTile(
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
@@ -392,6 +394,6 @@ class _SettingsTile extends StatelessWidget {
                   )
                 : null),
       ),
-    );
+    ));
   }
 }

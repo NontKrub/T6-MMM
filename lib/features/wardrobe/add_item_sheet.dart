@@ -490,9 +490,11 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         child: GlassContainer(
           margin: const EdgeInsets.all(16),
           borderRadius: 20,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               ListTile(
                 key: const Key('add-item-source-camera'),
                 leading: const Icon(Icons.camera_alt_rounded),
@@ -513,6 +515,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

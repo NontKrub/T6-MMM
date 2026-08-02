@@ -24,13 +24,13 @@ extension ClothingCategoryExt on ClothingCategory {
   IconData get icon {
     switch (this) {
       case ClothingCategory.hat:
-        return Icons.safety_divider;
+        return Icons.sports_baseball;
       case ClothingCategory.top:
         return Icons.dry_cleaning;
       case ClothingCategory.pants:
-        return Icons.man;
+        return Icons.straighten;
       case ClothingCategory.shoes:
-        return Icons.ice_skating;
+        return Icons.hiking;
       case ClothingCategory.accessory:
         return Icons.watch;
     }

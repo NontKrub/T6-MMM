@@ -132,7 +132,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                         children: [
                           Expanded(
                             child: _LanguageCard(
-                              flag: '🇬🇧',
+                              flagAsset: 'assets/images/flag_gb.png',
                               languageName: 'English',
                               nativeName: 'English',
                               code: 'en',
@@ -143,7 +143,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: _LanguageCard(
-                              flag: '🇹🇭',
+                              flagAsset: 'assets/images/flag_th.png',
                               languageName: 'Thai',
                               nativeName: 'ภาษาไทย',
                               code: 'th',
@@ -211,7 +211,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
 }
 
 class _LanguageCard extends StatelessWidget {
-  final String flag;
+  final String flagAsset;
   final String languageName;
   final String nativeName;
   final String code;
@@ -219,7 +219,7 @@ class _LanguageCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _LanguageCard({
-    required this.flag,
+    required this.flagAsset,
     required this.languageName,
     required this.nativeName,
     required this.code,
@@ -248,7 +248,10 @@ class _LanguageCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(flag, style: const TextStyle(fontSize: 40)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(flagAsset, width: 64, height: 42, fit: BoxFit.cover),
+            ),
             const SizedBox(height: 12),
             Text(
               nativeName,

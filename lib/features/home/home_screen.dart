@@ -309,7 +309,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
   static const _avatarMeta = [
     (AvatarType.human, Icons.person_rounded, 'Human'),
     (AvatarType.dog, Icons.pets_rounded, 'Dog'),
-    (AvatarType.cat, Icons.catching_pokemon_rounded, 'Cat'),
+    (AvatarType.cat, Icons.cruelty_free, 'Cat'),
   ];
 
   static const _bodyShapeMeta = [
