@@ -1,3 +1,5 @@
+import '../../shared/models/clothing_item.dart';
+import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
 class RepetitionInsight {
@@ -56,9 +58,13 @@ class MissingPieceRecommendation {
 }
 
 class RecommendationRepository {
+  final _local = LocalAccountRepository();
+
   Future<List<MissingPieceRecommendation>> generateMissingPieces() async {
     final client = SupabaseService.client;
-    if (client == null || client.auth.currentUser == null) return const [];
+    if (client == null || client.auth.currentUser == null) {
+      return localMissingPieces(await _local.fetchItems());
+    }
 
     final response = await client.functions.invoke(
       'missing-pieces',
@@ -130,4 +136,41 @@ class RecommendationRepository {
     ).difference(DateTime.utc(2024)).inDays;
     return palettes[daySeed % palettes.length];
   }
+}
+
+List<MissingPieceRecommendation> localMissingPieces(List<ClothingItem> items) {
+  const required = [
+    ClothingCategory.top,
+    ClothingCategory.pants,
+    ClothingCategory.shoes,
+  ];
+  final gaps = required.where(
+    (category) => !items.any((item) => item.category == category),
+  );
+  final recommendations = gaps
+      .map(
+        (category) => MissingPieceRecommendation(
+          id: 'local-${category.name}',
+          category: category.name,
+          title: 'Add ${category.label.toLowerCase()}',
+          reason: 'Your wardrobe needs this category for complete outfits.',
+          suggestion: 'Choose a versatile neutral piece you will wear often.',
+          priority: 'essential',
+        ),
+      )
+      .toList();
+  if (recommendations.isNotEmpty) return recommendations;
+  if (!items.any((item) => item.category == ClothingCategory.accessory)) {
+    return const [
+      MissingPieceRecommendation(
+        id: 'local-accessory',
+        category: 'accessory',
+        title: 'Add a versatile accessory',
+        reason: 'Your base wardrobe is complete but has no finishing piece.',
+        suggestion: 'Try a neutral belt, bag, watch, or scarf.',
+        priority: 'nice_to_have',
+      ),
+    ];
+  }
+  return const [];
 }

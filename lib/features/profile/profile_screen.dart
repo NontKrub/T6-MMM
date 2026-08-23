@@ -85,10 +85,7 @@ class ProfileScreen extends ConsumerWidget {
                   label: l10n?.profileItems ?? 'Items',
                 ),
                 const SizedBox(width: 12),
-                _StatCard(
-                  value: '5',
-                  label: l10n?.profileOutfits ?? 'Outfits',
-                ),
+                _StatCard(value: '5', label: l10n?.profileOutfits ?? 'Outfits'),
                 const SizedBox(width: 12),
                 _StatCard(
                   value: wardrobe.isNotEmpty

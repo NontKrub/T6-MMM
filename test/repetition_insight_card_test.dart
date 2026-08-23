@@ -16,19 +16,18 @@ void main() {
   Widget buildApp(List overrides) {
     return ProviderScope(
       overrides: overrides.cast(),
-      child: const MaterialApp(
-        home: Scaffold(body: RepetitionInsightCard()),
-      ),
+      child: const MaterialApp(home: Scaffold(body: RepetitionInsightCard())),
     );
   }
 
-  testWidgets('hides when repetition alerts setting is disabled', (tester) async {
+  testWidgets('hides when repetition alerts setting is disabled', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       buildApp([
         appSettingsProvider.overrideWith(
-          (ref) => TestSettingsNotifier(
-            const AppSettings(repetitionAlerts: false),
-          ),
+          (ref) =>
+              TestSettingsNotifier(const AppSettings(repetitionAlerts: false)),
         ),
       ]),
     );
@@ -42,7 +41,8 @@ void main() {
     await tester.pumpWidget(
       buildApp([
         appSettingsProvider.overrideWith(
-          (ref) => TestSettingsNotifier(const AppSettings(repetitionAlerts: true)),
+          (ref) =>
+              TestSettingsNotifier(const AppSettings(repetitionAlerts: true)),
         ),
         repetitionInsightProvider.overrideWith((ref) async {
           return const RepetitionInsight(
@@ -60,11 +60,14 @@ void main() {
     expect(find.text('Style reminder'), findsNothing);
   });
 
-  testWidgets('renders backend dominant color when alert is true', (tester) async {
+  testWidgets('renders backend dominant color when alert is true', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       buildApp([
         appSettingsProvider.overrideWith(
-          (ref) => TestSettingsNotifier(const AppSettings(repetitionAlerts: true)),
+          (ref) =>
+              TestSettingsNotifier(const AppSettings(repetitionAlerts: true)),
         ),
         repetitionInsightProvider.overrideWith((ref) async {
           return const RepetitionInsight(

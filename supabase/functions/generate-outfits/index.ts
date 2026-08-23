@@ -19,6 +19,7 @@ type Body = {
   weather?: Record<string, unknown>;
   lucky_colors?: string[];
   learn_preferences?: boolean;
+  target_hex?: string;
 };
 
 Deno.serve(async (req) => {
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
       recentEvents,
       preferenceEvents: learnPreferences ? learnedEvents : [],
       learnPreferences,
+      targetHex: body.target_hex ?? null,
     };
     const candidates = buildValidOutfitCandidates(wardrobe, scoreOptions);
     if (candidates.length === 0) {
@@ -119,6 +121,7 @@ Deno.serve(async (req) => {
               match_weather: body.match_weather ?? false,
               weather: body.weather ?? null,
               lucky_colors: body.lucky_colors ?? [],
+              target_hex: body.target_hex ?? null,
               profile: {
                 color_season: profile?.color_season ?? null,
                 body_type: profile?.body_type ?? null,
@@ -180,6 +183,7 @@ Deno.serve(async (req) => {
       lucky_colors: scoreOptions.luckyColors,
       color_season: scoreOptions.colorSeason,
       learn_preferences: learnPreferences,
+      target_hex: body.target_hex ?? null,
     };
 
     const saved = [];

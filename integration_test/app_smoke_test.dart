@@ -55,29 +55,37 @@ void main() {
 
       expect(find.text('Generate Outfit'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.checkroom_rounded).first);
+      await tester.tap(find.byKey(const ValueKey('nav-/wardrobe')));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
+      expect(appRouter.routeInformationProvider.value.uri.path, '/wardrobe');
       expect(find.text('Wardrobe'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.add_shopping_cart_rounded).first);
+      await tester.tap(find.byKey(const ValueKey('nav-/missing')));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.textContaining('Your wardrobe needs'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.chat_bubble_rounded).first);
+      await tester.tap(find.byKey(const ValueKey('nav-/chat')));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Fashion AI'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.home_rounded).first);
+      await tester.tap(find.byKey(const ValueKey('nav-/home')));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Generate Outfit'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.settings_rounded).first);
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Settings'), findsOneWidget);
       Navigator.of(tester.element(find.text('Settings'))).pop();
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
       await tester.tap(find.text('Guest').first);
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Profile'), findsOneWidget);
     },

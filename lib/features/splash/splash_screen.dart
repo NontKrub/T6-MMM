@@ -40,7 +40,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   String _tagline(BuildContext ctx) =>
-      AppLocalizations.of(ctx)?.appTagline ?? 'match your wardrobe to your mood';
+      AppLocalizations.of(ctx)?.appTagline ??
+      'match your wardrobe to your mood';
 
   @override
   Widget build(BuildContext context) {

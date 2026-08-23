@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../shared/models/outfit.dart';
-import '../../shared/models/clothing_item.dart';
 import '../services/outfit_repository.dart';
 import 'app_settings_provider.dart';
 import 'repetition_insight_provider.dart';
@@ -98,6 +97,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     bool usePersonalColor = false,
     bool useLuckyColor = false,
     bool matchWeather = false,
+    String? targetHex,
   }) async {
     final appSettings = ref.read(appSettingsProvider);
     final generated = await _repository.generateOutfits(
@@ -108,37 +108,11 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
       luckyColorMethod: appSettings.luckyColorMethod,
       weatherLocationMode: appSettings.weatherLocationMode,
       learnPreferences: appSettings.learnPreferences,
+      targetHex: targetHex,
     );
     state = [...generated, ...state];
     ref.read(generatedOutfitsProvider.notifier).state = generated;
     return generated;
-  }
-
-  Outfit rushOutfit(WidgetRef ref) {
-    final wardrobe = ref.read(wardrobeProvider);
-    final tops = wardrobe
-        .where((i) => i.category == ClothingCategory.top)
-        .toList();
-    final pants = wardrobe
-        .where((i) => i.category == ClothingCategory.pants)
-        .toList();
-    final shoes = wardrobe
-        .where((i) => i.category == ClothingCategory.shoes)
-        .toList();
-
-    if (tops.isEmpty || pants.isEmpty || shoes.isEmpty) {
-      throw StateError('Add at least one top, pants, and shoes first.');
-    }
-
-    tops.shuffle();
-    pants.shuffle();
-    shoes.shuffle();
-
-    return Outfit(
-      id: 'rush_${DateTime.now().millisecondsSinceEpoch}',
-      name: 'Rush Outfit',
-      itemIds: [tops.first.id, pants.first.id, shoes.first.id],
-    );
   }
 
   Future<Outfit> rushBackendOutfit(WidgetRef ref) async {
@@ -149,4 +123,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     state = [outfit, ...state];
     return outfit;
   }
+
+  Future<int> repeatCountFor(Outfit outfit) =>
+      _repository.repeatCountFor(outfit.itemIds);
 }

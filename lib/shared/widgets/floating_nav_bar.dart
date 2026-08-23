@@ -53,6 +53,7 @@ class FloatingNavBar extends StatelessWidget {
               children: List.generate(_tabPaths.length, (i) {
                 final selected = i == selectedIndex;
                 return _NavItem(
+                  navKey: ValueKey('nav-${_tabPaths[i]}'),
                   icon: _tabIcons[i],
                   label: labels[i],
                   selected: selected,
@@ -68,12 +69,14 @@ class FloatingNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
+  final Key navKey;
   final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _NavItem({
+    required this.navKey,
     required this.icon,
     required this.label,
     required this.selected,
@@ -83,6 +86,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: navKey,
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(

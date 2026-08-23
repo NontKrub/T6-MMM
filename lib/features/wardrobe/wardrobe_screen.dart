@@ -73,7 +73,8 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                 controller: _searchController,
                 onChanged: (v) => setState(() => _searchQuery = v),
                 decoration: InputDecoration(
-                  hintText: l10n?.wardrobeSearchHint ??
+                  hintText:
+                      l10n?.wardrobeSearchHint ??
                       'Search by name, brand, or tag…',
                   prefixIcon: const Icon(Icons.search_rounded, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -166,7 +167,10 @@ class _EmptyState extends StatelessWidget {
             hasSearch
                 ? (l10n?.wardrobeNoResults ?? 'No items found')
                 : (l10n?.wardrobeEmpty ?? 'Your wardrobe is empty'),
-            style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontSize: 15),
+            style: TextStyle(
+              color: Colors.grey.withValues(alpha: 0.6),
+              fontSize: 15,
+            ),
           ),
           if (!hasSearch) ...[
             const SizedBox(height: 6),

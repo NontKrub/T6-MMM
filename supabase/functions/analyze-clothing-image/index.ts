@@ -41,7 +41,6 @@ Deno.serve(async (req) => {
     }
 
     let analysis: ClothingAnalysis;
-
     try {
       analysis = await openAiJson<ClothingAnalysis>({
         instructions:
@@ -67,7 +66,10 @@ Deno.serve(async (req) => {
       console.error(
         error instanceof Error ? error.message : "AI clothing analysis failed.",
       );
-      analysis = fallbackAnalysis(body);
+      return jsonResponse({
+        error:
+          "Clothing analysis is unavailable. Keep the image and tag it manually.",
+      }, 502);
     }
     analysis = normalizeAnalysis(analysis);
 
@@ -90,29 +92,6 @@ Deno.serve(async (req) => {
     }, 500);
   }
 });
-
-function fallbackAnalysis(body: Body) {
-  const nameText = `${body.name ?? ""} ${(body.tags ?? []).join(" ")}`
-    .toLowerCase();
-  const category = inferCategory(nameText);
-  const tags = [
-    ...new Set(
-      ["needs-review", ...(body.tags ?? [])]
-        .map((tag) => tag.trim().toLowerCase())
-        .filter(Boolean),
-    ),
-  ].slice(0, 8);
-
-  return {
-    category,
-    suggested_name: body.name?.trim() || "Wardrobe item",
-    dominant_colors: [],
-    primary_color: "unknown",
-    tags,
-    attributes: { ai_fallback: true },
-    confidence: 0,
-  };
-}
 
 function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
   const normalizedPrimary = normalizeWord(analysis.primary_color) || "unknown";
@@ -154,16 +133,4 @@ function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
 
 function normalizeWord(value: string) {
   return value.trim().toLowerCase();
-}
-
-function inferCategory(
-  text: string,
-): "hat" | "top" | "pants" | "shoes" | "accessory" {
-  if (/\b(cap|hat|beanie)\b/.test(text)) return "hat";
-  if (/\b(shoe|sneaker|boot|loafer|heel|sandal)\b/.test(text)) return "shoes";
-  if (/\b(pant|jean|trouser|short|skirt)\b/.test(text)) return "pants";
-  if (/\b(bag|belt|watch|scarf|necklace|bracelet|ring)\b/.test(text)) {
-    return "accessory";
-  }
-  return "top";
 }

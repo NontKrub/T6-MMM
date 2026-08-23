@@ -12,6 +12,7 @@ class LocalAccountRepository {
   static const _guestEnabledKey = 'mmm_guest_enabled';
   static const _profileKey = 'mmm_guest_profile';
   static const _wardrobeKey = 'mmm_guest_wardrobe';
+  static const _wearHistoryKey = 'mmm_guest_wear_history';
 
   Future<bool> hasGuestAccount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -35,6 +36,7 @@ class LocalAccountRepository {
     await prefs.remove(_guestEnabledKey);
     await prefs.remove(_profileKey);
     await prefs.remove(_wardrobeKey);
+    await prefs.remove(_wearHistoryKey);
   }
 
   Future<UserProfile?> fetchProfile() async {
@@ -92,6 +94,23 @@ class LocalAccountRepository {
 
   Future<void> updateItems(List<ClothingItem> items) => _saveItems(items);
 
+  Future<List<List<String>>> fetchWearCombinations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_wearHistoryKey);
+    if (raw == null || raw.isEmpty) return <List<String>>[];
+    return (jsonDecode(raw) as List)
+        .map((entry) => (entry as List).whereType<String>().toList())
+        .toList();
+  }
+
+  Future<void> recordWearCombination(List<String> itemIds) async {
+    final normalized = itemIds.toSet().toList()..sort();
+    final history = await fetchWearCombinations();
+    history.add(normalized);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_wearHistoryKey, jsonEncode(history));
+  }
+
   Future<void> _saveItems(List<ClothingItem> items) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_guestEnabledKey, true);
@@ -112,6 +131,10 @@ extension on ClothingItem {
       imageUrl: imageUrl,
       tags: tags,
       color: color,
+      colorHexes: colorHexes,
+      pattern: pattern,
+      silhouette: silhouette,
+      analysisConfidence: analysisConfidence,
       wearCount: wearCount,
       lastWorn: lastWorn,
     );

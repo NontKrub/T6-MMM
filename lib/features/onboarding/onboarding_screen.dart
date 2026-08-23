@@ -45,7 +45,8 @@ class OnboardingScreen extends ConsumerWidget {
     final isLastStep = state.step == steps.length - 1;
 
     // Continue is disabled on the Name+DOB step until name is filled
-    final canContinue = !(isGuest && state.step == 0 && state.name.trim().isEmpty);
+    final canContinue =
+        !(isGuest && state.step == 0 && state.name.trim().isEmpty);
 
     return Scaffold(
       body: Container(
@@ -76,10 +77,7 @@ class OnboardingScreen extends ConsumerWidget {
                       const SizedBox(width: 24),
                     const Spacer(),
                     Text(
-                      l10n?.onboardingStep(
-                            state.step + 1,
-                            steps.length,
-                          ) ??
+                      l10n?.onboardingStep(state.step + 1, steps.length) ??
                           '${state.step + 1} / ${steps.length}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
@@ -292,11 +290,15 @@ class _UserInfoStepState extends State<_UserInfoStep> {
               fillColor: Colors.white.withValues(alpha: 0.08),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -535,7 +537,10 @@ class _StyleAndBodyStep extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             l10n?.onboardingStyleVibesHint ?? 'Pick everything that resonates.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
