@@ -3,6 +3,43 @@ import '../../core/theme/app_colors.dart';
 
 enum ClothingCategory { hat, top, pants, shoes, accessory }
 
+enum ClothingPattern {
+  solid,
+  striped,
+  checked,
+  floral,
+  graphic,
+  textured,
+  unknown,
+}
+
+enum ClothingSilhouette {
+  fitted,
+  regular,
+  relaxed,
+  oversized,
+  cropped,
+  wideLeg,
+  slim,
+  unknown,
+}
+
+extension ClothingSilhouetteValue on ClothingSilhouette {
+  String get value => this == ClothingSilhouette.wideLeg ? 'wide-leg' : name;
+}
+
+ClothingPattern clothingPatternFromString(String? value) =>
+    ClothingPattern.values.firstWhere(
+      (entry) => entry.name == value,
+      orElse: () => ClothingPattern.unknown,
+    );
+
+ClothingSilhouette clothingSilhouetteFromString(String? value) =>
+    ClothingSilhouette.values.firstWhere(
+      (entry) => entry.value == value,
+      orElse: () => ClothingSilhouette.unknown,
+    );
+
 extension ClothingCategoryExt on ClothingCategory {
   String get value => name;
 
@@ -67,6 +104,10 @@ class ClothingItem {
   final String imageUrl;
   final List<String> tags;
   final String? color;
+  final List<String> colorHexes;
+  final ClothingPattern pattern;
+  final ClothingSilhouette silhouette;
+  final double? analysisConfidence;
   final int wearCount;
   final DateTime? lastWorn;
 
@@ -78,6 +119,10 @@ class ClothingItem {
     required this.imageUrl,
     this.tags = const [],
     this.color,
+    this.colorHexes = const [],
+    this.pattern = ClothingPattern.unknown,
+    this.silhouette = ClothingSilhouette.unknown,
+    this.analysisConfidence,
     this.wearCount = 0,
     this.lastWorn,
   });
@@ -86,6 +131,13 @@ class ClothingItem {
     final colors =
         (json['dominant_colors'] as List?)?.whereType<String>().toList() ??
         const <String>[];
+    final attributes = json['detected_attributes'] is Map
+        ? Map<String, dynamic>.from(json['detected_attributes'] as Map)
+        : const <String, dynamic>{};
+    final hexes = colors
+        .map((color) => color.trim().toUpperCase())
+        .where((color) => RegExp(r'^#[0-9A-F]{6}$').hasMatch(color))
+        .toList();
     return ClothingItem(
       id: json['id'] as String,
       name: json['name'] as String? ?? 'Unnamed item',
@@ -100,6 +152,12 @@ class ClothingItem {
       color:
           json['primary_color'] as String? ??
           (colors.isNotEmpty ? colors.first : null),
+      colorHexes: hexes,
+      pattern: clothingPatternFromString(attributes['pattern'] as String?),
+      silhouette: clothingSilhouetteFromString(
+        attributes['silhouette'] as String?,
+      ),
+      analysisConfidence: (json['ai_confidence'] as num?)?.toDouble(),
       wearCount: json['wear_count'] as int? ?? 0,
       lastWorn: json['last_worn'] != null
           ? DateTime.tryParse(json['last_worn'] as String)
@@ -116,6 +174,12 @@ class ClothingItem {
       'image_url': imageUrl,
       'tags': tags,
       'primary_color': color,
+      'dominant_colors': colorHexes,
+      'detected_attributes': {
+        'pattern': pattern.name,
+        'silhouette': silhouette.value,
+      },
+      'ai_confidence': analysisConfidence,
       'wear_count': wearCount,
       'last_worn': lastWorn?.toIso8601String(),
     };
@@ -133,8 +197,13 @@ class ClothingItem {
       'image_path': imagePath,
       'image_url': imageUrl,
       'tags': tags,
-      'dominant_colors': color == null ? <String>[] : <String>[color!],
+      'dominant_colors': colorHexes,
       'primary_color': color,
+      'detected_attributes': {
+        'pattern': pattern.name,
+        'silhouette': silhouette.value,
+      },
+      'ai_confidence': analysisConfidence,
       'wear_count': wearCount,
       'last_worn': lastWorn?.toIso8601String(),
     };
@@ -147,6 +216,10 @@ class ClothingItem {
     String? imageUrl,
     List<String>? tags,
     String? color,
+    List<String>? colorHexes,
+    ClothingPattern? pattern,
+    ClothingSilhouette? silhouette,
+    double? analysisConfidence,
     int? wearCount,
     DateTime? lastWorn,
   }) {
@@ -158,6 +231,10 @@ class ClothingItem {
       imageUrl: imageUrl ?? this.imageUrl,
       tags: tags ?? this.tags,
       color: color ?? this.color,
+      colorHexes: colorHexes ?? this.colorHexes,
+      pattern: pattern ?? this.pattern,
+      silhouette: silhouette ?? this.silhouette,
+      analysisConfidence: analysisConfidence ?? this.analysisConfidence,
       wearCount: wearCount ?? this.wearCount,
       lastWorn: lastWorn ?? this.lastWorn,
     );

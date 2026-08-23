@@ -112,6 +112,10 @@ extension on ClothingItem {
       imageUrl: imageUrl,
       tags: tags,
       color: color,
+      colorHexes: colorHexes,
+      pattern: pattern,
+      silhouette: silhouette,
+      analysisConfidence: analysisConfidence,
       wearCount: wearCount,
       lastWorn: lastWorn,
     );
