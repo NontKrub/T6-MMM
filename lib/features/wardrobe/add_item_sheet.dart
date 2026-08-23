@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/clothing_analysis_service.dart';
 import '../../core/services/image_pick_service.dart';
+import '../../core/services/image_storage_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -21,11 +23,17 @@ class AddItemSheet extends ConsumerStatefulWidget {
     this.imagePickService,
     this.fileExists,
     this.quickPickSource,
+    this.persistImage,
+    this.analyzeImage,
+    this.readImage,
   });
 
   final ImagePickService? imagePickService;
   final Future<bool> Function(String path)? fileExists;
   final ImageSource? quickPickSource;
+  final Future<File> Function(Uint8List bytes, String name)? persistImage;
+  final Future<ClothingAnalysisResult> Function(Uint8List bytes)? analyzeImage;
+  final Future<Uint8List> Function(XFile file)? readImage;
 
   @override
   ConsumerState<AddItemSheet> createState() => _AddItemSheetState();
@@ -33,17 +41,31 @@ class AddItemSheet extends ConsumerStatefulWidget {
 
 class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   XFile? _pickedFile;
+  Uint8List? _imageBytes;
   String? _imagePath;
+  bool _analyzing = false;
   bool _saving = false;
   ClothingCategory _category = ClothingCategory.top;
+  ClothingPattern _pattern = ClothingPattern.unknown;
+  ClothingSilhouette _silhouette = ClothingSilhouette.unknown;
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
+  final _hexController = TextEditingController();
   final List<String> _tags = [];
+  final _imageStorage = ImageStorageService();
+  final _analysis = const ClothingAnalysisService();
 
   ImagePickService get _imagePickService =>
       widget.imagePickService ?? ref.read(imagePickServiceProvider);
   Future<bool> _fileExists(String path) =>
       widget.fileExists?.call(path) ?? File(path).exists();
+  Future<File> _persistImage(Uint8List bytes, String name) =>
+      widget.persistImage?.call(bytes, name) ??
+      _imageStorage.persist(bytes, name);
+  Future<ClothingAnalysisResult> _analyzeImage(Uint8List bytes) =>
+      widget.analyzeImage?.call(bytes) ?? _analysis.analyze(bytes);
+  Future<Uint8List> _readImage(XFile file) =>
+      widget.readImage?.call(file) ?? file.readAsBytes();
 
   static const _tagOptions = [
     'casual',
@@ -83,6 +105,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   void dispose() {
     _nameController.dispose();
     _brandController.dispose();
+    _hexController.dispose();
     super.dispose();
   }
 
@@ -128,11 +151,34 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       return;
     }
     if (!mounted) return;
-
-    setState(() {
-      _pickedFile = file;
-      _imagePath = path;
-    });
+    setState(() => _analyzing = true);
+    try {
+      final bytes = await _readImage(file);
+      final managedFile = await _persistImage(bytes, file.name);
+      if (!mounted) return;
+      setState(() {
+        _pickedFile = XFile(managedFile.path);
+        _imageBytes = bytes;
+        _imagePath = managedFile.path;
+      });
+      try {
+        final result = await _analyzeImage(bytes);
+        if (!mounted) return;
+        setState(() {
+          if (result.category != null) _category = result.category!;
+          _pattern = result.pattern;
+          _silhouette = result.silhouette;
+          _hexController.text = result.colorHexes.firstOrNull ?? '';
+          _tags.addAll(result.styles.where((tag) => !_tags.contains(tag)));
+        });
+      } catch (_) {
+        _showError(
+          'Color analysis failed. You can still tag this item manually.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _analyzing = false);
+    }
   }
 
   Future<void> _save() async {
@@ -142,6 +188,13 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       return;
     }
 
+    final hex = _hexController.text.trim().isEmpty
+        ? null
+        : normalizeHexColor(_hexController.text);
+    if (_hexController.text.trim().isNotEmpty && hex == null) {
+      _showError('Enter a valid HEX color such as #3366FF.');
+      return;
+    }
     final trimmedName = _nameController.text.trim();
     final itemName = trimmedName.isNotEmpty ? trimmedName : 'Wardrobe item';
     final brand = _brandController.text.trim();
@@ -152,12 +205,16 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         await ref
             .read(wardrobeProvider.notifier)
             .addUploadedItem(
-              bytes: await _pickedFile!.readAsBytes(),
+              bytes: _imageBytes ?? await _pickedFile!.readAsBytes(),
               fileName: _pickedFile!.name,
               name: trimmedName,
               brand: brand.isEmpty ? null : brand,
               fallbackCategory: _category,
               tags: _tags,
+              colorHexes: hex == null ? const [] : [hex],
+              color: hex == null ? null : coarseColorName(hex),
+              pattern: _pattern,
+              silhouette: _silhouette,
             );
         if (!mounted) return;
         Navigator.pop(context);
@@ -180,6 +237,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       category: _category,
       imageUrl: _imagePath!,
       tags: _tags,
+      color: hex == null ? null : coarseColorName(hex),
+      colorHexes: hex == null ? const [] : [hex],
+      pattern: _pattern,
+      silhouette: _silhouette,
     );
 
     ref.read(wardrobeProvider.notifier).addItem(item);
@@ -276,7 +337,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           style: BorderStyle.solid,
                         ),
                       ),
-                      child: _saving
+                      child: _saving || _analyzing
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -286,7 +347,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  l10n?.addItemSaving ?? 'Saving...',
+                                  _analyzing
+                                      ? 'Analyzing colors on device...'
+                                      : (l10n?.addItemSaving ?? 'Saving...'),
                                   style: TextStyle(
                                     color: AppColors.seedColor,
                                     fontSize: 13,
@@ -315,7 +378,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.6),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
@@ -337,14 +402,18 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 Icon(
                                   Icons.add_photo_alternate_rounded,
                                   size: 36,
-                                  color: AppColors.seedColor.withValues(alpha: 0.6),
+                                  color: AppColors.seedColor.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   l10n?.addItemTapToAddPhoto ??
                                       'Tap to add photo',
                                   style: TextStyle(
-                                    color: AppColors.seedColor.withValues(alpha: 0.7),
+                                    color: AppColors.seedColor.withValues(
+                                      alpha: 0.7,
+                                    ),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -421,6 +490,61 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                       prefixIcon: const Icon(Icons.store_rounded),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('add-item-hex'),
+                    controller: _hexController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Primary color (HEX)',
+                      hintText: '#3366FF',
+                      prefixIcon: Icon(Icons.palette_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<ClothingPattern>(
+                          key: const Key('add-item-pattern'),
+                          initialValue: _pattern,
+                          decoration: const InputDecoration(
+                            labelText: 'Pattern',
+                          ),
+                          items: ClothingPattern.values
+                              .map(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value.name),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) =>
+                              setState(() => _pattern = value!),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<ClothingSilhouette>(
+                          key: const Key('add-item-silhouette'),
+                          initialValue: _silhouette,
+                          decoration: const InputDecoration(
+                            labelText: 'Silhouette',
+                          ),
+                          items: ClothingSilhouette.values
+                              .map(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value.value),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) =>
+                              setState(() => _silhouette = value!),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   // Tags
                   Text(
@@ -467,7 +591,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     width: double.infinity,
                     child: FilledButton.icon(
                       key: const Key('add-item-save'),
-                      onPressed: _saving ? null : _save,
+                      onPressed: _saving || _analyzing ? null : _save,
                       icon: const Icon(Icons.check_rounded, size: 18),
                       label: Text(l10n?.addItemSave ?? 'Save to Wardrobe'),
                     ),
@@ -495,27 +619,27 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              ListTile(
-                key: const Key('add-item-source-camera'),
-                leading: const Icon(Icons.camera_alt_rounded),
-                title: Text(l10n?.addItemCamera ?? 'Camera'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                key: const Key('add-item-source-gallery'),
-                leading: const Icon(Icons.photo_library_rounded),
-                title: Text(l10n?.addItemPhotoLibrary ?? 'Photo Library'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
+                ListTile(
+                  key: const Key('add-item-source-camera'),
+                  leading: const Icon(Icons.camera_alt_rounded),
+                  title: Text(l10n?.addItemCamera ?? 'Camera'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  key: const Key('add-item-source-gallery'),
+                  leading: const Icon(Icons.photo_library_rounded),
+                  title: Text(l10n?.addItemPhotoLibrary ?? 'Photo Library'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

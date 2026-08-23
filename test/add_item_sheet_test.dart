@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mix_match_mood/core/providers/wardrobe_provider.dart';
+import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
 import 'package:mix_match_mood/core/services/image_pick_service.dart';
 import 'package:mix_match_mood/features/wardrobe/add_item_sheet.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
@@ -54,6 +57,12 @@ void main() {
             body: AddItemSheet(
               fileExists: (_) async => true,
               quickPickSource: ImageSource.camera,
+              readImage: (_) async => Uint8List.fromList([1, 2, 3]),
+              persistImage: (_, name) async => File('/managed/$name'),
+              analyzeImage: (_) async => const ClothingAnalysisResult(
+                colorHexes: ['#FF0000'],
+                colorNames: ['red'],
+              ),
             ),
           ),
         ),
@@ -139,7 +148,40 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(notifier.state.length, 1);
-    expect(notifier.state.first.imageUrl, pickedFile.path);
+    expect(notifier.state.first.imageUrl, '/managed/save-picked.jpg');
     expect(notifier.state.first.name, 'Wardrobe item');
+    expect(notifier.state.first.colorHexes, ['#FF0000']);
+    expect(notifier.state.first.color, 'red');
+  });
+
+  testWidgets('manual visual metadata overrides analysis before save', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/manual.jpg');
+    final notifier = _TestWardrobeNotifier();
+
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+    );
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('add-item-hex')), '3366ff');
+    await tester.tap(find.byKey(const Key('add-item-pattern')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('solid').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-item-silhouette')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('slim').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pumpAndSettle();
+
+    expect(notifier.state.single.colorHexes, ['#3366FF']);
+    expect(notifier.state.single.pattern, ClothingPattern.solid);
+    expect(notifier.state.single.silhouette, ClothingSilhouette.slim);
   });
 }

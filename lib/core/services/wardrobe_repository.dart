@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../shared/models/clothing_item.dart';
 import 'local_account_repository.dart';
+import 'image_storage_service.dart';
 import 'supabase_service.dart';
 
 const _uuid = Uuid();
@@ -14,6 +15,7 @@ class WardrobeRepository {
 
   SupabaseClient? get _client => SupabaseService.client;
   final _local = LocalAccountRepository();
+  final _imageStorage = ImageStorageService();
 
   Future<List<ClothingItem>> fetchItems() async {
     final client = _client;
@@ -52,6 +54,10 @@ class WardrobeRepository {
     String? brand,
     required ClothingCategory fallbackCategory,
     List<String> tags = const [],
+    List<String> colorHexes = const [],
+    String? color,
+    ClothingPattern pattern = ClothingPattern.unknown,
+    ClothingSilhouette silhouette = ClothingSilhouette.unknown,
   }) async {
     final client = _client;
     final user = client?.auth.currentUser;
@@ -64,6 +70,10 @@ class WardrobeRepository {
         category: fallbackCategory,
         imageUrl: fileName,
         tags: tags,
+        color: color,
+        colorHexes: colorHexes,
+        pattern: pattern,
+        silhouette: silhouette,
       );
       return _local.insertItem(item);
     }
@@ -82,22 +92,6 @@ class WardrobeRepository {
           fileOptions: const FileOptions(upsert: true),
         );
 
-    Map<String, dynamic>? analysis;
-    try {
-      final response = await client.functions.invoke(
-        'analyze-clothing-image',
-        body: {
-          'image_path': imagePath,
-          'name': name,
-          'brand': brand,
-          'tags': tags,
-        },
-      );
-      analysis = Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      analysis = null;
-    }
-
     final imageUrl = await client.storage
         .from(bucket)
         .createSignedUrl(imagePath, 60 * 60);
@@ -106,18 +100,20 @@ class WardrobeRepository {
         .insert({
           'id': itemId,
           'user_id': user.id,
-          'name': name.isNotEmpty
-              ? name
-              : analysis?['suggested_name'] ?? 'Wardrobe item',
+          'name': name.isNotEmpty ? name : 'Wardrobe item',
           'brand': brand,
-          'category': analysis?['category'] ?? fallbackCategory.value,
+          'category': fallbackCategory.value,
           'image_path': imagePath,
           'image_url': imageUrl,
-          'tags': analysis?['tags'] ?? tags,
-          'dominant_colors': analysis?['dominant_colors'] ?? <String>[],
-          'primary_color': analysis?['primary_color'],
-          'detected_attributes': analysis?['attributes'] ?? <String, dynamic>{},
-          'ai_confidence': analysis?['confidence'],
+          'tags': tags,
+          'dominant_colors': colorHexes,
+          'primary_color': color,
+          'detected_attributes': {
+            'pattern': pattern.name,
+            'silhouette': silhouette.value,
+            'analysis_source': 'on_device_pixels',
+          },
+          'ai_confidence': null,
         })
         .select()
         .single();
@@ -143,6 +139,10 @@ class WardrobeRepository {
   Future<void> archiveItem(String id) async {
     final client = _client;
     if (client == null || client.auth.currentUser == null) {
+      final item = (await _local.fetchItems())
+          .where((item) => item.id == id)
+          .firstOrNull;
+      if (item != null) await _imageStorage.deleteOwned(item.imageUrl);
       await _local.archiveItem(id);
       return;
     }

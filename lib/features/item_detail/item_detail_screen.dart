@@ -167,6 +167,34 @@ class ItemDetailScreen extends ConsumerWidget {
                         )
                         .toList(),
                   ),
+                if (item.colorHexes.isNotEmpty ||
+                    item.pattern != ClothingPattern.unknown ||
+                    item.silhouette != ClothingSilhouette.unknown) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ...item.colorHexes.map(
+                        (hex) => Chip(
+                          avatar: CircleAvatar(
+                            backgroundColor: Color(
+                              int.parse(hex.substring(1), radix: 16) |
+                                  0xFF000000,
+                            ),
+                          ),
+                          label: Text(hex),
+                        ),
+                      ),
+                      if (item.pattern != ClothingPattern.unknown)
+                        Chip(label: Text('Pattern: ${item.pattern.name}')),
+                      if (item.silhouette != ClothingSilhouette.unknown)
+                        Chip(
+                          label: Text('Silhouette: ${item.silhouette.value}'),
+                        ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 20),
                 // Wear stats
                 _WearStatsCard(
@@ -308,7 +336,10 @@ class _Stat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontSize: 11),
+            style: TextStyle(
+              color: Colors.grey.withValues(alpha: 0.6),
+              fontSize: 11,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

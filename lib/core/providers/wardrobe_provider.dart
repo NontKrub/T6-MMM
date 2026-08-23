@@ -35,6 +35,10 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     String? brand,
     required ClothingCategory fallbackCategory,
     List<String> tags = const [],
+    List<String> colorHexes = const [],
+    String? color,
+    ClothingPattern pattern = ClothingPattern.unknown,
+    ClothingSilhouette silhouette = ClothingSilhouette.unknown,
   }) async {
     final item = await _repository.uploadAndCreateItem(
       bytes: bytes,
@@ -43,6 +47,10 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       brand: brand,
       fallbackCategory: fallbackCategory,
       tags: tags,
+      colorHexes: colorHexes,
+      color: color,
+      pattern: pattern,
+      silhouette: silhouette,
     );
     if (item != null) {
       state = [...state, item];
