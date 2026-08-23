@@ -44,6 +44,33 @@ Deno.test("scoreOutfitCandidate boosts lucky and personal colors", () => {
   assert(candidate.selection_factors.includes("personal_color"));
 });
 
+Deno.test("scoreOutfitCandidate uses HEX distance and modest pattern rules", () => {
+  const close = scoreOutfitCandidate([
+    baseItem({ id: "top", category: "top", primary_color: "#3366FF" }),
+    baseItem({ id: "pants", category: "pants", primary_color: "#335FEA" }),
+    baseItem({ id: "shoes", category: "shoes", primary_color: "#223355" }),
+  ], { targetHex: "#3360F0" });
+  const loud = scoreOutfitCandidate([
+    baseItem({
+      id: "top",
+      category: "top",
+      primary_color: "#FF0000",
+      detected_attributes: { pattern: "floral" },
+    }),
+    baseItem({
+      id: "pants",
+      category: "pants",
+      primary_color: "#00FFFF",
+      detected_attributes: { pattern: "graphic" },
+    }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ], { targetHex: "#3360F0" });
+
+  assert(close.score > loud.score);
+  assert(close.selection_factors.includes("target_color"));
+  assert(loud.selection_factors.includes("pattern_balance"));
+});
+
 Deno.test("scoreOutfitCandidate boosts selected style exact matches", () => {
   const matching = scoreOutfitCandidate([
     baseItem({ id: "top", category: "top", tags: ["streetwear"] }),
@@ -133,9 +160,32 @@ Deno.test("scoreOutfitCandidate penalizes recent item repetition", () => {
   assert(fresh.score > repeated.score);
 });
 
+Deno.test("scoreOutfitCandidate detects repeated combinations order independently", () => {
+  const items = [
+    baseItem({ id: "top", category: "top" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ];
+  const repeated = scoreOutfitCandidate(items, {
+    recentEvents: [{
+      style: null,
+      colors: [],
+      worn_at: new Date().toISOString(),
+      clothing_item_ids: ["shoes", "top", "pants"],
+    }],
+  });
+
+  assert(repeated.selection_factors.includes("repeat_combination"));
+});
+
 Deno.test("learned preference tokens boost matching candidates", () => {
   const matching = scoreOutfitCandidate([
-    baseItem({ id: "top", category: "top", tags: ["minimal"], primary_color: "black" }),
+    baseItem({
+      id: "top",
+      category: "top",
+      tags: ["minimal"],
+      primary_color: "black",
+    }),
     baseItem({ id: "pants", category: "pants", tags: ["clean"] }),
     baseItem({ id: "shoes", category: "shoes", tags: ["leather"] }),
   ], {
@@ -150,7 +200,12 @@ Deno.test("learned preference tokens boost matching candidates", () => {
     }],
   });
   const plain = scoreOutfitCandidate([
-    baseItem({ id: "top", category: "top", tags: ["sport"], primary_color: "orange" }),
+    baseItem({
+      id: "top",
+      category: "top",
+      tags: ["sport"],
+      primary_color: "orange",
+    }),
     baseItem({ id: "pants", category: "pants" }),
     baseItem({ id: "shoes", category: "shoes" }),
   ], {

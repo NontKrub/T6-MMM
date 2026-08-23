@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/providers/outfit_provider.dart';
-import '../../core/providers/session_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/app_localizations.dart';
@@ -75,16 +73,44 @@ class _InARushModalState extends ConsumerState<InARushModal> {
     _loadOutfit();
   }
 
+  Future<void> _wear(Outfit outfit) async {
+    final count = await ref
+        .read(outfitsProvider.notifier)
+        .repeatCountFor(outfit);
+    if (!mounted) return;
+    if (count > 0) {
+      final action = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Repeat outfit'),
+          content: Text("You've worn this combination $count times."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'another'),
+              child: const Text('Generate Another'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, 'wear'),
+              child: const Text('Wear Anyway'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (action == 'another') {
+        _loadOutfit();
+        return;
+      }
+      if (action != 'wear') return;
+    }
+    await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
-    final locked = ref
-        .watch(sessionProvider)
-        .maybeWhen(
-          data: (session) => session.requiresLoginForAi,
-          orElse: () => true,
-        );
     final outfit = _outfit;
     final hasError = _error != null;
     final items = outfit == null
@@ -141,12 +167,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                       ),
                     ),
                     Text(
-                      locked
-                          ? (l10n?.rushStatusSignInRequired ??
-                              'Sign in required')
-                          : hasError
+                      hasError
                           ? (l10n?.rushStatusNeedsSetup ??
-                              'Needs a little setup')
+                                'Needs a little setup')
                           : (l10n?.rushStatusReady ?? 'Your outfit is ready'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
@@ -168,10 +191,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  locked
-                      ? (l10n?.rushLockedMessage ??
-                          'Rush outfit uses backend AI. Sign in with Supabase to use it.')
-                      : _error!,
+                  _error!,
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
                   textAlign: TextAlign.center,
                 ),
@@ -271,7 +291,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: locked || _loading ? null : _reshuffle,
+                    onPressed: _loading ? null : _reshuffle,
                     icon: const Icon(Icons.shuffle_rounded, size: 16),
                     label: Text(l10n?.rushReshuffle ?? 'Reshuffle'),
                     style: OutlinedButton.styleFrom(
@@ -286,24 +306,10 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: locked
-                        ? () {
-                            Navigator.pop(context);
-                            context.go('/auth');
-                          }
-                        : () {
-                            if (_outfit != null) {
-                              ref
-                                  .read(outfitsProvider.notifier)
-                                  .selectOutfit(_outfit!, ref);
-                            }
-                            Navigator.pop(context);
-                          },
+                    onPressed: _outfit == null ? null : () => _wear(_outfit!),
                     icon: const Icon(Icons.check_rounded, size: 16),
                     label: Text(
-                      locked
-                          ? (l10n?.rushSignIn ?? 'Sign In')
-                          : _outfit == null
+                      _outfit == null
                           ? (l10n?.rushGotIt ?? 'Got It')
                           : (l10n?.rushWearThis ?? 'Wear This'),
                     ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers/session_provider.dart';
 import '../../core/services/recommendation_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -20,15 +19,7 @@ class MissingPiecesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final locked = ref
-        .watch(sessionProvider)
-        .maybeWhen(
-          data: (session) => session.requiresLoginForAi,
-          orElse: () => true,
-        );
-    final recommendations = locked
-        ? const AsyncValue<List<MissingPieceRecommendation>>.data([])
-        : ref.watch(missingPiecesProvider);
+    final recommendations = ref.watch(missingPiecesProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -49,11 +40,8 @@ class MissingPiecesScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    locked
-                        ? (l10n?.missingSubtitleLocked ??
-                              'Sign in to generate wardrobe gap recommendations')
-                        : (l10n?.missingSubtitleUnlocked ??
-                              'Curated to fill the gaps in your collection'),
+                    l10n?.missingSubtitleUnlocked ??
+                        'Curated to fill the gaps in your collection',
                     style: TextStyle(
                       color: Colors.grey.withValues(alpha: 0.6),
                       fontSize: 13,
@@ -64,51 +52,27 @@ class MissingPiecesScreen extends ConsumerWidget {
             ).animate().fadeIn(duration: 300.ms),
             const SizedBox(height: 20),
             Expanded(
-              child: locked
-                  ? const _LockedState()
-                  : recommendations.when(
-                      data: (items) => items.isEmpty
-                          ? const _EmptyState()
-                          : ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(
-                                20,
-                                0,
-                                20,
-                                120,
-                              ),
-                              itemCount: items.length,
-                              itemBuilder: (context, i) =>
-                                  _RecommendationCard(rec: items[i])
-                                      .animate(delay: (i * 100).ms)
-                                      .fadeIn(duration: 400.ms)
-                                      .slideX(begin: 0.1, end: 0),
-                            ),
-                      error: (error, _) => _ErrorState(error: error),
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.seedColor,
-                        ),
+              child: recommendations.when(
+                data: (items) => items.isEmpty
+                    ? const _EmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                        itemCount: items.length,
+                        itemBuilder: (context, i) =>
+                            _RecommendationCard(rec: items[i])
+                                .animate(delay: (i * 100).ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideX(begin: 0.1, end: 0),
                       ),
-                    ),
+                error: (error, _) => _ErrorState(error: error),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.seedColor),
+                ),
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _LockedState extends StatelessWidget {
-  const _LockedState();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _CenteredMessage(
-      icon: Icons.lock_outline_rounded,
-      title: l10n?.missingLockedTitle ?? 'Recommendations need a login',
-      message: l10n?.missingLockedMessage ??
-          'Missing pieces use backend AI and your Supabase wardrobe. Guest accounts keep wardrobe data local only.',
     );
   }
 }
@@ -122,7 +86,8 @@ class _EmptyState extends StatelessWidget {
     return _CenteredMessage(
       icon: Icons.inventory_2_outlined,
       title: l10n?.missingEmptyTitle ?? 'No recommendations yet',
-      message: l10n?.missingEmptyMessage ??
+      message:
+          l10n?.missingEmptyMessage ??
           'The backend did not return any missing pieces.',
     );
   }

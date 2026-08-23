@@ -58,6 +58,7 @@ type ScoreOptions = {
   learnPreferences?: boolean;
   rush?: boolean;
   metadataQualityBaseline?: number;
+  targetHex?: string | null;
 };
 
 const seasonColors: Record<string, string[]> = {
@@ -189,7 +190,9 @@ export function scoreOutfitCandidate(
   }
 
   if (options.learnPreferences ?? true) {
-    const learned = deriveLearnedPreferenceTokens(options.preferenceEvents ?? []);
+    const learned = deriveLearnedPreferenceTokens(
+      options.preferenceEvents ?? [],
+    );
     const learnedTagMatches = learned.tags.filter((tag) => tokenSet.has(tag))
       .length;
     const learnedColorMatches = learned.colors.filter((color) =>
@@ -216,6 +219,38 @@ export function scoreOutfitCandidate(
   ) {
     score += 9;
     factors.add("lucky_color");
+  }
+
+  if (options.targetHex) {
+    const distances = colors.map((color) =>
+      hexDistance(color, options.targetHex!)
+    )
+      .filter((distance): distance is number => distance !== null);
+    if (distances.length > 0) {
+      const closest = Math.min(...distances);
+      if (closest <= 80) score += 8;
+      else if (closest <= 180) score += 4;
+      if (closest <= 180) factors.add("target_color");
+    }
+  }
+
+  const loudPatterns = items.filter((item) => {
+    const pattern = normalizeToken(
+      String(item.detected_attributes?.pattern ?? ""),
+    );
+    return pattern !== "" && pattern !== "solid" && pattern !== "unknown";
+  }).length;
+  if (loudPatterns > 1) {
+    score -= 4;
+    factors.add("pattern_balance");
+  }
+
+  const silhouettes = items.map((item) =>
+    normalizeToken(String(item.detected_attributes?.silhouette ?? ""))
+  ).filter((value) => value && value !== "unknown");
+  if (silhouettes.length > 1 && new Set(silhouettes).size > 1) {
+    score += 2;
+    factors.add("silhouette_balance");
   }
 
   if (options.usePersonalColor && options.colorSeason) {
@@ -289,6 +324,15 @@ export function scoreOutfitCandidate(
   } else {
     score -= repeatedItems * 5;
   }
+  const itemKey = candidateKey(items.map((item) => item.id));
+  const exactRepeats =
+    recentEvents.filter((event) =>
+      candidateKey(event.clothing_item_ids ?? []) === itemKey
+    ).length;
+  if (exactRepeats > 0) {
+    score -= exactRepeats * 10;
+    factors.add("repeat_combination");
+  }
   if (
     recentEvents.slice(0, 5).filter((event) => event.style === style).length >=
       3
@@ -333,6 +377,15 @@ export function explainScoreFactors(
   if (factors.includes("personal_color")) {
     labels.push("works with your color season");
   }
+  if (factors.includes("target_color")) {
+    labels.push("matches your chosen color");
+  }
+  if (factors.includes("pattern_balance")) {
+    labels.push("keeps patterns balanced");
+  }
+  if (factors.includes("silhouette_balance")) {
+    labels.push("balances silhouettes");
+  }
   if (factors.includes("style_preferences")) {
     labels.push("aligns with your saved style preferences");
   }
@@ -344,6 +397,9 @@ export function explainScoreFactors(
   }
   if (factors.includes("low_repetition")) {
     labels.push("keeps recent repeats low");
+  }
+  if (factors.includes("repeat_combination")) {
+    labels.push("flags a repeated combination");
   }
   if (factors.includes("metadata_quality")) {
     labels.push("avoids items with uncertain metadata");
@@ -360,7 +416,9 @@ type LearnedTokens = {
   styles: Map<string, number>;
 };
 
-function deriveLearnedPreferenceTokens(events: PreferenceEventRow[]): LearnedTokens {
+function deriveLearnedPreferenceTokens(
+  events: PreferenceEventRow[],
+): LearnedTokens {
   const nowMs = Date.now();
   const tagWeights = new Map<string, number>();
   const colorWeights = new Map<string, number>();
@@ -663,6 +721,19 @@ function normalizedColors(items: ClothingItemRow[]) {
 
 function normalizeColor(color: string) {
   return color.trim().toLowerCase();
+}
+
+function hexDistance(first: string, second: string) {
+  const pattern = /^#([0-9a-f]{6})$/i;
+  const a = pattern.exec(first.trim());
+  const b = pattern.exec(second.trim());
+  if (!a || !b) return null;
+  const firstValue = Number.parseInt(a[1], 16);
+  const secondValue = Number.parseInt(b[1], 16);
+  const red = (firstValue >> 16) - (secondValue >> 16);
+  const green = ((firstValue >> 8) & 0xff) - ((secondValue >> 8) & 0xff);
+  const blue = (firstValue & 0xff) - (secondValue & 0xff);
+  return Math.sqrt(red * red + green * green + blue * blue);
 }
 
 function daysSince(item: ClothingItemRow) {

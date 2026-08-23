@@ -167,6 +167,7 @@ class WardrobeRepository {
           return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
         }).toList(),
       );
+      await _local.recordWearCombination(itemIds);
       return;
     }
     await client.rpc(
