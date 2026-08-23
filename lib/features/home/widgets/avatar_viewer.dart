@@ -179,32 +179,33 @@ class _AvatarViewerState extends State<AvatarViewer>
                   // Figure
                   Positioned(
                     top: h * 0.015 + floatOffset,
-                    child: Transform(
-                          transform: _perspective(_yAngle),
-                          alignment: Alignment.center,
-                          child: SizedBox(
-                            width: figureW,
-                            height: figureH,
-                            child: CustomPaint(
-                              painter: _FashionFigurePainter(
-                                avatarType: widget.avatarType,
-                                bodyShape: widget.bodyShape,
-                                yAngle: _yAngle,
-                                isDark: isDark,
-                                skinToneIndex: widget.skinToneIndex,
-                                hairColorIndex: widget.hairColorIndex,
-                                hairStyleIndex: widget.hairStyleIndex,
+                    child:
+                        Transform(
+                              transform: _perspective(_yAngle),
+                              alignment: Alignment.center,
+                              child: SizedBox(
+                                width: figureW,
+                                height: figureH,
+                                child: CustomPaint(
+                                  painter: _FashionFigurePainter(
+                                    avatarType: widget.avatarType,
+                                    bodyShape: widget.bodyShape,
+                                    yAngle: _yAngle,
+                                    isDark: isDark,
+                                    skinToneIndex: widget.skinToneIndex,
+                                    hairColorIndex: widget.hairColorIndex,
+                                    hairStyleIndex: widget.hairStyleIndex,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        )
-                        .animate(controller: _entryController)
-                        .scale(
-                          begin: const Offset(0.70, 0.70),
-                          end: const Offset(1, 1),
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: 500.ms),
+                            )
+                            .animate(controller: _entryController)
+                            .scale(
+                              begin: const Offset(0.70, 0.70),
+                              end: const Offset(1, 1),
+                              curve: Curves.elasticOut,
+                            )
+                            .fadeIn(duration: 500.ms),
                   ),
 
                   // Drag hint
@@ -348,12 +349,24 @@ class _DragHint extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chevron_left_rounded, size: 13, color: Colors.white.withValues(alpha: 0.25)),
+          Icon(
+            Icons.chevron_left_rounded,
+            size: 13,
+            color: Colors.white.withValues(alpha: 0.25),
+          ),
           Text(
             'drag to rotate',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 10, letterSpacing: 0.5),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.25),
+              fontSize: 10,
+              letterSpacing: 0.5,
+            ),
           ),
-          Icon(Icons.chevron_right_rounded, size: 13, color: Colors.white.withValues(alpha: 0.25)),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 13,
+            color: Colors.white.withValues(alpha: 0.25),
+          ),
         ],
       ),
     );
@@ -407,7 +420,12 @@ class _FashionFigurePainter extends CustomPainter {
     final r = (c.r + boost * _rightFactor).clamp(0.0, 1.0);
     final g = (c.g + boost * _rightFactor).clamp(0.0, 1.0);
     final b = (c.b + boost * _rightFactor).clamp(0.0, 1.0);
-    return Color.fromARGB(255, (r * 255).round(), (g * 255).round(), (b * 255).round());
+    return Color.fromARGB(
+      255,
+      (r * 255).round(),
+      (g * 255).round(),
+      (b * 255).round(),
+    );
   }
 
   Color _shadowed(Color c, {double darken = 0.0}) {
@@ -425,7 +443,12 @@ class _FashionFigurePainter extends CustomPainter {
     if (avatarType == AvatarType.human) {
       _drawHuman(canvas, size.width, size.height);
     } else {
-      _drawPet(canvas, size.width, size.height, isDog: avatarType == AvatarType.dog);
+      _drawPet(
+        canvas,
+        size.width,
+        size.height,
+        isDog: avatarType == AvatarType.dog,
+      );
     }
   }
 
@@ -459,12 +482,13 @@ class _FashionFigurePainter extends CustomPainter {
     canvas.drawCircle(
       Offset(hcx, hcy),
       hr,
-      Paint()..shader = RadialGradient(
-        center: const Alignment(0.28, -0.32),
-        radius: 0.72,
-        colors: [skinL, skin, skinD],
-        stops: const [0.0, 0.46, 1.0],
-      ).createShader(headRect),
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0.28, -0.32),
+          radius: 0.72,
+          colors: [skinL, skin, skinD],
+          stops: const [0.0, 0.46, 1.0],
+        ).createShader(headRect),
     );
 
     // 4 — Face
@@ -474,16 +498,28 @@ class _FashionFigurePainter extends CustomPainter {
     _drawHairFront(canvas, w, h, hair, hcx, hcy, hr, ff);
   }
 
-  void _drawBody(Canvas canvas, double w, double h, Color skin, Color skinL, Color skinD) {
+  void _drawBody(
+    Canvas canvas,
+    double w,
+    double h,
+    Color skin,
+    Color skinL,
+    Color skinD,
+  ) {
     // Neck
     final neckCy = h * 0.455;
-    final neckRect = Rect.fromCenter(center: Offset(w * 0.50, neckCy), width: w * 0.18, height: h * 0.05);
+    final neckRect = Rect.fromCenter(
+      center: Offset(w * 0.50, neckCy),
+      width: w * 0.18,
+      height: h * 0.05,
+    );
     canvas.drawRRect(
       RRect.fromRectAndRadius(neckRect, const Radius.circular(4)),
-      Paint()..shader = LinearGradient(
-        colors: [skinD, skinL, skinD],
-        stops: const [0.0, 0.50, 1.0],
-      ).createShader(neckRect),
+      Paint()
+        ..shader = LinearGradient(
+          colors: [skinD, skinL, skinD],
+          stops: const [0.0, 0.50, 1.0],
+        ).createShader(neckRect),
     );
 
     if (bodyShape == AvatarBodyShape.female) {
@@ -504,18 +540,34 @@ class _FashionFigurePainter extends CustomPainter {
     final torsoPath = Path()
       ..moveTo(w * 0.20, bodyTop)
       ..lineTo(w * 0.80, bodyTop)
-      ..quadraticBezierTo(w * 0.90, bodyTop + h * 0.07, w * 0.87, bodyTop + h * 0.14)
-      ..quadraticBezierTo(w * 0.90, bodyTop + h * 0.20, w * 0.84, bodyTop + h * 0.24)
+      ..quadraticBezierTo(
+        w * 0.90,
+        bodyTop + h * 0.07,
+        w * 0.87,
+        bodyTop + h * 0.14,
+      )
+      ..quadraticBezierTo(
+        w * 0.90,
+        bodyTop + h * 0.20,
+        w * 0.84,
+        bodyTop + h * 0.24,
+      )
       ..lineTo(w * 0.16, bodyTop + h * 0.24)
-      ..quadraticBezierTo(w * 0.10, bodyTop + h * 0.20, w * 0.13, bodyTop + h * 0.14)
+      ..quadraticBezierTo(
+        w * 0.10,
+        bodyTop + h * 0.20,
+        w * 0.13,
+        bodyTop + h * 0.14,
+      )
       ..quadraticBezierTo(w * 0.10, bodyTop + h * 0.07, w * 0.20, bodyTop)
       ..close();
     canvas.drawPath(
       torsoPath,
-      Paint()..shader = LinearGradient(
-        colors: [topD, topL, topL, topD],
-        stops: const [0.0, 0.28, 0.72, 1.0],
-      ).createShader(bodyRect),
+      Paint()
+        ..shader = LinearGradient(
+          colors: [topD, topL, topL, topD],
+          stops: const [0.0, 0.28, 0.72, 1.0],
+        ).createShader(bodyRect),
     );
 
     // Skirt
@@ -527,17 +579,33 @@ class _FashionFigurePainter extends CustomPainter {
     final skirtPath = Path()
       ..moveTo(w * 0.18, skirtTop)
       ..lineTo(w * 0.82, skirtTop)
-      ..quadraticBezierTo(w * 0.96, skirtTop + h * 0.14, w * 0.92, skirtTop + h * 0.27)
-      ..quadraticBezierTo(w * 0.88, skirtTop + h * 0.29, w * 0.50, skirtTop + h * 0.27)
-      ..quadraticBezierTo(w * 0.12, skirtTop + h * 0.29, w * 0.08, skirtTop + h * 0.27)
+      ..quadraticBezierTo(
+        w * 0.96,
+        skirtTop + h * 0.14,
+        w * 0.92,
+        skirtTop + h * 0.27,
+      )
+      ..quadraticBezierTo(
+        w * 0.88,
+        skirtTop + h * 0.29,
+        w * 0.50,
+        skirtTop + h * 0.27,
+      )
+      ..quadraticBezierTo(
+        w * 0.12,
+        skirtTop + h * 0.29,
+        w * 0.08,
+        skirtTop + h * 0.27,
+      )
       ..quadraticBezierTo(w * 0.04, skirtTop + h * 0.14, w * 0.18, skirtTop)
       ..close();
     canvas.drawPath(
       skirtPath,
-      Paint()..shader = LinearGradient(
-        colors: [skirtD, skirtL, skirtL, skirtD],
-        stops: const [0.0, 0.28, 0.72, 1.0],
-      ).createShader(skirtRect),
+      Paint()
+        ..shader = LinearGradient(
+          colors: [skirtD, skirtL, skirtL, skirtD],
+          stops: const [0.0, 0.28, 0.72, 1.0],
+        ).createShader(skirtRect),
     );
 
     // Legs (short, below skirt hem)
@@ -547,7 +615,12 @@ class _FashionFigurePainter extends CustomPainter {
     for (final isLeft in [true, false]) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(isLeft ? w * 0.28 : w * 0.58, legTop, w * 0.14, h * 0.11),
+          Rect.fromLTWH(
+            isLeft ? w * 0.28 : w * 0.58,
+            legTop,
+            w * 0.14,
+            h * 0.11,
+          ),
           const Radius.circular(6),
         ),
         Paint()..color = legColor,
@@ -577,10 +650,11 @@ class _FashionFigurePainter extends CustomPainter {
       ..close();
     canvas.drawPath(
       torsoPath,
-      Paint()..shader = LinearGradient(
-        colors: [topD, topL, topL, topD],
-        stops: const [0.0, 0.28, 0.72, 1.0],
-      ).createShader(bodyRect),
+      Paint()
+        ..shader = LinearGradient(
+          colors: [topD, topL, topL, topD],
+          stops: const [0.0, 0.28, 0.72, 1.0],
+        ).createShader(bodyRect),
     );
 
     final pantTop = bodyTop + h * 0.20;
@@ -596,10 +670,11 @@ class _FashionFigurePainter extends CustomPainter {
 
     // Trouser legs
     final pantsRect = Rect.fromLTWH(0, pantTop, w, h * 0.38);
-    final pantShading = Paint()..shader = LinearGradient(
-      colors: [pantsD, pantsL, pantsL, pantsD],
-      stops: const [0.0, 0.28, 0.72, 1.0],
-    ).createShader(pantsRect);
+    final pantShading = Paint()
+      ..shader = LinearGradient(
+        colors: [pantsD, pantsL, pantsL, pantsD],
+        stops: const [0.0, 0.28, 0.72, 1.0],
+      ).createShader(pantsRect);
 
     canvas.drawPath(
       Path()
@@ -624,17 +699,34 @@ class _FashionFigurePainter extends CustomPainter {
     _drawArms(canvas, w, h, bodyTop);
   }
 
-  void _drawShoes(Canvas canvas, double w, double h, double shoeTop, {required bool narrow}) {
+  void _drawShoes(
+    Canvas canvas,
+    double w,
+    double h,
+    double shoeTop, {
+    required bool narrow,
+  }) {
     final shoeColor = _shadowed(const Color(0xFF2C1A0E), darken: 0.10);
     final shoeW = narrow ? w * 0.22 : w * 0.26;
     for (final isLeft in [true, false]) {
       final sx = isLeft ? w * 0.12 : (narrow ? w * 0.50 : w * 0.53);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromLTWH(sx, shoeTop, shoeW, h * 0.055), const Radius.circular(8)),
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(sx, shoeTop, shoeW, h * 0.055),
+          const Radius.circular(8),
+        ),
         Paint()..color = shoeColor,
       );
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromLTWH(sx + shoeW * 0.10, shoeTop + h * 0.008, shoeW * 0.44, h * 0.018), const Radius.circular(4)),
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            sx + shoeW * 0.10,
+            shoeTop + h * 0.008,
+            shoeW * 0.44,
+            h * 0.018,
+          ),
+          const Radius.circular(4),
+        ),
         Paint()..color = Colors.white.withValues(alpha: 0.18),
       );
     }
@@ -649,7 +741,12 @@ class _FashionFigurePainter extends CustomPainter {
       final sx = isLeft ? w * 0.14 : w * 0.86;
       final ex = isLeft ? w * 0.05 : w * 0.95;
       final ey = bodyTop + h * 0.24;
-      final armRect = Rect.fromLTWH(isLeft ? 0 : w * 0.50, bodyTop, w * 0.50, h * 0.28);
+      final armRect = Rect.fromLTWH(
+        isLeft ? 0 : w * 0.50,
+        bodyTop,
+        w * 0.50,
+        h * 0.28,
+      );
       canvas.drawPath(
         Path()
           ..moveTo(sx, bodyTop + h * 0.04)
@@ -663,31 +760,64 @@ class _FashionFigurePainter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
       );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(ex, ey + h * 0.012), width: w * 0.10, height: w * 0.07),
+        Rect.fromCenter(
+          center: Offset(ex, ey + h * 0.012),
+          width: w * 0.10,
+          height: w * 0.07,
+        ),
         Paint()..color = skin,
       );
     }
   }
 
-  void _drawFace(Canvas canvas, double w, double h, Color skin, Color skinD, Color hair,
-      double hcx, double hcy, double hr, double ff) {
+  void _drawFace(
+    Canvas canvas,
+    double w,
+    double h,
+    Color skin,
+    Color skinD,
+    Color hair,
+    double hcx,
+    double hcy,
+    double hr,
+    double ff,
+  ) {
     final eyeY = hcy + hr * 0.14;
     final eyeSpread = hr * 0.50;
     final eyeR = hr * 0.27;
 
     for (final side in [-1, 1]) {
       final ex = hcx + side * eyeSpread;
-      canvas.drawCircle(Offset(ex, eyeY), eyeR, Paint()..color = Colors.white.withValues(alpha: 0.92 * ff));
-      canvas.drawCircle(Offset(ex, eyeY + eyeR * 0.05), eyeR * 0.68,
-          Paint()..color = Color.fromARGB((0.88 * ff * 255).round(), 52, 36, 20));
-      canvas.drawCircle(Offset(ex, eyeY + eyeR * 0.05), eyeR * 0.38,
-          Paint()..color = Colors.black.withValues(alpha: 0.90 * ff));
-      canvas.drawCircle(Offset(ex - eyeR * 0.28, eyeY - eyeR * 0.28), eyeR * 0.20,
-          Paint()..color = Colors.white.withValues(alpha: 0.90 * ff));
+      canvas.drawCircle(
+        Offset(ex, eyeY),
+        eyeR,
+        Paint()..color = Colors.white.withValues(alpha: 0.92 * ff),
+      );
+      canvas.drawCircle(
+        Offset(ex, eyeY + eyeR * 0.05),
+        eyeR * 0.68,
+        Paint()..color = Color.fromARGB((0.88 * ff * 255).round(), 52, 36, 20),
+      );
+      canvas.drawCircle(
+        Offset(ex, eyeY + eyeR * 0.05),
+        eyeR * 0.38,
+        Paint()..color = Colors.black.withValues(alpha: 0.90 * ff),
+      );
+      canvas.drawCircle(
+        Offset(ex - eyeR * 0.28, eyeY - eyeR * 0.28),
+        eyeR * 0.20,
+        Paint()..color = Colors.white.withValues(alpha: 0.90 * ff),
+      );
       // Lash arc
       canvas.drawArc(
-        Rect.fromCenter(center: Offset(ex, eyeY), width: eyeR * 2, height: eyeR * 2),
-        pi, pi, false,
+        Rect.fromCenter(
+          center: Offset(ex, eyeY),
+          width: eyeR * 2,
+          height: eyeR * 2,
+        ),
+        pi,
+        pi,
+        false,
         Paint()
           ..color = hair.withValues(alpha: 0.70 * ff)
           ..style = PaintingStyle.stroke
@@ -699,8 +829,11 @@ class _FashionFigurePainter extends CustomPainter {
     // Cheek blush (no blur — Impeller safe)
     for (final side in [-1, 1]) {
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx + side * hr * 0.65, hcy + hr * 0.38),
-            width: hr * 0.36, height: hr * 0.17),
+        Rect.fromCenter(
+          center: Offset(hcx + side * hr * 0.65, hcy + hr * 0.38),
+          width: hr * 0.36,
+          height: hr * 0.17,
+        ),
         Paint()..color = const Color(0xFFE8A4A0).withValues(alpha: 0.25 * ff),
       );
     }
@@ -709,7 +842,12 @@ class _FashionFigurePainter extends CustomPainter {
     canvas.drawPath(
       Path()
         ..moveTo(hcx - hr * 0.18, hcy + hr * 0.50)
-        ..quadraticBezierTo(hcx, hcy + hr * 0.65, hcx + hr * 0.18, hcy + hr * 0.50),
+        ..quadraticBezierTo(
+          hcx,
+          hcy + hr * 0.65,
+          hcx + hr * 0.18,
+          hcy + hr * 0.50,
+        ),
       Paint()
         ..color = const Color(0xFFD4847A).withValues(alpha: 0.80 * ff)
         ..style = PaintingStyle.stroke
@@ -720,7 +858,15 @@ class _FashionFigurePainter extends CustomPainter {
 
   // ─── Hair Styles ──────────────────────────────────────────────────────────
 
-  void _drawHairBack(Canvas canvas, double w, double h, Color hair, double hcx, double hcy, double hr) {
+  void _drawHairBack(
+    Canvas canvas,
+    double w,
+    double h,
+    Color hair,
+    double hcx,
+    double hcy,
+    double hr,
+  ) {
     final style = hairStyleIndex.clamp(0, 5);
     final dark = _shadowed(hair, darken: 0.24);
 
@@ -729,27 +875,50 @@ class _FashionFigurePainter extends CustomPainter {
       for (final side in [-1, 1]) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTWH(hcx + side * hr * 0.98 - (side < 0 ? hr * 0.60 : 0), hcy, hr * 0.60, h * 0.44),
+            Rect.fromLTWH(
+              hcx + side * hr * 0.98 - (side < 0 ? hr * 0.60 : 0),
+              hcy,
+              hr * 0.60,
+              h * 0.44,
+            ),
             const Radius.circular(12),
           ),
           Paint()..color = dark,
         );
       }
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.30), width: hr * 2.10, height: hr * 1.20),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy - hr * 0.30),
+          width: hr * 2.10,
+          height: hr * 1.20,
+        ),
         Paint()..color = dark,
       );
     } else if (style == 4) {
       // Ponytail — back cap + tail
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.28), width: hr * 2.05, height: hr * 1.10),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy - hr * 0.28),
+          width: hr * 2.05,
+          height: hr * 1.10,
+        ),
         Paint()..color = dark,
       );
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.14, hcy - hr * 0.88)
-          ..quadraticBezierTo(hcx - hr * 0.22, hcy + h * 0.14, hcx + hr * 0.08, hcy + h * 0.21)
-          ..quadraticBezierTo(hcx + hr * 0.22, hcy + h * 0.14, hcx + hr * 0.14, hcy - hr * 0.88),
+          ..quadraticBezierTo(
+            hcx - hr * 0.22,
+            hcy + h * 0.14,
+            hcx + hr * 0.08,
+            hcy + h * 0.21,
+          )
+          ..quadraticBezierTo(
+            hcx + hr * 0.22,
+            hcy + h * 0.14,
+            hcx + hr * 0.14,
+            hcy - hr * 0.88,
+          ),
         Paint()..color = dark,
       );
     } else if (style == 5) {
@@ -757,23 +926,51 @@ class _FashionFigurePainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.90, hcy - hr * 0.15)
-          ..quadraticBezierTo(hcx - hr * 1.05, hcy + hr * 0.60, hcx - hr * 0.85, hcy + hr * 0.88)
+          ..quadraticBezierTo(
+            hcx - hr * 1.05,
+            hcy + hr * 0.60,
+            hcx - hr * 0.85,
+            hcy + hr * 0.88,
+          )
           ..lineTo(hcx + hr * 0.85, hcy + hr * 0.88)
-          ..quadraticBezierTo(hcx + hr * 1.05, hcy + hr * 0.60, hcx + hr * 0.90, hcy - hr * 0.15)
-          ..quadraticBezierTo(hcx, hcy - hr * 1.08, hcx - hr * 0.90, hcy - hr * 0.15)
+          ..quadraticBezierTo(
+            hcx + hr * 1.05,
+            hcy + hr * 0.60,
+            hcx + hr * 0.90,
+            hcy - hr * 0.15,
+          )
+          ..quadraticBezierTo(
+            hcx,
+            hcy - hr * 1.08,
+            hcx - hr * 0.90,
+            hcy - hr * 0.15,
+          )
           ..close(),
         Paint()..color = dark,
       );
     } else {
       // All other styles — generic back mass
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.28), width: hr * 2.10, height: hr * 1.22),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy - hr * 0.28),
+          width: hr * 2.10,
+          height: hr * 1.22,
+        ),
         Paint()..color = dark,
       );
     }
   }
 
-  void _drawHairFront(Canvas canvas, double w, double h, Color hair, double hcx, double hcy, double hr, double ff) {
+  void _drawHairFront(
+    Canvas canvas,
+    double w,
+    double h,
+    Color hair,
+    double hcx,
+    double hcy,
+    double hr,
+    double ff,
+  ) {
     final style = hairStyleIndex.clamp(0, 5);
     final base = Paint()..color = hair;
     final lit = Paint()..color = _lit(hair, boost: 0.08);
@@ -783,9 +980,24 @@ class _FashionFigurePainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
-          ..quadraticBezierTo(hcx, hcy - hr * 1.06, hcx + hr * 0.90, hcy - hr * 0.18)
-          ..quadraticBezierTo(hcx + hr * 0.68, hcy - hr * 0.65, hcx, hcy - hr * 0.85)
-          ..quadraticBezierTo(hcx - hr * 0.68, hcy - hr * 0.65, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(
+            hcx,
+            hcy - hr * 1.06,
+            hcx + hr * 0.90,
+            hcy - hr * 0.18,
+          )
+          ..quadraticBezierTo(
+            hcx + hr * 0.68,
+            hcy - hr * 0.65,
+            hcx,
+            hcy - hr * 0.85,
+          )
+          ..quadraticBezierTo(
+            hcx - hr * 0.68,
+            hcy - hr * 0.65,
+            hcx - hr * 0.90,
+            hcy - hr * 0.18,
+          )
           ..close(),
         base,
       );
@@ -796,7 +1008,11 @@ class _FashionFigurePainter extends CustomPainter {
       crownArc();
       for (final dx in [-0.32, -0.05, 0.22, 0.50]) {
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(hcx + hr * dx, hcy - hr * 0.98), width: hr * 0.30, height: hr * 0.38),
+          Rect.fromCenter(
+            center: Offset(hcx + hr * dx, hcy - hr * 0.98),
+            width: hr * 0.30,
+            height: hr * 0.38,
+          ),
           lit,
         );
       }
@@ -805,34 +1021,76 @@ class _FashionFigurePainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
-          ..quadraticBezierTo(hcx - hr * 0.10, hcy - hr * 1.10, hcx + hr * 0.88, hcy - hr * 0.25)
-          ..quadraticBezierTo(hcx + hr * 0.60, hcy - hr * 0.72, hcx - hr * 0.10, hcy - hr * 0.85)
-          ..quadraticBezierTo(hcx - hr * 0.55, hcy - hr * 0.55, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(
+            hcx - hr * 0.10,
+            hcy - hr * 1.10,
+            hcx + hr * 0.88,
+            hcy - hr * 0.25,
+          )
+          ..quadraticBezierTo(
+            hcx + hr * 0.60,
+            hcy - hr * 0.72,
+            hcx - hr * 0.10,
+            hcy - hr * 0.85,
+          )
+          ..quadraticBezierTo(
+            hcx - hr * 0.55,
+            hcy - hr * 0.55,
+            hcx - hr * 0.90,
+            hcy - hr * 0.18,
+          )
           ..close(),
         base,
       );
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.90, hcy - hr * 0.18)
-          ..quadraticBezierTo(hcx - hr * 0.70, hcy + hr * 0.05, hcx - hr * 0.55, hcy + hr * 0.22)
-          ..quadraticBezierTo(hcx - hr * 0.40, hcy - hr * 0.10, hcx - hr * 0.60, hcy - hr * 0.40)
-          ..quadraticBezierTo(hcx - hr * 0.75, hcy - hr * 0.35, hcx - hr * 0.90, hcy - hr * 0.18)
+          ..quadraticBezierTo(
+            hcx - hr * 0.70,
+            hcy + hr * 0.05,
+            hcx - hr * 0.55,
+            hcy + hr * 0.22,
+          )
+          ..quadraticBezierTo(
+            hcx - hr * 0.40,
+            hcy - hr * 0.10,
+            hcx - hr * 0.60,
+            hcy - hr * 0.40,
+          )
+          ..quadraticBezierTo(
+            hcx - hr * 0.75,
+            hcy - hr * 0.35,
+            hcx - hr * 0.90,
+            hcy - hr * 0.18,
+          )
           ..close(),
         lit,
       );
     } else if (style == 2) {
       // Undercut — large crown puff + side strip
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx, hcy - hr * 0.70), width: hr * 1.60, height: hr * 0.90),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy - hr * 0.70),
+          width: hr * 1.60,
+          height: hr * 0.90,
+        ),
         base,
       );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx - hr * 0.10, hcy - hr * 0.82), width: hr * 0.80, height: hr * 0.28),
+        Rect.fromCenter(
+          center: Offset(hcx - hr * 0.10, hcy - hr * 0.82),
+          width: hr * 0.80,
+          height: hr * 0.28,
+        ),
         lit,
       );
       for (final side in [-1, 1]) {
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(hcx + side * hr * 0.88, hcy + hr * 0.05), width: hr * 0.30, height: hr * 0.55),
+          Rect.fromCenter(
+            center: Offset(hcx + side * hr * 0.88, hcy + hr * 0.05),
+            width: hr * 0.30,
+            height: hr * 0.55,
+          ),
           Paint()..color = _shadowed(hair, darken: 0.22),
         );
       }
@@ -842,7 +1100,12 @@ class _FashionFigurePainter extends CustomPainter {
       for (final side in [-1, 1]) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTWH(hcx + side * hr * 0.82 - (side < 0 ? hr * 0.44 : 0), hcy + hr * 0.20, hr * 0.44, h * 0.26),
+            Rect.fromLTWH(
+              hcx + side * hr * 0.82 - (side < 0 ? hr * 0.44 : 0),
+              hcy + hr * 0.20,
+              hr * 0.44,
+              h * 0.26,
+            ),
             const Radius.circular(10),
           ),
           Paint()..color = hair.withValues(alpha: 0.90),
@@ -854,8 +1117,14 @@ class _FashionFigurePainter extends CustomPainter {
       canvas.drawCircle(Offset(hcx, hcy - hr * 1.00), hr * 0.20, lit);
       // Bun wrap line
       canvas.drawArc(
-        Rect.fromCenter(center: Offset(hcx, hcy - hr * 1.00), width: hr * 0.40, height: hr * 0.40),
-        pi * 0.3, pi * 1.4, false,
+        Rect.fromCenter(
+          center: Offset(hcx, hcy - hr * 1.00),
+          width: hr * 0.40,
+          height: hr * 0.40,
+        ),
+        pi * 0.3,
+        pi * 1.4,
+        false,
         Paint()
           ..color = _shadowed(hair, darken: 0.30)
           ..style = PaintingStyle.stroke
@@ -869,9 +1138,24 @@ class _FashionFigurePainter extends CustomPainter {
         canvas.drawPath(
           Path()
             ..moveTo(hcx + side * hr * 0.88, hcy - hr * 0.18)
-            ..quadraticBezierTo(hcx + side * hr * 1.00, hcy + hr * 0.35, hcx + side * hr * 0.90, hcy + hr * 0.84)
-            ..quadraticBezierTo(hcx + side * hr * 0.70, hcy + hr * 0.87, hcx + side * hr * 0.60, hcy + hr * 0.79)
-            ..quadraticBezierTo(hcx + side * hr * 0.74, hcy + hr * 0.40, hcx + side * hr * 0.72, hcy - hr * 0.10)
+            ..quadraticBezierTo(
+              hcx + side * hr * 1.00,
+              hcy + hr * 0.35,
+              hcx + side * hr * 0.90,
+              hcy + hr * 0.84,
+            )
+            ..quadraticBezierTo(
+              hcx + side * hr * 0.70,
+              hcy + hr * 0.87,
+              hcx + side * hr * 0.60,
+              hcy + hr * 0.79,
+            )
+            ..quadraticBezierTo(
+              hcx + side * hr * 0.74,
+              hcy + hr * 0.40,
+              hcx + side * hr * 0.72,
+              hcy - hr * 0.10,
+            )
             ..close(),
           base,
         );
@@ -887,7 +1171,9 @@ class _FashionFigurePainter extends CustomPainter {
         : (isDog ? const Color(0xFFD4AA70) : const Color(0xFFE8D4C0));
     final furL = _lit(furBase, boost: 0.14);
     final furD = _shadowed(furBase, darken: 0.32);
-    final accent = isDog ? _shadowed(const Color(0xFF6B4220), darken: 0.10) : const Color(0xFF7A5C4A);
+    final accent = isDog
+        ? _shadowed(const Color(0xFF6B4220), darken: 0.10)
+        : const Color(0xFF7A5C4A);
 
     if (isDog) {
       _drawChibiDog(canvas, w, h, furBase, furL, furD, accent);
@@ -896,7 +1182,15 @@ class _FashionFigurePainter extends CustomPainter {
     }
   }
 
-  void _drawChibiDog(Canvas canvas, double w, double h, Color fur, Color furL, Color furD, Color accent) {
+  void _drawChibiDog(
+    Canvas canvas,
+    double w,
+    double h,
+    Color fur,
+    Color furL,
+    Color furD,
+    Color accent,
+  ) {
     final hcx = w * 0.50;
     final hcy = h * 0.28;
     final hr = w * 0.42;
@@ -905,25 +1199,45 @@ class _FashionFigurePainter extends CustomPainter {
     for (final isLeft in [true, false]) {
       final ex = isLeft ? hcx - hr * 0.75 : hcx + hr * 0.75;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(ex, hcy + hr * 0.30), width: hr * 0.58, height: hr * 1.10),
+        Rect.fromCenter(
+          center: Offset(ex, hcy + hr * 0.30),
+          width: hr * 0.58,
+          height: hr * 1.10,
+        ),
         Paint()..color = furD,
       );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(ex, hcy + hr * 0.32), width: hr * 0.32, height: hr * 0.68),
+        Rect.fromCenter(
+          center: Offset(ex, hcy + hr * 0.32),
+          width: hr * 0.32,
+          height: hr * 0.68,
+        ),
         Paint()..color = accent.withValues(alpha: 0.45),
       );
     }
 
     // Body
-    final bodyRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.70), width: w * 0.55, height: h * 0.22);
-    canvas.drawOval(bodyRect, Paint()..shader = LinearGradient(
-      colors: [furD, furL, furD], stops: const [0.0, 0.50, 1.0],
-    ).createShader(bodyRect));
+    final bodyRect = Rect.fromCenter(
+      center: Offset(w * 0.50, h * 0.70),
+      width: w * 0.55,
+      height: h * 0.22,
+    );
+    canvas.drawOval(
+      bodyRect,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [furD, furL, furD],
+          stops: const [0.0, 0.50, 1.0],
+        ).createShader(bodyRect),
+    );
 
     // Legs
     for (int i = 0; i < 4; i++) {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromLTWH(w * (0.16 + i * 0.22), h * 0.78, w * 0.14, h * 0.12), const Radius.circular(7)),
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(w * (0.16 + i * 0.22), h * 0.78, w * 0.14, h * 0.12),
+          const Radius.circular(7),
+        ),
         Paint()..color = furD,
       );
     }
@@ -934,20 +1248,35 @@ class _FashionFigurePainter extends CustomPainter {
         ..moveTo(w * 0.84, h * 0.68)
         ..quadraticBezierTo(w * 0.98, h * 0.58, w * 0.92, h * 0.50)
         ..quadraticBezierTo(w * 0.88, h * 0.45, w * 0.80, h * 0.52),
-      Paint()..color = furD..style = PaintingStyle.stroke..strokeWidth = w * 0.09..strokeCap = StrokeCap.round,
+      Paint()
+        ..color = furD
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * 0.09
+        ..strokeCap = StrokeCap.round,
     );
 
     // Head
     final headRect = Rect.fromCircle(center: Offset(hcx, hcy), radius: hr);
-    canvas.drawCircle(Offset(hcx, hcy), hr, Paint()..shader = RadialGradient(
-      center: const Alignment(0.28, -0.28), radius: 0.72,
-      colors: [furL, fur, furD], stops: const [0.0, 0.50, 1.0],
-    ).createShader(headRect));
+    canvas.drawCircle(
+      Offset(hcx, hcy),
+      hr,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0.28, -0.28),
+          radius: 0.72,
+          colors: [furL, fur, furD],
+          stops: const [0.0, 0.50, 1.0],
+        ).createShader(headRect),
+    );
 
     // Collar
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.88), width: hr * 0.80, height: hr * 0.18),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy + hr * 0.88),
+          width: hr * 0.80,
+          height: hr * 0.18,
+        ),
         const Radius.circular(5),
       ),
       Paint()..color = const Color(0xFFE04040),
@@ -959,31 +1288,72 @@ class _FashionFigurePainter extends CustomPainter {
         final ex = hcx + side * hr * 0.44;
         final ey = hcy + hr * 0.10;
         final er = hr * 0.22;
-        canvas.drawCircle(Offset(ex, ey), er, Paint()..color = Colors.white.withValues(alpha: 0.90 * ff));
-        canvas.drawCircle(Offset(ex, ey), er * 0.65, Paint()..color = Color.fromARGB((0.85 * ff * 255).round(), 55, 35, 15));
-        canvas.drawCircle(Offset(ex, ey), er * 0.35, Paint()..color = Colors.black.withValues(alpha: 0.88 * ff));
-        canvas.drawCircle(Offset(ex - er * 0.28, ey - er * 0.28), er * 0.20, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
+        canvas.drawCircle(
+          Offset(ex, ey),
+          er,
+          Paint()..color = Colors.white.withValues(alpha: 0.90 * ff),
+        );
+        canvas.drawCircle(
+          Offset(ex, ey),
+          er * 0.65,
+          Paint()
+            ..color = Color.fromARGB((0.85 * ff * 255).round(), 55, 35, 15),
+        );
+        canvas.drawCircle(
+          Offset(ex, ey),
+          er * 0.35,
+          Paint()..color = Colors.black.withValues(alpha: 0.88 * ff),
+        );
+        canvas.drawCircle(
+          Offset(ex - er * 0.28, ey - er * 0.28),
+          er * 0.20,
+          Paint()..color = Colors.white.withValues(alpha: 0.88 * ff),
+        );
       }
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.50), width: hr * 0.32, height: hr * 0.20),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy + hr * 0.50),
+          width: hr * 0.32,
+          height: hr * 0.20,
+        ),
         Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.80 * ff),
       );
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.22, hcy + hr * 0.58)
-          ..quadraticBezierTo(hcx, hcy + hr * 0.72, hcx + hr * 0.22, hcy + hr * 0.58),
-        Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.65 * ff)..style = PaintingStyle.stroke..strokeWidth = 2.0..strokeCap = StrokeCap.round,
+          ..quadraticBezierTo(
+            hcx,
+            hcy + hr * 0.72,
+            hcx + hr * 0.22,
+            hcy + hr * 0.58,
+          ),
+        Paint()
+          ..color = const Color(0xFF2C1A0E).withValues(alpha: 0.65 * ff)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.round,
       );
       for (final side in [-1, 1]) {
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(hcx + side * hr * 0.62, hcy + hr * 0.42), width: hr * 0.30, height: hr * 0.14),
+          Rect.fromCenter(
+            center: Offset(hcx + side * hr * 0.62, hcy + hr * 0.42),
+            width: hr * 0.30,
+            height: hr * 0.14,
+          ),
           Paint()..color = const Color(0xFFE89090).withValues(alpha: 0.22 * ff),
         );
       }
     }
   }
 
-  void _drawChibiCat(Canvas canvas, double w, double h, Color fur, Color furL, Color furD) {
+  void _drawChibiCat(
+    Canvas canvas,
+    double w,
+    double h,
+    Color fur,
+    Color furL,
+    Color furD,
+  ) {
     final hcx = w * 0.50;
     final hcy = h * 0.26;
     final hr = w * 0.40;
@@ -991,47 +1361,90 @@ class _FashionFigurePainter extends CustomPainter {
     // Pointed ears
     for (final isLeft in [true, false]) {
       final ex = isLeft ? hcx - hr * 0.72 : hcx + hr * 0.72;
-      final tip = Offset(ex + (isLeft ? -hr * 0.18 : hr * 0.18), hcy - hr * 1.10);
+      final tip = Offset(
+        ex + (isLeft ? -hr * 0.18 : hr * 0.18),
+        hcy - hr * 1.10,
+      );
       final b1 = Offset(ex - hr * 0.30, hcy - hr * 0.35);
       final b2 = Offset(ex + hr * 0.30, hcy - hr * 0.35);
-      canvas.drawPath(Path()..moveTo(b1.dx, b1.dy)..lineTo(tip.dx, tip.dy)..lineTo(b2.dx, b2.dy)..close(), Paint()..color = furD);
       canvas.drawPath(
-        Path()..moveTo(b1.dx + hr * 0.08, b1.dy)..lineTo(tip.dx, tip.dy + hr * 0.14)..lineTo(b2.dx - hr * 0.08, b2.dy)..close(),
+        Path()
+          ..moveTo(b1.dx, b1.dy)
+          ..lineTo(tip.dx, tip.dy)
+          ..lineTo(b2.dx, b2.dy)
+          ..close(),
+        Paint()..color = furD,
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(b1.dx + hr * 0.08, b1.dy)
+          ..lineTo(tip.dx, tip.dy + hr * 0.14)
+          ..lineTo(b2.dx - hr * 0.08, b2.dy)
+          ..close(),
         Paint()..color = const Color(0xFFE8A0B0).withValues(alpha: 0.70),
       );
     }
 
     // Body
-    final bodyRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.68), width: w * 0.50, height: h * 0.20);
-    canvas.drawOval(bodyRect, Paint()..shader = LinearGradient(
-      colors: [furD, furL, furD], stops: const [0.0, 0.50, 1.0],
-    ).createShader(bodyRect));
+    final bodyRect = Rect.fromCenter(
+      center: Offset(w * 0.50, h * 0.68),
+      width: w * 0.50,
+      height: h * 0.20,
+    );
+    canvas.drawOval(
+      bodyRect,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [furD, furL, furD],
+          stops: const [0.0, 0.50, 1.0],
+        ).createShader(bodyRect),
+    );
 
     // Legs
     for (int i = 0; i < 4; i++) {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromLTWH(w * (0.18 + i * 0.20), h * 0.76, w * 0.12, h * 0.12), const Radius.circular(6)),
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(w * (0.18 + i * 0.20), h * 0.76, w * 0.12, h * 0.12),
+          const Radius.circular(6),
+        ),
         Paint()..color = furD,
       );
     }
 
     // Tail
     canvas.drawPath(
-      Path()..moveTo(w * 0.82, h * 0.66)..cubicTo(w * 1.10, h * 0.62, w * 1.12, h * 0.48, w * 0.88, h * 0.44),
-      Paint()..color = furD..style = PaintingStyle.stroke..strokeWidth = w * 0.08..strokeCap = StrokeCap.round,
+      Path()
+        ..moveTo(w * 0.82, h * 0.66)
+        ..cubicTo(w * 1.10, h * 0.62, w * 1.12, h * 0.48, w * 0.88, h * 0.44),
+      Paint()
+        ..color = furD
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * 0.08
+        ..strokeCap = StrokeCap.round,
     );
 
     // Head
     final headRect = Rect.fromCircle(center: Offset(hcx, hcy), radius: hr);
-    canvas.drawCircle(Offset(hcx, hcy), hr, Paint()..shader = RadialGradient(
-      center: const Alignment(0.28, -0.28), radius: 0.72,
-      colors: [furL, fur, furD], stops: const [0.0, 0.50, 1.0],
-    ).createShader(headRect));
+    canvas.drawCircle(
+      Offset(hcx, hcy),
+      hr,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0.28, -0.28),
+          radius: 0.72,
+          colors: [furL, fur, furD],
+          stops: const [0.0, 0.50, 1.0],
+        ).createShader(headRect),
+    );
 
     // Collar
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(hcx, hcy + hr * 0.88), width: hr * 0.72, height: hr * 0.16),
+        Rect.fromCenter(
+          center: Offset(hcx, hcy + hr * 0.88),
+          width: hr * 0.72,
+          height: hr * 0.16,
+        ),
         const Radius.circular(5),
       ),
       Paint()..color = const Color(0xFFE040A0),
@@ -1048,35 +1461,75 @@ class _FashionFigurePainter extends CustomPainter {
           ..quadraticBezierTo(ex, ey - er * 0.85, ex + er * 1.20, ey)
           ..quadraticBezierTo(ex, ey + er * 0.85, ex - er * 1.20, ey)
           ..close();
-        canvas.drawPath(eyePath, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
-        canvas.drawCircle(Offset(ex, ey), er * 0.55, Paint()..color = Color.fromARGB((0.85 * ff * 255).round(), 30, 90, 40));
-        canvas.drawCircle(Offset(ex, ey), er * 0.28, Paint()..color = Colors.black.withValues(alpha: 0.88 * ff));
-        canvas.drawCircle(Offset(ex - er * 0.24, ey - er * 0.24), er * 0.18, Paint()..color = Colors.white.withValues(alpha: 0.88 * ff));
+        canvas.drawPath(
+          eyePath,
+          Paint()..color = Colors.white.withValues(alpha: 0.88 * ff),
+        );
+        canvas.drawCircle(
+          Offset(ex, ey),
+          er * 0.55,
+          Paint()
+            ..color = Color.fromARGB((0.85 * ff * 255).round(), 30, 90, 40),
+        );
+        canvas.drawCircle(
+          Offset(ex, ey),
+          er * 0.28,
+          Paint()..color = Colors.black.withValues(alpha: 0.88 * ff),
+        );
+        canvas.drawCircle(
+          Offset(ex - er * 0.24, ey - er * 0.24),
+          er * 0.18,
+          Paint()..color = Colors.white.withValues(alpha: 0.88 * ff),
+        );
       }
       // Nose
       canvas.drawPath(
-        Path()..moveTo(hcx, hcy + hr * 0.44)..lineTo(hcx - hr * 0.10, hcy + hr * 0.52)..lineTo(hcx + hr * 0.10, hcy + hr * 0.52)..close(),
+        Path()
+          ..moveTo(hcx, hcy + hr * 0.44)
+          ..lineTo(hcx - hr * 0.10, hcy + hr * 0.52)
+          ..lineTo(hcx + hr * 0.10, hcy + hr * 0.52)
+          ..close(),
         Paint()..color = const Color(0xFFE090A0).withValues(alpha: 0.80 * ff),
       );
       // Whiskers
-      final wPaint = Paint()..color = furD.withValues(alpha: 0.38 * ff)..strokeWidth = 0.8..strokeCap = StrokeCap.round;
+      final wPaint = Paint()
+        ..color = furD.withValues(alpha: 0.38 * ff)
+        ..strokeWidth = 0.8
+        ..strokeCap = StrokeCap.round;
       for (final side in [-1, 1]) {
         for (int i = 0; i < 3; i++) {
           final wy = hcy + hr * (0.42 + i * 0.10);
-          canvas.drawLine(Offset(hcx + side * hr * 0.10, wy), Offset(hcx + side * hr * 0.85, wy + i * hr * 0.04), wPaint);
+          canvas.drawLine(
+            Offset(hcx + side * hr * 0.10, wy),
+            Offset(hcx + side * hr * 0.85, wy + i * hr * 0.04),
+            wPaint,
+          );
         }
       }
       // Mouth
       canvas.drawPath(
         Path()
           ..moveTo(hcx - hr * 0.16, hcy + hr * 0.58)
-          ..quadraticBezierTo(hcx, hcy + hr * 0.70, hcx + hr * 0.16, hcy + hr * 0.58),
-        Paint()..color = const Color(0xFF2C1A0E).withValues(alpha: 0.50 * ff)..style = PaintingStyle.stroke..strokeWidth = 1.6..strokeCap = StrokeCap.round,
+          ..quadraticBezierTo(
+            hcx,
+            hcy + hr * 0.70,
+            hcx + hr * 0.16,
+            hcy + hr * 0.58,
+          ),
+        Paint()
+          ..color = const Color(0xFF2C1A0E).withValues(alpha: 0.50 * ff)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..strokeCap = StrokeCap.round,
       );
       // Blush
       for (final side in [-1, 1]) {
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(hcx + side * hr * 0.60, hcy + hr * 0.42), width: hr * 0.28, height: hr * 0.12),
+          Rect.fromCenter(
+            center: Offset(hcx + side * hr * 0.60, hcy + hr * 0.42),
+            width: hr * 0.28,
+            height: hr * 0.12,
+          ),
           Paint()..color = const Color(0xFFE89090).withValues(alpha: 0.20 * ff),
         );
       }

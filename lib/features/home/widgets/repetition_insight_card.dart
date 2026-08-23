@@ -22,7 +22,8 @@ class RepetitionInsightCard extends ConsumerWidget {
       orElse: () => null,
     );
     final signedInError = backendInsight.hasError;
-    final isSignedIn = backendInsight.isLoading || signedInInsight != null || signedInError;
+    final isSignedIn =
+        backendInsight.isLoading || signedInInsight != null || signedInError;
 
     String? dominantColor;
     String? dominantStyle;
@@ -33,7 +34,9 @@ class RepetitionInsightCard extends ConsumerWidget {
       dominantColor = signedInInsight.dominantColor;
       dominantStyle = signedInInsight.dominantStyle;
     } else if (!isSignedIn || signedInError) {
-      dominantColor = ref.watch(wardrobeProvider.notifier).dominantRecentColor();
+      dominantColor = ref
+          .watch(wardrobeProvider.notifier)
+          .dominantRecentColor();
       showAlert = dominantColor != null;
     }
     if (!showAlert) return const SizedBox.shrink();

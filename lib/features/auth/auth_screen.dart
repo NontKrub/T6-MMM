@@ -185,7 +185,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             const SizedBox(height: 20),
                             _SocialButton(
                               icon: Icons.g_mobiledata_rounded,
-                              label: l10n?.authContinueWithGoogle ??
+                              label:
+                                  l10n?.authContinueWithGoogle ??
                                   'Continue with Google',
                               onTap: () =>
                                   _handleOAuth(AuthService().signInWithGoogle),

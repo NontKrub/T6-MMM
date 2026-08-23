@@ -115,7 +115,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
               Expanded(
                 child: _LockedAiState(
                   title: l10n?.chatLockedTitle ?? 'Fashion AI needs a login',
-                  message: l10n?.chatLockedMessage ??
+                  message:
+                      l10n?.chatLockedMessage ??
                       'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.',
                 ),
               )
@@ -189,7 +190,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           controller: _controller,
                           onSubmitted: (_) => _send(),
                           decoration: InputDecoration(
-                            hintText: l10n?.chatInputHint ?? 'Ask about fashion…',
+                            hintText:
+                                l10n?.chatInputHint ?? 'Ask about fashion…',
                             border: InputBorder.none,
                           ),
                           maxLines: null,

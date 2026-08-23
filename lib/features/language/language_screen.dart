@@ -117,15 +117,13 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                       .slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 6),
                   Text(
-                        'เลือกภาษา',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.center,
-                      )
-                      .animate(delay: 300.ms)
-                      .fadeIn(duration: 400.ms),
+                    'เลือกภาษา',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
                   const SizedBox(height: 48),
                   // Language cards
                   Row(
@@ -178,14 +176,13 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                                 },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.seedColor,
-                            disabledBackgroundColor:
-                                Colors.white.withValues(alpha: 0.1),
+                            disabledBackgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           child: Text(
-                            _selected == 'th'
-                                ? 'ดำเนินการต่อ'
-                                : 'Continue',
+                            _selected == 'th' ? 'ดำเนินการต่อ' : 'Continue',
                             style: TextStyle(
                               color: _selected == null
                                   ? Colors.white.withValues(alpha: 0.3)
@@ -250,7 +247,12 @@ class _LanguageCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: Image.asset(flagAsset, width: 64, height: 42, fit: BoxFit.cover),
+              child: Image.asset(
+                flagAsset,
+                width: 64,
+                height: 42,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(height: 12),
             Text(

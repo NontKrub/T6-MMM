@@ -180,13 +180,15 @@ class SettingsScreen extends ConsumerWidget {
         _SettingsChoice(
           value: 'birth_profile',
           label: l10n?.settingsLuckyColorBirthProfile ?? 'Birth profile',
-          subtitle: l10n?.settingsLuckyColorBirthProfileSubtitle ??
+          subtitle:
+              l10n?.settingsLuckyColorBirthProfileSubtitle ??
               'Uses your saved birth date and weekday.',
         ),
         _SettingsChoice(
           value: 'random_daily',
           label: l10n?.settingsLuckyColorRandomDaily ?? 'Random daily',
-          subtitle: l10n?.settingsLuckyColorRandomDailySubtitle ??
+          subtitle:
+              l10n?.settingsLuckyColorRandomDailySubtitle ??
               'Uses a stable daily color set without profile data.',
         ),
       ],
@@ -208,13 +210,15 @@ class SettingsScreen extends ConsumerWidget {
         _SettingsChoice(
           value: 'auto_detect',
           label: l10n?.settingsWeatherAutoDetect ?? 'Auto-detect',
-          subtitle: l10n?.settingsWeatherAutoDetectSubtitle ??
+          subtitle:
+              l10n?.settingsWeatherAutoDetectSubtitle ??
               'Uses device location when weather matching is enabled.',
         ),
         _SettingsChoice(
           value: 'off',
           label: l10n?.settingsWeatherOff ?? 'Off',
-          subtitle: l10n?.settingsWeatherOffSubtitle ??
+          subtitle:
+              l10n?.settingsWeatherOffSubtitle ??
               'Outfit generation will skip weather matching.',
         ),
       ],
@@ -360,40 +364,43 @@ class _SettingsTile extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(icon, color: iconColor, size: 18),
+          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+          ),
+          subtitle: subtitle != null
+              ? Text(
+                  subtitle!,
+                  style: TextStyle(
+                    color: Colors.grey.withValues(alpha: 0.6),
+                    fontSize: 12,
+                  ),
+                )
+              : null,
+          trailing:
+              trailing ??
+              (onTap != null
+                  ? Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.grey.withValues(alpha: 0.4),
+                    )
+                  : null),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-        ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle!,
-                style: TextStyle(
-                  color: Colors.grey.withValues(alpha: 0.6),
-                  fontSize: 12,
-                ),
-              )
-            : null,
-        trailing:
-            trailing ??
-            (onTap != null
-                ? Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.grey.withValues(alpha: 0.4),
-                  )
-                : null),
       ),
-    ));
+    );
   }
 }
