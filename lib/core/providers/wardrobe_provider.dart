@@ -39,6 +39,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     String? color,
     ClothingPattern pattern = ClothingPattern.unknown,
     ClothingSilhouette silhouette = ClothingSilhouette.unknown,
+    double? analysisConfidence,
   }) async {
     final item = await _repository.uploadAndCreateItem(
       bytes: bytes,
@@ -51,6 +52,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       color: color,
       pattern: pattern,
       silhouette: silhouette,
+      analysisConfidence: analysisConfidence,
     );
     if (item != null) {
       state = [...state, item];

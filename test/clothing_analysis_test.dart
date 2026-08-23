@@ -46,6 +46,23 @@ void main() {
       expect(result.colorHexes, hasLength(1));
       expect(result.colorNames, ['beige']);
     });
+
+    test(
+      'combines pixel palette with classifier labels and confidence',
+      () async {
+        final service = ClothingAnalysisService(
+          classifier: (_) async => [_label('shirt', .93)],
+        );
+        final result = await service.analyze(
+          await _png([(color: const ui.Color(0xFF3366FF), width: 8)]),
+        );
+
+        expect(result.colorHexes, ['#3366FF']);
+        expect(result.category, ClothingCategory.top);
+        expect(result.confidence, .93);
+        expect(result.rawLabels, ['shirt']);
+      },
+    );
   });
 
   group('HEX helpers', () {
@@ -62,7 +79,55 @@ void main() {
       expect(colorDistance('#000000', '#FFFFFF'), closeTo(441.67, 0.01));
     });
   });
+
+  group('Vision label mapping', () {
+    test('maps supported clothing categories conservatively', () {
+      expect(
+        mapClothingLabels([_label('shirt', .91)]).category,
+        ClothingCategory.top,
+      );
+      expect(
+        mapClothingLabels([_label('jeans', .88)]).category,
+        ClothingCategory.pants,
+      );
+      expect(
+        mapClothingLabels([_label('shoe', .84)]).category,
+        ClothingCategory.shoes,
+      );
+      expect(
+        mapClothingLabels([_label('baseball cap', .79)]).category,
+        ClothingCategory.hat,
+      );
+      expect(
+        mapClothingLabels([_label('handbag', .82)]).category,
+        ClothingCategory.accessory,
+      );
+    });
+
+    test('rejects unknown and low-confidence category labels', () {
+      expect(mapClothingLabels([_label('furniture', .99)]).category, isNull);
+      expect(mapClothingLabels([_label('shirt', .39)]).category, isNull);
+    });
+
+    test('propagates genuine confidence, styles, pattern, and raw labels', () {
+      final result = mapClothingLabels([
+        _label('blazer', .87),
+        _label('businesswear', .72),
+        _label('striped', .66),
+      ]);
+
+      expect(result.category, ClothingCategory.top);
+      expect(result.confidence, .87);
+      expect(result.styles, containsAll(['formal', 'work']));
+      expect(result.pattern, ClothingPattern.striped);
+      expect(result.silhouette, ClothingSilhouette.unknown);
+      expect(result.rawLabels, ['blazer', 'businesswear', 'striped']);
+    });
+  });
 }
+
+ImageLabelPrediction _label(String text, double confidence) =>
+    ImageLabelPrediction(text: text, confidence: confidence);
 
 Future<Uint8List> _png(List<({ui.Color color, int width})> bands) async {
   final recorder = ui.PictureRecorder();

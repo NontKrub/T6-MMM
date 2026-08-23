@@ -1,8 +1,22 @@
+import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
+
 import '../../shared/models/clothing_item.dart';
+
+const _visionChannel = MethodChannel('mmm/clothing_analysis');
+
+class ImageLabelPrediction {
+  const ImageLabelPrediction({required this.text, required this.confidence});
+
+  final String text;
+  final double confidence;
+}
+
+typedef ImageClassifier =
+    Future<List<ImageLabelPrediction>> Function(Uint8List bytes);
 
 class ClothingAnalysisResult {
   const ClothingAnalysisResult({
@@ -27,9 +41,13 @@ class ClothingAnalysisResult {
 }
 
 class ClothingAnalysisService {
-  const ClothingAnalysisService();
+  const ClothingAnalysisService({ImageClassifier? classifier})
+    : _classifier = classifier;
+
+  final ImageClassifier? _classifier;
 
   Future<ClothingAnalysisResult> analyze(Uint8List bytes) async {
+    final labelsFuture = (_classifier ?? _classifyOnDevice)(bytes);
     var codec = await ui.instantiateImageCodec(bytes);
     var frame = await codec.getNextFrame();
     if (frame.image.width > 64) {
@@ -65,12 +83,208 @@ class ClothingAnalysisService {
         return byCount != 0 ? byCount : a.firstPixel.compareTo(b.firstPixel);
       });
     final hexes = ranked.take(3).map((bucket) => bucket.hex).toList();
+    final labelResult = mapClothingLabels(await labelsFuture);
     return ClothingAnalysisResult(
+      category: labelResult.category,
       colorHexes: hexes,
       colorNames: hexes.map(coarseColorName).toList(),
+      styles: labelResult.styles,
+      pattern: labelResult.pattern,
+      silhouette: labelResult.silhouette,
+      confidence: labelResult.confidence,
+      rawLabels: labelResult.rawLabels,
     );
   }
 }
+
+Future<List<ImageLabelPrediction>> _classifyOnDevice(Uint8List bytes) async {
+  if (!Platform.isIOS) return const [];
+  final result = await _visionChannel.invokeListMethod<Object?>(
+    'classifyImage',
+    bytes,
+  );
+  return (result ?? const [])
+      .whereType<Map>()
+      .map((row) => Map<String, Object?>.from(row))
+      .where((row) => row['label'] is String && row['confidence'] is num)
+      .map(
+        (row) => ImageLabelPrediction(
+          text: row['label']! as String,
+          confidence: (row['confidence']! as num).toDouble(),
+        ),
+      )
+      .toList();
+}
+
+ClothingAnalysisResult mapClothingLabels(
+  List<ImageLabelPrediction> labels, {
+  double categoryThreshold = .5,
+}) {
+  const categories = <ClothingCategory, Set<String>>{
+    ClothingCategory.top: {
+      'shirt',
+      't shirt',
+      't-shirt',
+      'blouse',
+      'sweater',
+      'jacket',
+      'hoodie',
+      'blazer',
+      'cardigan',
+      'coat',
+      'top',
+      'jersey',
+    },
+    ClothingCategory.pants: {
+      'pants',
+      'trousers',
+      'jeans',
+      'shorts',
+      'skirt',
+      'leggings',
+      'bottoms',
+    },
+    ClothingCategory.shoes: {
+      'shoe',
+      'shoes',
+      'footwear',
+      'sneaker',
+      'sneakers',
+      'boot',
+      'boots',
+      'loafer',
+      'loafers',
+      'sandal',
+      'sandals',
+    },
+    ClothingCategory.hat: {'hat', 'cap', 'baseball cap', 'beanie', 'headwear'},
+    ClothingCategory.accessory: {
+      'accessory',
+      'fashion accessory',
+      'bag',
+      'handbag',
+      'belt',
+      'watch',
+      'scarf',
+      'jewelry',
+      'necklace',
+      'bracelet',
+      'tie',
+    },
+  };
+  ClothingCategory? category;
+  double? confidence;
+  for (final label in labels) {
+    if (label.confidence < categoryThreshold) continue;
+    final normalized = _normalizeLabel(label.text);
+    for (final entry in categories.entries) {
+      if (_matchesAny(normalized, entry.value) &&
+          (confidence == null || label.confidence > confidence)) {
+        category = entry.key;
+        confidence = label.confidence;
+      }
+    }
+  }
+
+  final styles = <String>{};
+  for (final label in labels.where((label) => label.confidence >= .45)) {
+    final value = _normalizeLabel(label.text);
+    if (_matchesAny(value, const {
+      't shirt',
+      't-shirt',
+      'jeans',
+      'denim',
+      'hoodie',
+      'casual wear',
+    })) {
+      styles.add('casual');
+    }
+    if (_matchesAny(value, const {
+      'suit',
+      'blazer',
+      'dress shoe',
+      'businesswear',
+      'formal wear',
+      'tie',
+    })) {
+      styles.addAll(const ['formal', 'work']);
+    }
+    if (_matchesAny(value, const {
+      'sportswear',
+      'sports uniform',
+      'sneaker',
+      'jersey',
+      'athletic shoe',
+    })) {
+      styles.add('sport');
+    }
+  }
+
+  var pattern = ClothingPattern.unknown;
+  var patternConfidence = 0.0;
+  const patterns = <ClothingPattern, Set<String>>{
+    ClothingPattern.solid: {'solid', 'plain'},
+    ClothingPattern.striped: {'stripe', 'striped'},
+    ClothingPattern.checked: {'check', 'checked', 'plaid'},
+    ClothingPattern.floral: {'floral', 'flower pattern'},
+    ClothingPattern.graphic: {'graphic', 'graphic design', 'printed t shirt'},
+    ClothingPattern.textured: {'textile', 'texture', 'knit'},
+  };
+  for (final label in labels.where((label) => label.confidence >= .6)) {
+    final value = _normalizeLabel(label.text);
+    for (final entry in patterns.entries) {
+      if (_matchesAny(value, entry.value) &&
+          label.confidence > patternConfidence) {
+        pattern = entry.key;
+        patternConfidence = label.confidence;
+      }
+    }
+  }
+
+  var silhouette = ClothingSilhouette.unknown;
+  var silhouetteConfidence = 0.0;
+  const silhouettes = <ClothingSilhouette, Set<String>>{
+    ClothingSilhouette.fitted: {'fitted', 'bodycon'},
+    ClothingSilhouette.regular: {'regular fit'},
+    ClothingSilhouette.relaxed: {'relaxed fit'},
+    ClothingSilhouette.oversized: {'oversized'},
+    ClothingSilhouette.cropped: {'cropped'},
+    ClothingSilhouette.wideLeg: {'wide leg'},
+    ClothingSilhouette.slim: {'slim fit', 'skinny jeans'},
+  };
+  for (final label in labels.where((label) => label.confidence >= .6)) {
+    final value = _normalizeLabel(label.text);
+    for (final entry in silhouettes.entries) {
+      if (_matchesAny(value, entry.value) &&
+          label.confidence > silhouetteConfidence) {
+        silhouette = entry.key;
+        silhouetteConfidence = label.confidence;
+      }
+    }
+  }
+
+  return ClothingAnalysisResult(
+    category: category,
+    colorHexes: const [],
+    colorNames: const [],
+    styles: styles.toList(),
+    pattern: pattern,
+    silhouette: silhouette,
+    confidence: confidence,
+    rawLabels: labels.map((label) => label.text).toList(),
+  );
+}
+
+String _normalizeLabel(String value) => value
+    .toLowerCase()
+    .replaceAll(RegExp(r'[_/]+'), ' ')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
+
+bool _matchesAny(String label, Set<String> terms) => terms.any((term) {
+  if (label == term) return true;
+  return RegExp('(^|[^a-z])${RegExp.escape(term)}([^a-z]|\$)').hasMatch(label);
+});
 
 class _ColorBucket {
   _ColorBucket(this.firstPixel);

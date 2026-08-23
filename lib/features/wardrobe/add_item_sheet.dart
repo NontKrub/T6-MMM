@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -26,6 +27,8 @@ class AddItemSheet extends ConsumerStatefulWidget {
     this.persistImage,
     this.analyzeImage,
     this.readImage,
+    this.deleteImage,
+    this.signedIn,
   });
 
   final ImagePickService? imagePickService;
@@ -34,6 +37,8 @@ class AddItemSheet extends ConsumerStatefulWidget {
   final Future<File> Function(Uint8List bytes, String name)? persistImage;
   final Future<ClothingAnalysisResult> Function(Uint8List bytes)? analyzeImage;
   final Future<Uint8List> Function(XFile file)? readImage;
+  final Future<void> Function(String path)? deleteImage;
+  final bool? signedIn;
 
   @override
   ConsumerState<AddItemSheet> createState() => _AddItemSheetState();
@@ -45,12 +50,16 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   String? _imagePath;
   bool _analyzing = false;
   bool _saving = false;
-  ClothingCategory _category = ClothingCategory.top;
+  bool _imageCommitted = false;
+  ClothingCategory? _category;
   ClothingPattern _pattern = ClothingPattern.unknown;
   ClothingSilhouette _silhouette = ClothingSilhouette.unknown;
+  double? _analysisConfidence;
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
   final _hexController = TextEditingController();
+  final List<String> _colorHexes = [];
+  String? _primaryHex;
   final List<String> _tags = [];
   final _imageStorage = ImageStorageService();
   final _analysis = const ClothingAnalysisService();
@@ -66,6 +75,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       widget.analyzeImage?.call(bytes) ?? _analysis.analyze(bytes);
   Future<Uint8List> _readImage(XFile file) =>
       widget.readImage?.call(file) ?? file.readAsBytes();
+  Future<void> _deleteImage(String path) =>
+      widget.deleteImage?.call(path) ?? _imageStorage.deleteOwned(path);
+  bool get _isSignedIn => widget.signedIn ?? SupabaseService.isSignedIn;
 
   static const _tagOptions = [
     'casual',
@@ -103,6 +115,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
 
   @override
   void dispose() {
+    final path = _imagePath;
+    if (!_imageCommitted && path != null) unawaited(_deleteImage(path));
     _nameController.dispose();
     _brandController.dispose();
     _hexController.dispose();
@@ -155,25 +169,42 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     try {
       final bytes = await _readImage(file);
       final managedFile = await _persistImage(bytes, file.name);
-      if (!mounted) return;
+      if (!mounted) {
+        await _deleteImage(managedFile.path);
+        return;
+      }
+      final previousPath = _imagePath;
       setState(() {
         _pickedFile = XFile(managedFile.path);
         _imageBytes = bytes;
         _imagePath = managedFile.path;
       });
+      if (previousPath != null && previousPath != managedFile.path) {
+        await _deleteImage(previousPath);
+      }
       try {
         final result = await _analyzeImage(bytes);
         if (!mounted) return;
         setState(() {
-          if (result.category != null) _category = result.category!;
+          _category = result.category;
           _pattern = result.pattern;
           _silhouette = result.silhouette;
-          _hexController.text = result.colorHexes.firstOrNull ?? '';
+          _analysisConfidence = result.confidence;
+          _colorHexes
+            ..clear()
+            ..addAll(
+              result.colorHexes
+                  .map(normalizeHexColor)
+                  .whereType<String>()
+                  .toSet(),
+            );
+          _primaryHex = _colorHexes.firstOrNull;
+          _hexController.clear();
           _tags.addAll(result.styles.where((tag) => !_tags.contains(tag)));
         });
       } catch (_) {
         _showError(
-          'Color analysis failed. You can still tag this item manually.',
+          'Image analysis failed. You can still tag this item manually.',
         );
       }
     } finally {
@@ -181,25 +212,48 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     }
   }
 
+  void _addCustomHex() {
+    final hex = normalizeHexColor(_hexController.text);
+    if (hex == null) {
+      _showError('Enter a valid HEX color such as #3366FF.');
+      return;
+    }
+    setState(() {
+      if (!_colorHexes.contains(hex)) _colorHexes.add(hex);
+      _primaryHex ??= hex;
+      _hexController.clear();
+    });
+  }
+
+  Color _colorFromHex(String hex) =>
+      Color(0xFF000000 | int.parse(hex.substring(1), radix: 16));
+
   Future<void> _save() async {
     if (_saving) return;
     if (_pickedFile == null || _imagePath == null) {
       _showError('Please add a photo before saving.');
       return;
     }
-
-    final hex = _hexController.text.trim().isEmpty
+    if (_category == null) {
+      _showError('Select a category before saving.');
+      return;
+    }
+    final customHex = _hexController.text.trim().isEmpty
         ? null
         : normalizeHexColor(_hexController.text);
-    if (_hexController.text.trim().isNotEmpty && hex == null) {
+    if (_hexController.text.trim().isNotEmpty && customHex == null) {
       _showError('Enter a valid HEX color such as #3366FF.');
       return;
+    }
+    if (customHex != null && !_colorHexes.contains(customHex)) {
+      _colorHexes.add(customHex);
+      _primaryHex ??= customHex;
     }
     final trimmedName = _nameController.text.trim();
     final itemName = trimmedName.isNotEmpty ? trimmedName : 'Wardrobe item';
     final brand = _brandController.text.trim();
 
-    if (SupabaseService.isSignedIn) {
+    if (_isSignedIn) {
       setState(() => _saving = true);
       try {
         await ref
@@ -209,13 +263,20 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               fileName: _pickedFile!.name,
               name: trimmedName,
               brand: brand.isEmpty ? null : brand,
-              fallbackCategory: _category,
+              fallbackCategory: _category!,
               tags: _tags,
-              colorHexes: hex == null ? const [] : [hex],
-              color: hex == null ? null : coarseColorName(hex),
+              colorHexes: List.unmodifiable(_colorHexes),
+              color: _primaryHex == null ? null : coarseColorName(_primaryHex!),
               pattern: _pattern,
               silhouette: _silhouette,
+              analysisConfidence: _analysisConfidence,
             );
+        _imageCommitted = true;
+        try {
+          await _deleteImage(_imagePath!);
+        } catch (error) {
+          debugPrint('Could not remove uploaded staging image: $error');
+        }
         if (!mounted) return;
         Navigator.pop(context);
         return;
@@ -234,18 +295,20 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       id: _uuid.v4(),
       name: itemName,
       brand: brand.isEmpty ? null : brand,
-      category: _category,
+      category: _category!,
       imageUrl: _imagePath!,
       tags: _tags,
-      color: hex == null ? null : coarseColorName(hex),
-      colorHexes: hex == null ? const [] : [hex],
+      color: _primaryHex == null ? null : coarseColorName(_primaryHex!),
+      colorHexes: List.unmodifiable(_colorHexes),
       pattern: _pattern,
       silhouette: _silhouette,
+      analysisConfidence: _analysisConfidence,
     );
 
     setState(() => _saving = true);
     try {
       await ref.read(wardrobeProvider.notifier).addItem(item);
+      _imageCommitted = true;
       if (!mounted) return;
       Navigator.pop(context);
     } catch (error) {
@@ -325,14 +388,16 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   // Image picker
                   GestureDetector(
                     key: const Key('add-item-image-picker'),
-                    onTap: () {
-                      final source = widget.quickPickSource;
-                      if (source != null) {
-                        _pickImage(source);
-                        return;
-                      }
-                      _showSourcePicker(context, l10n);
-                    },
+                    onTap: _saving || _analyzing
+                        ? null
+                        : () {
+                            final source = widget.quickPickSource;
+                            if (source != null) {
+                              _pickImage(source);
+                              return;
+                            }
+                            _showSourcePicker(context, l10n);
+                          },
                     child: Container(
                       height: 160,
                       decoration: BoxDecoration(
@@ -379,7 +444,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                     height: 160,
                                   ),
                                 ),
-                                if (SupabaseService.isSignedIn)
+                                if (_isSignedIn && _category != null)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
@@ -393,9 +458,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                     ),
                                     child: Text(
                                       l10n?.addItemCategoryLabel(
-                                            _category.label,
+                                            _category!.label,
                                           ) ??
-                                          'Category: ${_category.label}',
+                                          'Category: ${_category!.label}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,
@@ -436,12 +501,22 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
+                  if (_category == null)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Select category',
+                        key: Key('add-item-category-required'),
+                        style: TextStyle(color: Colors.orange),
+                      ),
+                    ),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: ClothingCategory.values.map((cat) {
                       final sel = _category == cat;
                       return GestureDetector(
+                        key: Key('add-item-category-${cat.name}'),
                         onTap: () => setState(() => _category = cat),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
@@ -481,6 +556,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   const SizedBox(height: 20),
                   // Name field
                   TextField(
+                    key: const Key('add-item-name'),
                     controller: _nameController,
                     decoration: InputDecoration(
                       hintText:
@@ -499,56 +575,96 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  Text(
+                    'Detected colors',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_colorHexes.isEmpty)
+                    const Text('No colors selected')
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _colorHexes.map((hex) {
+                        final primary = hex == _primaryHex;
+                        return InputChip(
+                          key: Key('add-item-color-$hex'),
+                          selected: primary,
+                          avatar: CircleAvatar(
+                            backgroundColor: _colorFromHex(hex),
+                          ),
+                          label: Text(hex),
+                          onSelected: (_) => setState(() => _primaryHex = hex),
+                          onDeleted: () => setState(() {
+                            _colorHexes.remove(hex);
+                            if (primary) _primaryHex = _colorHexes.firstOrNull;
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 12),
                   TextField(
                     key: const Key('add-item-hex'),
                     controller: _hexController,
                     textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Primary color (HEX)',
+                    decoration: InputDecoration(
+                      labelText: 'Add custom HEX',
                       hintText: '#3366FF',
                       prefixIcon: Icon(Icons.palette_outlined),
+                      suffixIcon: IconButton(
+                        key: const Key('add-item-add-hex'),
+                        onPressed: _addCustomHex,
+                        icon: const Icon(Icons.add_rounded),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<ClothingPattern>(
-                          key: const Key('add-item-pattern'),
-                          initialValue: _pattern,
-                          decoration: const InputDecoration(
-                            labelText: 'Pattern',
+                        child: KeyedSubtree(
+                          key: ValueKey(_pattern),
+                          child: DropdownButtonFormField<ClothingPattern>(
+                            key: const Key('add-item-pattern'),
+                            initialValue: _pattern,
+                            decoration: const InputDecoration(
+                              labelText: 'Pattern',
+                            ),
+                            items: ClothingPattern.values
+                                .map(
+                                  (value) => DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value.name),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _pattern = value!),
                           ),
-                          items: ClothingPattern.values
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value.name),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) =>
-                              setState(() => _pattern = value!),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: DropdownButtonFormField<ClothingSilhouette>(
-                          key: const Key('add-item-silhouette'),
-                          initialValue: _silhouette,
-                          decoration: const InputDecoration(
-                            labelText: 'Silhouette',
+                        child: KeyedSubtree(
+                          key: ValueKey(_silhouette),
+                          child: DropdownButtonFormField<ClothingSilhouette>(
+                            key: const Key('add-item-silhouette'),
+                            initialValue: _silhouette,
+                            decoration: const InputDecoration(
+                              labelText: 'Silhouette',
+                            ),
+                            items: ClothingSilhouette.values
+                                .map(
+                                  (value) => DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value.value),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _silhouette = value!),
                           ),
-                          items: ClothingSilhouette.values
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value.value),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) =>
-                              setState(() => _silhouette = value!),
                         ),
                       ),
                     ],
