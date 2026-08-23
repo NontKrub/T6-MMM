@@ -243,8 +243,16 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       silhouette: _silhouette,
     );
 
-    ref.read(wardrobeProvider.notifier).addItem(item);
-    Navigator.pop(context);
+    setState(() => _saving = true);
+    try {
+      await ref.read(wardrobeProvider.notifier).addItem(item);
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (error) {
+      if (mounted) _showError('Could not save item: $error');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   bool _isPermissionError(PlatformException error) {
