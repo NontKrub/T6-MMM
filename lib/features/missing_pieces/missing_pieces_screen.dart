@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/recommendation_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -13,13 +14,50 @@ final missingPiecesProvider =
       return RecommendationRepository().generateMissingPieces();
     });
 
-class MissingPiecesScreen extends ConsumerWidget {
+class MissingPiecesScreen extends ConsumerStatefulWidget {
   const MissingPiecesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MissingPiecesScreen> createState() =>
+      _MissingPiecesScreenState();
+}
+
+class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
+  String? _topId;
+  String? _pantsId;
+  AsyncValue<List<MissingPieceRecommendation>>? _selectedResult;
+
+  Future<void> _analyze(ClothingItem top, ClothingItem pants) async {
+    setState(() => _selectedResult = const AsyncLoading());
+    try {
+      final result = await RecommendationRepository().generateMissingPieces(
+        top: top,
+        pants: pants,
+      );
+      if (!mounted) return;
+      setState(() => _selectedResult = AsyncData(result));
+    } catch (error, stack) {
+      if (!mounted) return;
+      setState(() => _selectedResult = AsyncError(error, stack));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final recommendations = ref.watch(missingPiecesProvider);
+    final wardrobe = ref.watch(wardrobeProvider);
+    final tops = wardrobe
+        .where((item) => item.category == ClothingCategory.top)
+        .toList();
+    final pants = wardrobe
+        .where((item) => item.category == ClothingCategory.pants)
+        .toList();
+    final selectedTop = tops.where((item) => item.id == _topId).firstOrNull;
+    final selectedPants = pants
+        .where((item) => item.id == _pantsId)
+        .firstOrNull;
+    final AsyncValue<List<MissingPieceRecommendation>> recommendations =
+        _selectedResult ?? ref.watch(missingPiecesProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -50,7 +88,64 @@ class MissingPiecesScreen extends ConsumerWidget {
                 ],
               ),
             ).animate().fadeIn(duration: 300.ms),
-            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    key: const Key('missing-piece-top'),
+                    initialValue: _topId,
+                    decoration: const InputDecoration(
+                      labelText: 'Selected top',
+                    ),
+                    items: tops
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.id,
+                            child: Text(item.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) => setState(() {
+                      _topId = value;
+                      _selectedResult = null;
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    key: const Key('missing-piece-pants'),
+                    initialValue: _pantsId,
+                    decoration: const InputDecoration(
+                      labelText: 'Selected pants / bottom',
+                    ),
+                    items: pants
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.id,
+                            child: Text(item.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) => setState(() {
+                      _pantsId = value;
+                      _selectedResult = null;
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('missing-piece-analyze'),
+                      onPressed: selectedTop == null || selectedPants == null
+                          ? null
+                          : () => _analyze(selectedTop, selectedPants),
+                      icon: const Icon(Icons.auto_awesome_rounded),
+                      label: const Text('Analyze Missing Piece'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: recommendations.when(
                 data: (items) => items.isEmpty

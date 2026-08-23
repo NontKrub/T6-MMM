@@ -8,11 +8,55 @@ import '../../shared/models/user_profile.dart';
 
 const _uuid = Uuid();
 
+class LocalPreferenceEvent {
+  const LocalPreferenceEvent({
+    required this.style,
+    required this.itemIds,
+    required this.tags,
+    required this.colors,
+    required this.source,
+    required this.selectedAt,
+  });
+
+  final String? style;
+  final List<String> itemIds;
+  final List<String> tags;
+  final List<String> colors;
+  final String source;
+  final DateTime selectedAt;
+
+  factory LocalPreferenceEvent.fromJson(Map<String, dynamic> json) =>
+      LocalPreferenceEvent(
+        style: json['style'] as String?,
+        itemIds: (json['item_ids'] as List? ?? const [])
+            .whereType<String>()
+            .toList(),
+        tags: (json['tags'] as List? ?? const []).whereType<String>().toList(),
+        colors: (json['colors'] as List? ?? const [])
+            .whereType<String>()
+            .toList(),
+        source: json['source'] as String? ?? 'generated',
+        selectedAt:
+            DateTime.tryParse(json['selected_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      );
+
+  Map<String, dynamic> toJson() => {
+    'style': style,
+    'item_ids': itemIds,
+    'tags': tags,
+    'colors': colors,
+    'source': source,
+    'selected_at': selectedAt.toUtc().toIso8601String(),
+  };
+}
+
 class LocalAccountRepository {
   static const _guestEnabledKey = 'mmm_guest_enabled';
   static const _profileKey = 'mmm_guest_profile';
   static const _wardrobeKey = 'mmm_guest_wardrobe';
   static const _wearHistoryKey = 'mmm_guest_wear_history';
+  static const _preferenceHistoryKey = 'mmm_guest_preference_history';
 
   Future<bool> hasGuestAccount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,6 +81,7 @@ class LocalAccountRepository {
     await prefs.remove(_profileKey);
     await prefs.remove(_wardrobeKey);
     await prefs.remove(_wearHistoryKey);
+    await prefs.remove(_preferenceHistoryKey);
   }
 
   Future<UserProfile?> fetchProfile() async {
@@ -109,6 +154,36 @@ class LocalAccountRepository {
     history.add(normalized);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_wearHistoryKey, jsonEncode(history));
+  }
+
+  Future<List<LocalPreferenceEvent>> fetchPreferenceEvents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_preferenceHistoryKey);
+    if (raw == null || raw.isEmpty) return const [];
+    return (jsonDecode(raw) as List)
+        .map(
+          (row) => LocalPreferenceEvent.fromJson(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> recordPreferenceEvent(LocalPreferenceEvent event) async {
+    final events = [...await fetchPreferenceEvents()];
+    events.add(event);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _preferenceHistoryKey,
+      jsonEncode(
+        events.reversed
+            .take(100)
+            .toList()
+            .reversed
+            .map((entry) => entry.toJson())
+            .toList(),
+      ),
+    );
   }
 
   Future<void> _saveItems(List<ClothingItem> items) async {

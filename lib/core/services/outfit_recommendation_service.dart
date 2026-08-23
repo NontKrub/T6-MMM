@@ -1,6 +1,7 @@
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
 import 'clothing_analysis_service.dart';
+import 'local_account_repository.dart';
 
 String combinationKey(Iterable<String> itemIds) =>
     (itemIds.toSet().toList()..sort()).join('|');
@@ -19,6 +20,7 @@ class OutfitRecommendationService {
     List<List<String>> history = const [],
     bool rush = false,
     String? targetHex,
+    List<LocalPreferenceEvent> preferences = const [],
   }) {
     final tops = _category(wardrobe, ClothingCategory.top);
     final pants = _category(wardrobe, ClothingCategory.pants);
@@ -37,7 +39,9 @@ class OutfitRecommendationService {
         for (final shoe in shoes) {
           for (final extra in extras) {
             final items = [top, bottom, shoe, ?extra];
-            candidates.add(_score(items, style, history, rush, targetHex));
+            candidates.add(
+              _score(items, style, history, rush, targetHex, preferences),
+            );
           }
         }
       }
@@ -53,37 +57,55 @@ class OutfitRecommendationService {
 
   double visualScore(List<ClothingItem> items) {
     var score = 0.0;
-    final colors = items
-        .map((item) => item.colorHexes.firstOrNull)
-        .whereType<String>()
-        .toList();
-    if (colors.length > 1) {
-      var total = 0.0;
-      var pairs = 0;
-      for (var i = 0; i < colors.length; i++) {
-        for (var j = i + 1; j < colors.length; j++) {
-          total += colorDistance(colors[i], colors[j]);
-          pairs++;
+    final colors = items.map((item) => item.colorHexes.firstOrNull).toList();
+    for (var i = 0; i < colors.length; i++) {
+      final first = colors[i];
+      if (first == null) continue;
+      for (var j = i + 1; j < colors.length; j++) {
+        final second = colors[j];
+        if (second == null) continue;
+        final distance = colorDistance(first, second);
+        final firstNeutral = _isNeutralHex(first);
+        final secondNeutral = _isNeutralHex(second);
+        if (firstNeutral && secondNeutral && distance <= 140) {
+          score += 3;
+        } else if (firstNeutral != secondNeutral) {
+          score += 2;
+        } else if (distance <= 80) {
+          score += 2;
+        } else if (distance >= 300) {
+          score -= 1;
         }
-      }
-      final average = total / pairs;
-      if (average <= 80) {
-        score += 8;
-      } else if (average <= 180) {
-        score += 4;
       }
     }
     final loudPatterns = items.where((item) {
       return item.pattern != ClothingPattern.unknown &&
           item.pattern != ClothingPattern.solid;
     }).length;
-    if (loudPatterns > 1) score -= 4;
+    if (loudPatterns > 1) {
+      score -= 5;
+    } else if (loudPatterns == 1 &&
+        items.any((item) => item.pattern == ClothingPattern.solid)) {
+      score += 1;
+    }
 
-    final silhouettes = items
-        .map((item) => item.silhouette)
-        .where((value) => value != ClothingSilhouette.unknown)
-        .toList();
-    if (silhouettes.length > 1 && silhouettes.toSet().length > 1) score += 2;
+    final top = items
+        .where((item) => item.category == ClothingCategory.top)
+        .firstOrNull;
+    final pants = items
+        .where((item) => item.category == ClothingCategory.pants)
+        .firstOrNull;
+    if (top != null && pants != null) {
+      if ((top.silhouette == ClothingSilhouette.oversized &&
+              pants.silhouette == ClothingSilhouette.slim) ||
+          (top.silhouette == ClothingSilhouette.fitted &&
+              pants.silhouette == ClothingSilhouette.wideLeg)) {
+        score += 2;
+      } else if (top.silhouette == ClothingSilhouette.oversized &&
+          pants.silhouette == ClothingSilhouette.wideLeg) {
+        score -= 1;
+      }
+    }
     return score;
   }
 
@@ -105,6 +127,7 @@ class OutfitRecommendationService {
     List<List<String>> history,
     bool rush,
     String? targetHex,
+    List<LocalPreferenceEvent> preferences,
   ) {
     var score = 50.0;
     final factors = <String>[];
@@ -120,6 +143,9 @@ class OutfitRecommendationService {
       score += targetScore;
       if (targetScore > 0) factors.add('target_color');
     }
+    final learned = _learnedPreferenceScore(items, style, preferences);
+    score += learned;
+    if (learned > 0) factors.add('learned_preference');
 
     final averageWear =
         items.fold<int>(0, (sum, item) => sum + item.wearCount) / items.length;
@@ -147,6 +173,45 @@ class OutfitRecommendationService {
     );
   }
 
+  double _learnedPreferenceScore(
+    List<ClothingItem> items,
+    String style,
+    List<LocalPreferenceEvent> events,
+  ) {
+    if (events.isEmpty) return 0;
+    final tags = items
+        .expand((item) => item.tags)
+        .map((tag) => tag.toLowerCase())
+        .toSet();
+    final colors = items
+        .expand(
+          (item) => [
+            if (item.color != null) item.color!.toLowerCase(),
+            ...item.colorHexes.map(coarseColorName),
+          ],
+        )
+        .toSet();
+    var tagWeight = 0.0;
+    var colorWeight = 0.0;
+    var styleWeight = 0.0;
+    final now = DateTime.now();
+    for (final event in events) {
+      final recency = now.difference(event.selectedAt).inDays <= 90 ? 1.0 : .5;
+      if (event.tags.any((tag) => tags.contains(tag.toLowerCase()))) {
+        tagWeight += recency;
+      }
+      if (event.colors.any((color) => colors.contains(color.toLowerCase()))) {
+        colorWeight += recency;
+      }
+      if (event.style?.toLowerCase() == style.toLowerCase()) {
+        styleWeight += recency;
+      }
+    }
+    return (tagWeight * 3).clamp(0, 6) +
+        (colorWeight * 2).clamp(0, 2) +
+        styleWeight.clamp(0, 2);
+  }
+
   List<ClothingItem> _category(
     List<ClothingItem> items,
     ClothingCategory category,
@@ -164,6 +229,14 @@ class OutfitRecommendationService {
               return neutralNames.contains(closest);
             }));
   }
+
+  bool _isNeutralHex(String hex) => const {
+    'black',
+    'white',
+    'gray',
+    'brown',
+    'beige',
+  }.contains(coarseColorName(hex));
 
   String _title(String value) => value.isEmpty
       ? 'Everyday'

@@ -5,6 +5,7 @@ import { requireUser } from "../_shared/supabase.ts";
 type MissingPiecesBody = {
   action?: "generate" | "dismiss";
   id?: string;
+  selected_item_ids?: string[];
 };
 
 Deno.serve(async (req) => {
@@ -47,6 +48,9 @@ Deno.serve(async (req) => {
           .is("archived_at", null),
       ]);
 
+    const selectedItems = (wardrobe ?? []).filter((item) =>
+      typeof item.id === "string" && body.selected_item_ids?.includes(item.id)
+    );
     let result;
     try {
       result = await openAiJson<{
@@ -64,7 +68,12 @@ Deno.serve(async (req) => {
           role: "user",
           content: [{
             type: "input_text",
-            text: JSON.stringify({ profile, preferences, wardrobe }),
+            text: JSON.stringify({
+              profile,
+              preferences,
+              wardrobe,
+              selected_items: selectedItems,
+            }),
           }],
         }],
         responseFormat: {

@@ -29,6 +29,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   bool _matchWeather = false;
   List<Outfit> _generatedOutfits = [];
   bool _loading = false;
+  bool _wearing = false;
   String? _error;
   final _targetHexController = TextEditingController();
 
@@ -41,6 +42,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   }
 
   Future<void> _generate() async {
+    if (_loading) return;
     final l10n = AppLocalizations.of(context);
     final targetHex = _targetHexController.text.trim().isEmpty
         ? null
@@ -83,37 +85,43 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   }
 
   Future<void> _wear(Outfit outfit) async {
-    final count = await ref
-        .read(outfitsProvider.notifier)
-        .repeatCountFor(outfit);
-    if (!mounted) return;
-    if (count > 0) {
-      final action = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Repeat outfit'),
-          content: Text("You've worn this combination $count times."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'another'),
-              child: const Text('Generate Another'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, 'wear'),
-              child: const Text('Wear Anyway'),
-            ),
-          ],
-        ),
-      );
+    if (_wearing) return;
+    setState(() => _wearing = true);
+    try {
+      final count = await ref
+          .read(outfitsProvider.notifier)
+          .repeatCountFor(outfit);
       if (!mounted) return;
-      if (action == 'another') {
-        await _generate();
-        return;
+      if (count > 0) {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Repeat outfit'),
+            content: Text("You've worn this combination $count times."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'another'),
+                child: const Text('Generate Another'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, 'wear'),
+                child: const Text('Wear Anyway'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (action == 'another') {
+          await _generate();
+          return;
+        }
+        if (action != 'wear') return;
       }
-      if (action != 'wear') return;
+      await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _wearing = false);
     }
-    await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
-    if (mounted) Navigator.pop(context);
   }
 
   String _friendlyGenerationError(Object error, AppLocalizations? l) {
