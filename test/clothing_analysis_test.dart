@@ -61,6 +61,7 @@ void main() {
         expect(result.category, ClothingCategory.top);
         expect(result.confidence, .93);
         expect(result.rawLabels, ['shirt']);
+        expect(result.rawPredictions.single.confidence, .93);
       },
     );
   });
@@ -109,6 +110,28 @@ void main() {
       expect(mapClothingLabels([_label('shirt', .39)]).category, isNull);
     });
 
+    test('keeps generic labels unknown and maps explicit patterns', () {
+      for (final label in ['textile', 'fabric', 'clothing']) {
+        final result = mapClothingLabels([_label(label, .99)]);
+        expect(result.category, isNull, reason: label);
+        expect(result.pattern, ClothingPattern.unknown, reason: label);
+        expect(result.silhouette, ClothingSilhouette.unknown, reason: label);
+      }
+
+      expect(
+        mapClothingLabels([_label('striped', .9)]).pattern,
+        ClothingPattern.striped,
+      );
+      expect(
+        mapClothingLabels([_label('plaid', .9)]).pattern,
+        ClothingPattern.checked,
+      );
+      expect(
+        mapClothingLabels([_label('knitted', .9)]).pattern,
+        ClothingPattern.textured,
+      );
+    });
+
     test('propagates genuine confidence, styles, pattern, and raw labels', () {
       final result = mapClothingLabels([
         _label('blazer', .87),
@@ -122,6 +145,7 @@ void main() {
       expect(result.pattern, ClothingPattern.striped);
       expect(result.silhouette, ClothingSilhouette.unknown);
       expect(result.rawLabels, ['blazer', 'businesswear', 'striped']);
+      expect(result.rawPredictions, hasLength(3));
     });
   });
 }

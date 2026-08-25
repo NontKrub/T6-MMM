@@ -57,23 +57,20 @@ class OutfitRecommendationService {
 
   double visualScore(List<ClothingItem> items) {
     var score = 0.0;
-    final colors = items.map((item) => item.colorHexes.firstOrNull).toList();
-    for (var i = 0; i < colors.length; i++) {
-      final first = colors[i];
-      if (first == null) continue;
-      for (var j = i + 1; j < colors.length; j++) {
-        final second = colors[j];
-        if (second == null) continue;
-        final distance = colorDistance(first, second);
-        final firstNeutral = _isNeutralHex(first);
-        final secondNeutral = _isNeutralHex(second);
-        if (firstNeutral && secondNeutral && distance <= 140) {
+    final palettes = items.map(_representativePalette).toList();
+    for (var i = 0; i < palettes.length; i++) {
+      for (var j = i + 1; j < palettes.length; j++) {
+        final pair = _closestColorPair(palettes[i], palettes[j]);
+        if (pair == null) continue;
+        final firstNeutral = _isNeutralHex(pair.$1);
+        final secondNeutral = _isNeutralHex(pair.$2);
+        if (firstNeutral && secondNeutral) {
           score += 3;
         } else if (firstNeutral != secondNeutral) {
           score += 2;
-        } else if (distance <= 80) {
+        } else if (pair.$3 <= 80) {
           score += 2;
-        } else if (distance >= 300) {
+        } else if (pair.$3 >= 300) {
           score -= 1;
         }
       }
@@ -111,7 +108,7 @@ class OutfitRecommendationService {
 
   double targetColorScore(List<ClothingItem> items, String targetHex) {
     final distances = items
-        .expand((item) => item.colorHexes)
+        .expand(_representativePalette)
         .map((hex) => colorDistance(hex, targetHex))
         .toList();
     if (distances.isEmpty) return 0;
@@ -241,4 +238,23 @@ class OutfitRecommendationService {
   String _title(String value) => value.isEmpty
       ? 'Everyday'
       : '${value[0].toUpperCase()}${value.substring(1)}';
+}
+
+List<String> _representativePalette(ClothingItem item) =>
+    item.colorHexes.map(normalizeHexColor).whereType<String>().take(3).toList();
+
+(String, String, double)? _closestColorPair(
+  List<String> first,
+  List<String> second,
+) {
+  (String, String, double)? closest;
+  for (final a in first) {
+    for (final b in second) {
+      final distance = colorDistance(a, b);
+      if (closest == null || distance < closest.$3) {
+        closest = (a, b, distance);
+      }
+    }
+  }
+  return closest;
 }

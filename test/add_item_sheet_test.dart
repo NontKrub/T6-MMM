@@ -54,6 +54,8 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
     ClothingPattern pattern = ClothingPattern.unknown,
     ClothingSilhouette silhouette = ClothingSilhouette.unknown,
     double? analysisConfidence,
+    String? classificationSource,
+    String? colorSource,
   }) async {
     if (uploadFails) throw StateError('upload failed');
     uploads++;
@@ -217,6 +219,8 @@ void main() {
     expect(notifier.state.single.color, 'blue');
     expect(notifier.state.single.pattern, ClothingPattern.solid);
     expect(notifier.state.single.silhouette, ClothingSilhouette.slim);
+    expect(notifier.state.single.classificationSource, 'manual');
+    expect(notifier.state.single.colorSource, 'manual');
   });
 
   testWidgets('uncertain category requires explicit selection', (tester) async {
@@ -338,6 +342,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(notifier.uploads, 1);
     expect(deleted, ['/managed/signed.jpg']);
+  });
+
+  testWidgets('signed upload retries failed staging cleanup on dispose', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/retry-cleanup.jpg');
+    final notifier = _TestWardrobeNotifier();
+    var attempts = 0;
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+      deleteImage: (_) async {
+        attempts++;
+        if (attempts == 1) throw const FileSystemException('busy');
+      },
+      signedIn: true,
+    );
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pumpAndSettle();
+    await tester.pump();
+
+    expect(attempts, 2);
   });
 
   testWidgets('failed signed upload keeps staging image for retry', (

@@ -50,11 +50,13 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   String? _imagePath;
   bool _analyzing = false;
   bool _saving = false;
-  bool _imageCommitted = false;
+  bool _retainLocalImage = false;
   ClothingCategory? _category;
   ClothingPattern _pattern = ClothingPattern.unknown;
   ClothingSilhouette _silhouette = ClothingSilhouette.unknown;
   double? _analysisConfidence;
+  String? _classificationSource;
+  String? _colorSource;
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
   final _hexController = TextEditingController();
@@ -116,7 +118,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   @override
   void dispose() {
     final path = _imagePath;
-    if (!_imageCommitted && path != null) unawaited(_deleteImage(path));
+    if (!_retainLocalImage && path != null) unawaited(_deleteImage(path));
     _nameController.dispose();
     _brandController.dispose();
     _hexController.dispose();
@@ -190,6 +192,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
           _pattern = result.pattern;
           _silhouette = result.silhouette;
           _analysisConfidence = result.confidence;
+          _classificationSource = result.classificationSource;
+          _colorSource = result.colorSource;
           _colorHexes
             ..clear()
             ..addAll(
@@ -221,6 +225,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     setState(() {
       if (!_colorHexes.contains(hex)) _colorHexes.add(hex);
       _primaryHex ??= hex;
+      _colorSource = 'manual';
       _hexController.clear();
     });
   }
@@ -270,10 +275,12 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               pattern: _pattern,
               silhouette: _silhouette,
               analysisConfidence: _analysisConfidence,
+              classificationSource: _classificationSource,
+              colorSource: _colorSource,
             );
-        _imageCommitted = true;
         try {
           await _deleteImage(_imagePath!);
+          _imagePath = null;
         } catch (error) {
           debugPrint('Could not remove uploaded staging image: $error');
         }
@@ -303,12 +310,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       pattern: _pattern,
       silhouette: _silhouette,
       analysisConfidence: _analysisConfidence,
+      classificationSource: _classificationSource,
+      colorSource: _colorSource,
     );
 
     setState(() => _saving = true);
     try {
       await ref.read(wardrobeProvider.notifier).addItem(item);
-      _imageCommitted = true;
+      _retainLocalImage = true;
       if (!mounted) return;
       Navigator.pop(context);
     } catch (error) {
@@ -421,7 +430,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 const SizedBox(height: 12),
                                 Text(
                                   _analyzing
-                                      ? 'Analyzing colors on device...'
+                                      ? 'Analyzing item on device...'
                                       : (l10n?.addItemSaving ?? 'Saving...'),
                                   style: TextStyle(
                                     color: AppColors.seedColor,
@@ -517,7 +526,11 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                       final sel = _category == cat;
                       return GestureDetector(
                         key: Key('add-item-category-${cat.name}'),
-                        onTap: () => setState(() => _category = cat),
+                        onTap: () => setState(() {
+                          _category = cat;
+                          _classificationSource = 'manual';
+                          _analysisConfidence = null;
+                        }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(
@@ -598,6 +611,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           onSelected: (_) => setState(() => _primaryHex = hex),
                           onDeleted: () => setState(() {
                             _colorHexes.remove(hex);
+                            _colorSource = 'manual';
                             if (primary) _primaryHex = _colorHexes.firstOrNull;
                           }),
                         );
@@ -639,8 +653,11 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                   ),
                                 )
                                 .toList(),
-                            onChanged: (value) =>
-                                setState(() => _pattern = value!),
+                            onChanged: (value) => setState(() {
+                              _pattern = value!;
+                              _classificationSource = 'manual';
+                              _analysisConfidence = null;
+                            }),
                           ),
                         ),
                       ),
@@ -662,8 +679,11 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                   ),
                                 )
                                 .toList(),
-                            onChanged: (value) =>
-                                setState(() => _silhouette = value!),
+                            onChanged: (value) => setState(() {
+                              _silhouette = value!;
+                              _classificationSource = 'manual';
+                              _analysisConfidence = null;
+                            }),
                           ),
                         ),
                       ),
@@ -684,6 +704,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                       return GestureDetector(
                         onTap: () => setState(() {
                           sel ? _tags.remove(tag) : _tags.add(tag);
+                          _classificationSource = 'manual';
+                          _analysisConfidence = null;
                         }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),

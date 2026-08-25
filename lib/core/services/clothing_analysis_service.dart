@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../shared/models/clothing_item.dart';
@@ -28,6 +29,9 @@ class ClothingAnalysisResult {
     this.silhouette = ClothingSilhouette.unknown,
     this.confidence,
     this.rawLabels = const [],
+    this.rawPredictions = const [],
+    this.classificationSource,
+    this.colorSource,
   });
 
   final ClothingCategory? category;
@@ -38,13 +42,20 @@ class ClothingAnalysisResult {
   final ClothingSilhouette silhouette;
   final double? confidence;
   final List<String> rawLabels;
+  final List<ImageLabelPrediction> rawPredictions;
+  final String? classificationSource;
+  final String? colorSource;
 }
 
 class ClothingAnalysisService {
-  const ClothingAnalysisService({ImageClassifier? classifier})
-    : _classifier = classifier;
+  const ClothingAnalysisService({
+    ImageClassifier? classifier,
+    String? classificationSource,
+  }) : _classifier = classifier,
+       _classificationSource = classificationSource;
 
   final ImageClassifier? _classifier;
+  final String? _classificationSource;
 
   Future<ClothingAnalysisResult> analyze(Uint8List bytes) async {
     final labelsFuture = (_classifier ?? _classifyOnDevice)(bytes);
@@ -83,7 +94,8 @@ class ClothingAnalysisService {
         return byCount != 0 ? byCount : a.firstPixel.compareTo(b.firstPixel);
       });
     final hexes = ranked.take(3).map((bucket) => bucket.hex).toList();
-    final labelResult = mapClothingLabels(await labelsFuture);
+    final predictions = await labelsFuture;
+    final labelResult = mapClothingLabels(predictions);
     return ClothingAnalysisResult(
       category: labelResult.category,
       colorHexes: hexes,
@@ -93,17 +105,22 @@ class ClothingAnalysisService {
       silhouette: labelResult.silhouette,
       confidence: labelResult.confidence,
       rawLabels: labelResult.rawLabels,
+      rawPredictions: predictions,
+      classificationSource: predictions.isEmpty
+          ? null
+          : (_classificationSource ?? _platformClassificationSource),
+      colorSource: 'pixel_palette',
     );
   }
 }
 
 Future<List<ImageLabelPrediction>> _classifyOnDevice(Uint8List bytes) async {
-  if (!Platform.isIOS) return const [];
+  if (!Platform.isIOS && !Platform.isAndroid) return const [];
   final result = await _visionChannel.invokeListMethod<Object?>(
     'classifyImage',
     bytes,
   );
-  return (result ?? const [])
+  final predictions = (result ?? const [])
       .whereType<Map>()
       .map((row) => Map<String, Object?>.from(row))
       .where((row) => row['label'] is String && row['confidence'] is num)
@@ -114,7 +131,22 @@ Future<List<ImageLabelPrediction>> _classifyOnDevice(Uint8List bytes) async {
         ),
       )
       .toList();
+  if (kDebugMode) {
+    for (final prediction in predictions.take(20)) {
+      debugPrint(
+        'Clothing analysis: ${prediction.text} '
+        '${prediction.confidence.toStringAsFixed(4)}',
+      );
+    }
+  }
+  return predictions;
 }
+
+String? get _platformClassificationSource => Platform.isIOS
+    ? 'ios_vision'
+    : Platform.isAndroid
+    ? 'android_mlkit'
+    : null;
 
 ClothingAnalysisResult mapClothingLabels(
   List<ImageLabelPrediction> labels, {
@@ -228,7 +260,13 @@ ClothingAnalysisResult mapClothingLabels(
     ClothingPattern.checked: {'check', 'checked', 'plaid'},
     ClothingPattern.floral: {'floral', 'flower pattern'},
     ClothingPattern.graphic: {'graphic', 'graphic design', 'printed t shirt'},
-    ClothingPattern.textured: {'textile', 'texture', 'knit'},
+    ClothingPattern.textured: {
+      'texture',
+      'textured',
+      'knit',
+      'knitted',
+      'ribbed',
+    },
   };
   for (final label in labels.where((label) => label.confidence >= .6)) {
     final value = _normalizeLabel(label.text);
@@ -272,6 +310,7 @@ ClothingAnalysisResult mapClothingLabels(
     silhouette: silhouette,
     confidence: confidence,
     rawLabels: labels.map((label) => label.text).toList(),
+    rawPredictions: labels,
   );
 }
 

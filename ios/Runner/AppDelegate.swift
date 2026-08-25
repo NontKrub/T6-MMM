@@ -31,6 +31,9 @@ import Vision
       DispatchQueue.global(qos: .userInitiated).async {
         do {
           let request = VNClassifyImageRequest()
+#if targetEnvironment(simulator)
+          request.usesCPUOnly = true
+#endif
           try VNImageRequestHandler(data: bytes.data, options: [:]).perform([request])
           let labels = (request.results ?? [])
             .filter { $0.confidence >= 0.05 }

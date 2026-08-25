@@ -14,6 +14,8 @@ void main() {
     expect(item.pattern, ClothingPattern.unknown);
     expect(item.silhouette, ClothingSilhouette.unknown);
     expect(item.analysisConfidence, isNull);
+    expect(item.classificationSource, isNull);
+    expect(item.colorSource, isNull);
   });
 
   test('visual metadata survives JSON round trip', () {
@@ -27,6 +29,8 @@ void main() {
       pattern: ClothingPattern.solid,
       silhouette: ClothingSilhouette.slim,
       analysisConfidence: 0.9,
+      classificationSource: 'ios_vision',
+      colorSource: 'pixel_palette',
     );
 
     final restored = ClothingItem.fromJson(item.toJson());
@@ -35,5 +39,7 @@ void main() {
     expect(restored.pattern, ClothingPattern.solid);
     expect(restored.silhouette, ClothingSilhouette.slim);
     expect(restored.analysisConfidence, 0.9);
+    expect(restored.classificationSource, 'ios_vision');
+    expect(restored.colorSource, 'pixel_palette');
   });
 }

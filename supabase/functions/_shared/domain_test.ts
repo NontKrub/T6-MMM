@@ -1,5 +1,6 @@
 import {
   buildValidOutfitCandidates,
+  normalizeMissingPieceItems,
   repetitionInsights,
   scoreOutfitCandidate,
   selectUsableOutfitsFromGenerated,
@@ -27,6 +28,47 @@ Deno.test("buildValidOutfitCandidates requires top pants and shoes", () => {
   ]);
 
   assertEquals(candidates.length, 0);
+});
+
+Deno.test("normalizeMissingPieceItems preserves selected visual context", () => {
+  const selected = normalizeMissingPieceItems([
+    baseItem({
+      id: "top",
+      name: "Striped Shirt",
+      category: "top",
+      tags: ["casual"],
+      dominant_colors: ["#FFFFFF", "#334455"],
+      primary_color: "white",
+      detected_attributes: { pattern: "striped", silhouette: "regular" },
+    }),
+    baseItem({
+      id: "pants",
+      category: "pants",
+      dominant_colors: ["#111111"],
+      detected_attributes: { pattern: "solid" },
+    }),
+    baseItem({
+      id: "unknown",
+      category: "shoes",
+      detected_attributes: null,
+    }),
+  ]);
+
+  assertEquals(selected[0], {
+    id: "top",
+    name: "Striped Shirt",
+    category: "top",
+    tags: ["casual"],
+    colors: ["#FFFFFF", "#334455"],
+    primary_color: "white",
+    pattern: "striped",
+    silhouette: "regular",
+    wear_count: 0,
+    last_worn: null,
+  });
+  assertEquals(selected[1].pattern, "solid");
+  assertEquals(selected[2].pattern, null);
+  assertEquals(selected[2].silhouette, null);
 });
 
 Deno.test("scoreOutfitCandidate boosts lucky and personal colors", () => {
