@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+// Required explicitly by the integration-test contract; Flutter services also re-exports it.
+// ignore: unnecessary_import
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
