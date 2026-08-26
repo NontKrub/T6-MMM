@@ -53,10 +53,22 @@ and app restarts. MMM downsamples and quantizes image pixels on-device to
 produce a deterministic dominant palette. HEX values are authoritative for
 color matching.
 
-Category, pattern, and silhouette are editable suggestions. The current local
-analyzer leaves them `unknown` rather than inventing a result; users can tag
-them manually before saving. Signed-in wardrobe sync still uploads images to
-the configured Supabase wardrobe bucket.
+On iOS, Apple Vision's on-device `VNClassifyImageRequest` supplies real model
+labels and confidence. MMM conservatively maps supported labels to category
+and style suggestions. Category stays unselected below the confidence
+threshold and must be confirmed before save. Raw labels are used only for the
+current analysis/debugging and are not persisted.
+
+On Android, the same Dart method-channel contract uses Google ML Kit's bundled
+on-device image labeler. Images are not sent to a classification service.
+Classification provenance and pixel-palette provenance are stored separately.
+
+Pattern and silhouette are suggested only when Vision returns explicit,
+high-confidence labels such as `striped`, `oversized`, or `wide leg`;
+otherwise they remain `unknown` for manual selection. Users can retain up to
+three detected HEX colors, remove or add colors, and choose the primary color.
+Signed-in wardrobe sync still uploads images to the configured Supabase
+wardrobe bucket and removes its local staging copy after successful upload.
 
 On iOS, the deployment target is 15.0. Camera, photo-library, and location
 permissions are requested by their related actions. To run a simulator build:
@@ -66,8 +78,13 @@ xcrun simctl list devices available
 flutter run -d <simulator-udid>
 ```
 
-The iOS Simulator can exercise photo-library import. Physical camera capture
-still requires a real iPhone.
+The native method channel, Apple Vision request, confidence range, and pixel
+palette were exercised on iPhone 17 Pro Simulator with iOS 27.0. On that
+runtime, the available CPU classifier repeatedly produced generic labels for
+the local garment fixtures, so semantic garment recognition was not accepted
+as validated and category remained unselected. Manual category, pattern, and
+silhouette entry remains the supported fallback. Physical camera capture was
+not tested and still requires a real iPhone.
 
 ## Backend
 

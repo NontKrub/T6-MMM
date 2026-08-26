@@ -58,6 +58,9 @@ class WardrobeRepository {
     String? color,
     ClothingPattern pattern = ClothingPattern.unknown,
     ClothingSilhouette silhouette = ClothingSilhouette.unknown,
+    double? analysisConfidence,
+    String? classificationSource,
+    String? colorSource,
   }) async {
     final client = _client;
     final user = client?.auth.currentUser;
@@ -74,6 +77,9 @@ class WardrobeRepository {
         colorHexes: colorHexes,
         pattern: pattern,
         silhouette: silhouette,
+        analysisConfidence: analysisConfidence,
+        classificationSource: classificationSource,
+        colorSource: colorSource,
       );
       return _local.insertItem(item);
     }
@@ -111,9 +117,10 @@ class WardrobeRepository {
           'detected_attributes': {
             'pattern': pattern.name,
             'silhouette': silhouette.value,
-            'analysis_source': 'on_device_pixels',
+            'classification_source': classificationSource,
+            'color_source': colorSource,
           },
-          'ai_confidence': null,
+          'ai_confidence': analysisConfidence,
         })
         .select()
         .single();

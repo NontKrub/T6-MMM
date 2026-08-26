@@ -1,10 +1,15 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import {
+  type ClothingItemRow,
+  normalizeMissingPieceItems,
+} from "../_shared/domain.ts";
 import { openAiJson, recommendationsSchema } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
 type MissingPiecesBody = {
   action?: "generate" | "dismiss";
   id?: string;
+  selected_item_ids?: string[];
 };
 
 Deno.serve(async (req) => {
@@ -14,6 +19,14 @@ Deno.serve(async (req) => {
   try {
     const { supabase, userId } = await requireUser(req);
     const body = await readJson<MissingPiecesBody>(req);
+
+    if (
+      body.selected_item_ids != null &&
+      (!Array.isArray(body.selected_item_ids) ||
+        body.selected_item_ids.some((id) => typeof id !== "string"))
+    ) {
+      return jsonResponse({ error: "selected_item_ids must be strings." }, 400);
+    }
 
     if (body.action === "dismiss") {
       if (!body.id) {
@@ -42,11 +55,23 @@ Deno.serve(async (req) => {
         supabase.from("style_preferences").select("kind,value"),
         supabase.from("clothing_items")
           .select(
-            "id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn",
+            "id,name,brand,category,tags,dominant_colors,primary_color,detected_attributes,wear_count,last_worn",
           )
           .is("archived_at", null),
       ]);
 
+    const wardrobeRows = (wardrobe ?? []) as ClothingItemRow[];
+    const selectedIds = new Set(body.selected_item_ids ?? []);
+    const selectedRows = wardrobeRows.filter((item) =>
+      selectedIds.has(item.id)
+    );
+    if (selectedRows.length !== selectedIds.size) {
+      return jsonResponse({
+        error: "Selected items must belong to your wardrobe.",
+      }, 400);
+    }
+    const wardrobeContext = normalizeMissingPieceItems(wardrobeRows);
+    const selectedItems = normalizeMissingPieceItems(selectedRows);
     let result;
     try {
       result = await openAiJson<{
@@ -59,12 +84,17 @@ Deno.serve(async (req) => {
         }>;
       }>({
         instructions:
-          "Recommend missing wardrobe pieces. Be concrete, useful, and avoid recommending items the user already owns.",
+          "Recommend missing wardrobe pieces. When selected_items is non-empty, complete those garments first using category, color, pattern, silhouette, and style tags. Do not recommend an owned item unless explaining how to use it.",
         input: [{
           role: "user",
           content: [{
             type: "input_text",
-            text: JSON.stringify({ profile, preferences, wardrobe }),
+            text: JSON.stringify({
+              profile,
+              preferences,
+              wardrobe: wardrobeContext,
+              selected_items: selectedItems,
+            }),
           }],
         }],
         responseFormat: {

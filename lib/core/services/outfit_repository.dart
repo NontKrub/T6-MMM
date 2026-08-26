@@ -66,6 +66,7 @@ class OutfitRepository {
         style: style,
         history: await _local.fetchWearCombinations(),
         targetHex: targetHex,
+        preferences: await _local.fetchPreferenceEvents(),
       );
     }
 
@@ -108,7 +109,19 @@ class OutfitRepository {
   }) async {
     final client = SupabaseService.client;
     final user = client?.auth.currentUser;
-    if (client == null || user == null) return;
+    if (client == null || user == null) {
+      await _local.recordPreferenceEvent(
+        LocalPreferenceEvent(
+          style: outfit.style,
+          itemIds: itemIds,
+          tags: tags,
+          colors: colors,
+          source: source,
+          selectedAt: DateTime.now(),
+        ),
+      );
+      return;
+    }
 
     await client.from('outfit_preference_events').insert({
       'user_id': user.id,
@@ -132,6 +145,7 @@ class OutfitRepository {
             style: style,
             history: await _local.fetchWearCombinations(),
             rush: true,
+            preferences: await _local.fetchPreferenceEvents(),
           )
           .first;
     }

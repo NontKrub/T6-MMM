@@ -20,6 +20,7 @@ class InARushModal extends ConsumerStatefulWidget {
 class _InARushModalState extends ConsumerState<InARushModal> {
   Outfit? _outfit;
   bool _loading = true;
+  bool _wearing = false;
   String? _error;
 
   @override
@@ -70,41 +71,48 @@ class _InARushModalState extends ConsumerState<InARushModal> {
   }
 
   void _reshuffle() {
+    if (_loading) return;
     _loadOutfit();
   }
 
   Future<void> _wear(Outfit outfit) async {
-    final count = await ref
-        .read(outfitsProvider.notifier)
-        .repeatCountFor(outfit);
-    if (!mounted) return;
-    if (count > 0) {
-      final action = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Repeat outfit'),
-          content: Text("You've worn this combination $count times."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'another'),
-              child: const Text('Generate Another'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, 'wear'),
-              child: const Text('Wear Anyway'),
-            ),
-          ],
-        ),
-      );
+    if (_wearing) return;
+    setState(() => _wearing = true);
+    try {
+      final count = await ref
+          .read(outfitsProvider.notifier)
+          .repeatCountFor(outfit);
       if (!mounted) return;
-      if (action == 'another') {
-        _loadOutfit();
-        return;
+      if (count > 0) {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Repeat outfit'),
+            content: Text("You've worn this combination $count times."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'another'),
+                child: const Text('Generate Another'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, 'wear'),
+                child: const Text('Wear Anyway'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (action == 'another') {
+          await _loadOutfit();
+          return;
+        }
+        if (action != 'wear') return;
       }
-      if (action != 'wear') return;
+      await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _wearing = false);
     }
-    await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
-    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -306,7 +314,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _outfit == null ? null : () => _wear(_outfit!),
+                    onPressed: _outfit == null || _wearing
+                        ? null
+                        : () => _wear(_outfit!),
                     icon: const Icon(Icons.check_rounded, size: 16),
                     label: Text(
                       _outfit == null

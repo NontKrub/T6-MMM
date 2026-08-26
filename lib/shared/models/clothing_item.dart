@@ -108,6 +108,8 @@ class ClothingItem {
   final ClothingPattern pattern;
   final ClothingSilhouette silhouette;
   final double? analysisConfidence;
+  final String? classificationSource;
+  final String? colorSource;
   final int wearCount;
   final DateTime? lastWorn;
 
@@ -123,6 +125,8 @@ class ClothingItem {
     this.pattern = ClothingPattern.unknown,
     this.silhouette = ClothingSilhouette.unknown,
     this.analysisConfidence,
+    this.classificationSource,
+    this.colorSource,
     this.wearCount = 0,
     this.lastWorn,
   });
@@ -158,6 +162,8 @@ class ClothingItem {
         attributes['silhouette'] as String?,
       ),
       analysisConfidence: (json['ai_confidence'] as num?)?.toDouble(),
+      classificationSource: attributes['classification_source'] as String?,
+      colorSource: attributes['color_source'] as String?,
       wearCount: json['wear_count'] as int? ?? 0,
       lastWorn: json['last_worn'] != null
           ? DateTime.tryParse(json['last_worn'] as String)
@@ -178,6 +184,8 @@ class ClothingItem {
       'detected_attributes': {
         'pattern': pattern.name,
         'silhouette': silhouette.value,
+        'classification_source': classificationSource,
+        'color_source': colorSource,
       },
       'ai_confidence': analysisConfidence,
       'wear_count': wearCount,
@@ -202,6 +210,8 @@ class ClothingItem {
       'detected_attributes': {
         'pattern': pattern.name,
         'silhouette': silhouette.value,
+        'classification_source': classificationSource,
+        'color_source': colorSource,
       },
       'ai_confidence': analysisConfidence,
       'wear_count': wearCount,
@@ -220,6 +230,8 @@ class ClothingItem {
     ClothingPattern? pattern,
     ClothingSilhouette? silhouette,
     double? analysisConfidence,
+    String? classificationSource,
+    String? colorSource,
     int? wearCount,
     DateTime? lastWorn,
   }) {
@@ -235,6 +247,8 @@ class ClothingItem {
       pattern: pattern ?? this.pattern,
       silhouette: silhouette ?? this.silhouette,
       analysisConfidence: analysisConfidence ?? this.analysisConfidence,
+      classificationSource: classificationSource ?? this.classificationSource,
+      colorSource: colorSource ?? this.colorSource,
       wearCount: wearCount ?? this.wearCount,
       lastWorn: lastWorn ?? this.lastWorn,
     );

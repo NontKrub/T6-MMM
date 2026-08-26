@@ -1,4 +1,5 @@
 import '../../shared/models/clothing_item.dart';
+import 'clothing_analysis_service.dart';
 import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
@@ -60,15 +61,24 @@ class MissingPieceRecommendation {
 class RecommendationRepository {
   final _local = LocalAccountRepository();
 
-  Future<List<MissingPieceRecommendation>> generateMissingPieces() async {
+  Future<List<MissingPieceRecommendation>> generateMissingPieces({
+    ClothingItem? top,
+    ClothingItem? pants,
+  }) async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) {
-      return localMissingPieces(await _local.fetchItems());
+      final items = await _local.fetchItems();
+      return top != null && pants != null
+          ? localMissingPiecesForSelection(items, top: top, pants: pants)
+          : localMissingPieces(items);
     }
 
     final response = await client.functions.invoke(
       'missing-pieces',
-      body: const {},
+      body: {
+        if (top != null && pants != null)
+          'selected_item_ids': [top.id, pants.id],
+      },
     );
     final data = Map<String, dynamic>.from(response.data as Map);
     return (data['recommendations'] as List? ?? const [])
@@ -137,6 +147,101 @@ class RecommendationRepository {
     return palettes[daySeed % palettes.length];
   }
 }
+
+List<MissingPieceRecommendation> localMissingPiecesForSelection(
+  List<ClothingItem> items, {
+  required ClothingItem top,
+  required ClothingItem pants,
+}) {
+  final shoes = items
+      .where((item) => item.category == ClothingCategory.shoes)
+      .toList();
+  if (shoes.isEmpty) {
+    return const [
+      MissingPieceRecommendation(
+        id: 'local-selection-shoes',
+        category: 'shoes',
+        title: 'Add neutral shoes',
+        reason:
+            'Your selected top and pants need shoes to complete the outfit.',
+        suggestion: 'Try white, black, gray, beige, or brown footwear.',
+        priority: 'essential',
+      ),
+    ];
+  }
+
+  final base = [top, pants];
+  final loudBase = base.where(_isLoudPattern).length;
+  final candidates =
+      items
+          .where(
+            (item) =>
+                item.category == ClothingCategory.shoes ||
+                item.category == ClothingCategory.accessory,
+          )
+          .map(
+            (item) =>
+                (item: item, score: _missingPieceScore(item, base, loudBase)),
+          )
+          .toList()
+        ..sort((a, b) {
+          final byScore = b.score.compareTo(a.score);
+          return byScore != 0 ? byScore : a.item.id.compareTo(b.item.id);
+        });
+  if (candidates.isEmpty) return localMissingPieces(items);
+  final best = candidates.first.item;
+  final neutral = best.colorHexes.any(_isNeutralHex);
+  return [
+    MissingPieceRecommendation(
+      id: 'local-item-${best.id}',
+      category: best.category.name,
+      title: 'Try ${best.name}',
+      reason: loudBase > 1
+          ? 'A simple piece balances the selected patterns.'
+          : 'Its colors and style fit the selected top and pants.',
+      suggestion: neutral
+          ? 'This neutral piece keeps the outfit balanced.'
+          : 'Use this piece as the outfit accent.',
+      priority: 'recommended',
+    ),
+  ];
+}
+
+double _missingPieceScore(
+  ClothingItem candidate,
+  List<ClothingItem> base,
+  int loudBase,
+) {
+  var score = candidate.category == ClothingCategory.shoes ? 3.0 : 0.0;
+  final candidateHex = candidate.colorHexes.firstOrNull;
+  if (candidateHex != null) {
+    if (_isNeutralHex(candidateHex)) score += 3;
+    if (base
+        .expand((item) => item.colorHexes)
+        .any((hex) => colorDistance(hex, candidateHex) <= 180)) {
+      score += 2;
+    }
+  }
+  final baseTags = base.expand((item) => item.tags).toSet();
+  score += candidate.tags.where(baseTags.contains).length * 2;
+  if (loudBase > 1) {
+    score += _isLoudPattern(candidate) ? -5 : 4;
+  }
+  score -= candidate.wearCount.clamp(0, 5);
+  return score;
+}
+
+bool _isLoudPattern(ClothingItem item) =>
+    item.pattern != ClothingPattern.unknown &&
+    item.pattern != ClothingPattern.solid;
+
+bool _isNeutralHex(String hex) => const {
+  'black',
+  'white',
+  'gray',
+  'brown',
+  'beige',
+}.contains(coarseColorName(hex));
 
 List<MissingPieceRecommendation> localMissingPieces(List<ClothingItem> items) {
   const required = [

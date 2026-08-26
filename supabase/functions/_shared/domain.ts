@@ -46,6 +46,43 @@ export type GeneratedOutfitDraft = {
   score: number;
 };
 
+export type MissingPieceItemContext = {
+  id: string;
+  name: string;
+  category: ClothingItemRow["category"];
+  tags: string[];
+  colors: string[];
+  primary_color: string | null;
+  pattern: string | null;
+  silhouette: string | null;
+  wear_count: number;
+  last_worn: string | null;
+};
+
+export function normalizeMissingPieceItems(
+  items: ClothingItemRow[],
+): MissingPieceItemContext[] {
+  return items.map((item) => {
+    const attributes = item.detected_attributes ?? {};
+    return {
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      tags: item.tags,
+      colors: item.dominant_colors,
+      primary_color: item.primary_color,
+      pattern: typeof attributes.pattern === "string"
+        ? attributes.pattern
+        : null,
+      silhouette: typeof attributes.silhouette === "string"
+        ? attributes.silhouette
+        : null,
+      wear_count: item.wear_count,
+      last_worn: item.last_worn,
+    };
+  });
+}
+
 type ScoreOptions = {
   style?: string;
   stylePreferences?: string[];
