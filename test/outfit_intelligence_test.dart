@@ -89,6 +89,130 @@ void main() {
     expect(candidates.every((candidate) => candidate.isComplete), isTrue);
   });
 
+  test('candidate category limits favor practical items deterministically', () {
+    final wardrobe = [
+      for (var index = 0; index < 12; index++)
+        _item(
+          'a-overused-${index.toString().padLeft(2, '0')}',
+          ClothingCategory.top,
+          wearCount: 4,
+        ),
+      _item('z-fresh', ClothingCategory.top),
+      _item('pants', ClothingCategory.pants),
+      _item('shoes', ClothingCategory.shoes),
+    ];
+
+    final first = generator.generate(wardrobe);
+    final second = generator.generate(wardrobe);
+
+    expect(first.expand((candidate) => candidate.itemIds), contains('z-fresh'));
+    expect(
+      first.expand((candidate) => candidate.itemIds),
+      isNot(contains('a-overused-11')),
+    );
+    expect(
+      first.map((candidate) => candidate.id).toList(),
+      second.map((candidate) => candidate.id).toList(),
+    );
+  });
+
+  test('unused dress quota returns to basic candidates', () {
+    const bounded = OutfitCandidateGenerator(
+      maxItemsPerCategory: 20,
+      maxCandidates: 200,
+      maxAccessories: 0,
+    );
+    final candidates = bounded.generate([
+      for (var index = 0; index < 20; index++)
+        _item('top-$index', ClothingCategory.top),
+      for (var index = 0; index < 20; index++)
+        _item('pants-$index', ClothingCategory.pants),
+      _item('shoes-a', ClothingCategory.shoes),
+      _item('shoes-b', ClothingCategory.shoes),
+      _item('dress', ClothingCategory.dress),
+    ]);
+    final dressCount = candidates
+        .where((candidate) => candidate.onePiece != null)
+        .length;
+
+    expect(candidates, hasLength(200));
+    expect(dressCount, 2);
+    expect(candidates.length - dressCount, 198);
+  });
+
+  test('unused basic quota returns to dress candidates', () {
+    const bounded = OutfitCandidateGenerator(
+      maxItemsPerCategory: 250,
+      maxCandidates: 200,
+      maxAccessories: 0,
+    );
+    final candidates = bounded.generate([
+      _item('top', ClothingCategory.top),
+      for (var index = 0; index < 3; index++)
+        _item('pants-$index', ClothingCategory.pants),
+      _item('shoes', ClothingCategory.shoes),
+      for (var index = 0; index < 250; index++)
+        _item('dress-$index', ClothingCategory.dress),
+    ]);
+    final dressCount = candidates
+        .where((candidate) => candidate.onePiece != null)
+        .length;
+
+    expect(candidates, hasLength(200));
+    expect(candidates.length - dressCount, 3);
+    expect(dressCount, 197);
+  });
+
+  test('large basic and dress pools share candidate capacity', () {
+    const bounded = OutfitCandidateGenerator(
+      maxItemsPerCategory: 20,
+      maxCandidates: 200,
+      maxAccessories: 0,
+    );
+    final candidates = bounded.generate([
+      for (var index = 0; index < 20; index++)
+        _item('top-$index', ClothingCategory.top),
+      for (var index = 0; index < 20; index++)
+        _item('pants-$index', ClothingCategory.pants),
+      for (var index = 0; index < 20; index++)
+        _item('shoes-$index', ClothingCategory.shoes),
+      for (var index = 0; index < 20; index++)
+        _item('dress-$index', ClothingCategory.dress),
+    ]);
+    final dressCount = candidates
+        .where((candidate) => candidate.onePiece != null)
+        .length;
+
+    expect(candidates, hasLength(200));
+    expect(dressCount, greaterThan(0));
+    expect(candidates.length - dressCount, greaterThan(0));
+  });
+
+  test('balanced extras keep bags and accessories eligible', () {
+    final wardrobe = [
+      _item('top', ClothingCategory.top),
+      _item('pants', ClothingCategory.pants),
+      _item('shoes', ClothingCategory.shoes),
+      for (var index = 0; index < 5; index++)
+        _item('hat-$index', ClothingCategory.hat),
+      _item('bag', ClothingCategory.bag),
+      _item('accessory', ClothingCategory.accessory),
+    ];
+
+    final first = generator.generate(wardrobe);
+    final second = generator.generate(wardrobe);
+
+    expect(first.any((candidate) => candidate.itemIds.contains('bag')), isTrue);
+    expect(
+      first.any((candidate) => candidate.itemIds.contains('accessory')),
+      isTrue,
+    );
+    expect(
+      first.map((candidate) => candidate.id).toList(),
+      second.map((candidate) => candidate.id).toList(),
+    );
+  });
+
   test(
     'color compatibility handles neutral, analogous, and contrast pairs',
     () {
@@ -437,6 +561,8 @@ ClothingItem _item(
   String? hex,
   double? warmth,
   List<ClothingStyle> styles = const [],
+  int wearCount = 0,
+  DateTime? lastWorn,
 }) => ClothingItem(
   id: id,
   name: id,
@@ -446,4 +572,6 @@ ClothingItem _item(
   colorHexes: hex == null ? const [] : [hex],
   warmthLevel: warmth,
   styles: styles,
+  wearCount: wearCount,
+  lastWorn: lastWorn,
 );

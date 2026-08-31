@@ -24,22 +24,56 @@ class OutfitCandidateGenerator {
     if (shoes.isEmpty) return const [];
 
     final outerwear = _items(wardrobe, ClothingCategory.outerwear, context);
-    final extras = [
-      ..._items(wardrobe, ClothingCategory.hat, context),
-      ..._items(wardrobe, ClothingCategory.bag, context),
-      ..._items(wardrobe, ClothingCategory.accessory, context),
-    ].take(maxAccessories).toList();
+    final extras = _balancedExtras([
+      _items(wardrobe, ClothingCategory.hat, context),
+      _items(wardrobe, ClothingCategory.bag, context),
+      _items(wardrobe, ClothingCategory.accessory, context),
+    ]);
     final dresses = _items(wardrobe, ClothingCategory.dress, context);
     final candidates = <OutfitCandidate>[];
     final hasBasic = tops.isNotEmpty && bottoms.isNotEmpty;
     final hasDress = dresses.isNotEmpty;
-    var basicLimit = maxCandidates;
-    var dressLimit = maxCandidates;
+    final basicPotential = hasBasic
+        ? tops.length *
+              bottoms.length *
+              shoes.length *
+              (outerwear.length + 1) *
+              (extras.length + 1)
+        : 0;
+    final dressPotential = hasDress
+        ? dresses.length *
+              shoes.length *
+              (outerwear.length + 1) *
+              (extras.length + 1)
+        : 0;
+    var basicLimit = basicPotential < maxCandidates
+        ? basicPotential
+        : maxCandidates;
+    var dressLimit = dressPotential < maxCandidates
+        ? dressPotential
+        : maxCandidates;
     if (hasBasic && hasDress) {
-      basicLimit = (maxCandidates * 3) ~/ 4;
-      if (basicLimit == 0) basicLimit = 1;
-      if (basicLimit >= maxCandidates) basicLimit = maxCandidates - 1;
-      dressLimit = maxCandidates - basicLimit;
+      var dressReservation = maxCandidates ~/ 4;
+      if (dressReservation == 0) dressReservation = 1;
+      if (dressReservation >= maxCandidates) {
+        dressReservation = maxCandidates - 1;
+      }
+      final basicReservation = maxCandidates - dressReservation;
+      basicLimit = basicPotential < basicReservation
+          ? basicPotential
+          : basicReservation;
+      dressLimit = dressPotential < dressReservation
+          ? dressPotential
+          : dressReservation;
+
+      var remaining = maxCandidates - basicLimit - dressLimit;
+      final basicRoom = basicPotential - basicLimit;
+      final basicExtra = remaining < basicRoom ? remaining : basicRoom;
+      basicLimit += basicExtra;
+      remaining -= basicExtra;
+      final dressRoom = dressPotential - dressLimit;
+      final dressExtra = remaining < dressRoom ? remaining : dressRoom;
+      dressLimit += dressExtra;
     }
 
     if (hasBasic && basicLimit > 0) {
@@ -105,8 +139,37 @@ class OutfitCandidateGenerator {
                   item.category == category && _allowedByContext(item, context),
             )
             .toList()
-          ..sort((a, b) => a.id.compareTo(b.id));
+          ..sort(_comparePracticality);
     return items.take(maxItemsPerCategory).toList();
+  }
+
+  List<ClothingItem> _balancedExtras(List<List<ClothingItem>> groups) {
+    final extras = <ClothingItem>[];
+    for (var index = 0; extras.length < maxAccessories; index++) {
+      var added = false;
+      for (final group in groups) {
+        if (index >= group.length) continue;
+        extras.add(group[index]);
+        added = true;
+        if (extras.length == maxAccessories) return extras;
+      }
+      if (!added) break;
+    }
+    return extras;
+  }
+
+  int _comparePracticality(ClothingItem a, ClothingItem b) {
+    final wear = a.wearCount.compareTo(b.wearCount);
+    if (wear != 0) return wear;
+
+    if (a.lastWorn == null && b.lastWorn != null) return -1;
+    if (a.lastWorn != null && b.lastWorn == null) return 1;
+    if (a.lastWorn != null && b.lastWorn != null) {
+      final worn = a.lastWorn!.compareTo(b.lastWorn!);
+      if (worn != 0) return worn;
+    }
+
+    return a.id.compareTo(b.id);
   }
 
   bool _allowedByContext(ClothingItem item, OutfitContext? context) {
