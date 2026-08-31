@@ -64,6 +64,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   final List<String> _colorHexes = [];
   String? _primaryHex;
   final List<String> _tags = [];
+  final Set<String> _correctedFields = {};
   final _imageStorage = ImageStorageService();
   final _analysis = const ClothingAnalysisService();
 
@@ -182,6 +183,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         _imageBytes = bytes;
         _imagePath = managedFile.path;
         _localAnalysis = null;
+        _correctedFields.clear();
+        _tags.clear();
       });
       if (previousPath != null && previousPath != managedFile.path) {
         await _deleteImage(previousPath);
@@ -226,9 +229,12 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       return;
     }
     setState(() {
+      final hadPrimary = _primaryHex != null;
       if (!_colorHexes.contains(hex)) _colorHexes.add(hex);
       _primaryHex ??= hex;
       _colorSource = 'manual';
+      _correctedFields.add('dominant_colors');
+      if (!hadPrimary) _correctedFields.add('primary_color');
       _hexController.clear();
     });
   }
@@ -254,8 +260,12 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       return;
     }
     if (customHex != null && !_colorHexes.contains(customHex)) {
+      final hadPrimary = _primaryHex != null;
       _colorHexes.add(customHex);
       _primaryHex ??= customHex;
+      _colorSource = 'manual';
+      _correctedFields.add('dominant_colors');
+      if (!hadPrimary) _correctedFields.add('primary_color');
     }
     final trimmedName = _nameController.text.trim();
     final itemName = trimmedName.isNotEmpty ? trimmedName : 'Wardrobe item';
@@ -280,6 +290,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               analysisConfidence: _analysisConfidence,
               classificationSource: _classificationSource,
               colorSource: _colorSource,
+              correctedFields: Set.unmodifiable(_correctedFields),
               localAnalysis: _localAnalysis,
             );
         try {
@@ -329,8 +340,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
           : _localAnalysis?.source ?? AnalysisSource.unknown,
       analysisStatus: _localAnalysis?.status ?? AnalysisStatus.failed,
       analysisVersion: currentAnalysisVersion,
-      userCorrected:
-          _classificationSource == 'manual' || _colorSource == 'manual',
+      correctedFields: Set.unmodifiable(_correctedFields),
+      userCorrected: _correctedFields.isNotEmpty,
       analyzedAt: DateTime.now(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -552,6 +563,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           _category = cat;
                           _classificationSource = 'manual';
                           _analysisConfidence = null;
+                          _correctedFields.add('category');
                         }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
@@ -631,13 +643,20 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           ),
                           label: Text(hex),
                           onSelected: (_) => setState(() {
+                            if (_primaryHex != hex) {
+                              _correctedFields.add('primary_color');
+                            }
                             _primaryHex = hex;
                             _colorSource = 'manual';
                           }),
                           onDeleted: () => setState(() {
                             _colorHexes.remove(hex);
                             _colorSource = 'manual';
-                            if (primary) _primaryHex = _colorHexes.firstOrNull;
+                            _correctedFields.add('dominant_colors');
+                            if (primary) {
+                              _primaryHex = _colorHexes.firstOrNull;
+                              _correctedFields.add('primary_color');
+                            }
                           }),
                         );
                       }).toList(),
@@ -682,6 +701,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                               _pattern = value!;
                               _classificationSource = 'manual';
                               _analysisConfidence = null;
+                              _correctedFields.add('pattern');
                             }),
                           ),
                         ),
@@ -708,6 +728,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                               _silhouette = value!;
                               _classificationSource = 'manual';
                               _analysisConfidence = null;
+                              _correctedFields.add('silhouette');
                             }),
                           ),
                         ),
@@ -731,6 +752,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           sel ? _tags.remove(tag) : _tags.add(tag);
                           _classificationSource = 'manual';
                           _analysisConfidence = null;
+                          _correctedFields.add('tags');
                         }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),

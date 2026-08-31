@@ -45,6 +45,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    Set<String> correctedFields = const {},
     ClothingAnalysisResult? localAnalysis,
   }) async {
     final item = await _repository.uploadAndCreateItem(
@@ -61,6 +62,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       analysisConfidence: analysisConfidence,
       classificationSource: classificationSource,
       colorSource: colorSource,
+      correctedFields: correctedFields,
       localAnalysis: localAnalysis,
     );
     if (item != null) {

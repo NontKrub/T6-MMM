@@ -318,6 +318,7 @@ extension on ClothingItem {
       analysisSource: analysisSource,
       analysisStatus: analysisStatus,
       analysisVersion: analysisVersion,
+      correctedFields: correctedFields,
       userCorrected: userCorrected,
       analyzedAt: analyzedAt,
       createdAt: createdAt,

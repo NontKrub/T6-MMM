@@ -100,6 +100,7 @@ void main() {
         local: local,
         server: server,
         corrections: ClothingAnalysisCorrections(
+          correctedFields: const {'category'},
           category: ClothingCategory.dress,
         ),
       );
@@ -111,20 +112,22 @@ void main() {
     },
   );
 
-  test('item reanalysis keeps all user-corrected metadata', () {
+  test('item reanalysis keeps only corrected metadata', () {
     final item = ClothingItem(
       id: 'item-1',
       name: 'Corrected skirt',
       category: ClothingCategory.dress,
       imageUrl: '/managed/item.jpg',
       fit: ClothingFit.cropped,
-      userCorrected: true,
+      pattern: ClothingPattern.striped,
+      correctedFields: const {'category'},
     );
     const server = ClothingAnalysisResult(
       category: ClothingCategory.pants,
       colorHexes: ['#FF0000'],
       colorNames: ['red'],
       fit: ClothingFit.slim,
+      pattern: ClothingPattern.solid,
       confidence: 0.99,
       source: AnalysisSource.serverAI,
     );
@@ -135,10 +138,156 @@ void main() {
     );
 
     expect(merged.category, ClothingCategory.dress);
-    expect(merged.fit, ClothingFit.cropped);
+    expect(merged.fit, ClothingFit.slim);
+    expect(merged.pattern, ClothingPattern.solid);
     expect(merged.colorHexes, ['#FF0000']);
     expect(merged.analysisSource, AnalysisSource.merged);
     expect(merged.analysisVersion, currentAnalysisVersion);
+  });
+
+  test('color corrections do not freeze unrelated metadata', () {
+    final item = ClothingItem(
+      id: 'item-1',
+      name: 'Colored top',
+      category: ClothingCategory.top,
+      imageUrl: '/managed/item.jpg',
+      color: 'red',
+      colorHexes: const ['#FF0000'],
+      fit: ClothingFit.regular,
+      correctedFields: const {'primary_color', 'dominant_colors'},
+    );
+    const server = ClothingAnalysisResult(
+      category: ClothingCategory.outerwear,
+      primaryColor: 'blue',
+      colorHexes: ['#0000FF'],
+      colorNames: ['blue'],
+      fit: ClothingFit.slim,
+      material: ClothingMaterial.denim,
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+
+    expect(merged.color, 'red');
+    expect(merged.colorHexes, ['#FF0000']);
+    expect(merged.category, ClothingCategory.outerwear);
+    expect(merged.fit, ClothingFit.slim);
+    expect(merged.material, ClothingMaterial.denim);
+  });
+
+  test('tag corrections do not freeze unrelated metadata', () {
+    final item = ClothingItem(
+      id: 'item-1',
+      name: 'Minimal top',
+      category: ClothingCategory.top,
+      imageUrl: '/managed/item.jpg',
+      tags: const ['minimal'],
+      fit: ClothingFit.regular,
+      correctedFields: const {'tags'},
+    );
+    const server = ClothingAnalysisResult(
+      colorHexes: [],
+      colorNames: [],
+      tags: ['sport'],
+      fit: ClothingFit.relaxed,
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+
+    expect(merged.tags, ['minimal']);
+    expect(merged.fit, ClothingFit.relaxed);
+  });
+
+  test('uncorrected reanalysis can replace automatic tags with none', () {
+    const item = ClothingItem(
+      id: 'item-1',
+      name: 'Old top',
+      category: ClothingCategory.top,
+      imageUrl: '/managed/item.jpg',
+      tags: ['automatic'],
+    );
+    const server = ClothingAnalysisResult(
+      colorHexes: [],
+      colorNames: [],
+      tags: [],
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+
+    expect(merged.tags, isEmpty);
+  });
+
+  test('items without corrections fully accept refreshed metadata', () {
+    const item = ClothingItem(
+      id: 'item-1',
+      name: 'Old top',
+      category: ClothingCategory.top,
+      imageUrl: '/managed/item.jpg',
+      tags: ['old'],
+      fit: ClothingFit.regular,
+    );
+    const server = ClothingAnalysisResult(
+      category: ClothingCategory.pants,
+      colorHexes: [],
+      colorNames: [],
+      tags: ['new'],
+      fit: ClothingFit.slim,
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+
+    expect(merged.category, ClothingCategory.pants);
+    expect(merged.tags, ['new']);
+    expect(merged.fit, ClothingFit.slim);
+    expect(merged.correctedFields, isEmpty);
+    expect(merged.userCorrected, isFalse);
+  });
+
+  test('legacy corrected rows remain protected', () {
+    final item = ClothingItem.fromJson({
+      'id': 'legacy-corrected',
+      'name': 'Legacy dress',
+      'category': 'dress',
+      'image_url': '/managed/item.jpg',
+      'fit': 'regular',
+      'tags': ['manual'],
+      'user_corrected': true,
+      'corrected_fields': [],
+    });
+    const server = ClothingAnalysisResult(
+      category: ClothingCategory.pants,
+      colorHexes: [],
+      colorNames: [],
+      fit: ClothingFit.slim,
+      tags: ['server'],
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+
+    expect(item.correctedFields, clothingAnalysisFieldNames);
+    expect(merged.category, ClothingCategory.dress);
+    expect(merged.fit, ClothingFit.regular);
+    expect(merged.tags, ['manual']);
+    expect(merged.userCorrected, isTrue);
   });
 
   test('aligned local and server outerwear remains outerwear', () {
@@ -184,6 +333,32 @@ void main() {
     expect(json['image_path'], 'user-1/item-1/original.jpg');
     expect(json['created_at'], createdAt.toIso8601String());
     expect(json['updated_at'], updatedAt.toIso8601String());
+  });
+
+  test('corrected fields round-trip through database JSON', () {
+    final item = ClothingItem(
+      id: 'item-1',
+      name: 'Corrected top',
+      category: ClothingCategory.top,
+      imageUrl: 'https://example.test/top.jpg',
+      correctedFields: const {'tags', 'category'},
+    );
+
+    final json = item.toJson();
+    final restored = ClothingItem.fromJson(json);
+
+    expect(json['corrected_fields'], ['category', 'tags']);
+    expect(restored.correctedFields, {'category', 'tags'});
+    expect(restored.userCorrected, isTrue);
+    expect(
+      ClothingItem.fromJson(
+        item.toInsertJson(
+          userId: 'user-1',
+          imagePath: 'user-1/item-1/original.jpg',
+        ),
+      ).correctedFields,
+      {'category', 'tags'},
+    );
   });
 
   test('parses the server analysis contract defensively', () {

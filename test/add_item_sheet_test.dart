@@ -32,6 +32,7 @@ class _FakeImagePickerClient implements ImagePickerClient {
 class _TestWardrobeNotifier extends WardrobeNotifier {
   bool uploadFails = false;
   int uploads = 0;
+  Set<String> uploadedCorrectedFields = const {};
 
   @override
   Future<void> load() async {}
@@ -56,10 +57,12 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    Set<String> correctedFields = const {},
     ClothingAnalysisResult? localAnalysis,
   }) async {
     if (uploadFails) throw StateError('upload failed');
     uploads++;
+    uploadedCorrectedFields = correctedFields;
   }
 }
 
@@ -185,6 +188,8 @@ void main() {
     expect(notifier.state.first.name, 'Wardrobe item');
     expect(notifier.state.first.colorHexes, ['#FF0000']);
     expect(notifier.state.first.color, 'red');
+    expect(notifier.state.first.correctedFields, isEmpty);
+    expect(notifier.state.first.userCorrected, isFalse);
   });
 
   testWidgets('manual visual metadata overrides analysis before save', (
@@ -222,6 +227,13 @@ void main() {
     expect(notifier.state.single.silhouette, ClothingSilhouette.slim);
     expect(notifier.state.single.classificationSource, 'manual');
     expect(notifier.state.single.colorSource, 'manual');
+    expect(notifier.state.single.correctedFields, {
+      'dominant_colors',
+      'primary_color',
+      'pattern',
+      'silhouette',
+    });
+    expect(notifier.state.single.userCorrected, isTrue);
   });
 
   testWidgets('uncertain category requires explicit selection', (tester) async {
@@ -248,6 +260,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(notifier.state.single.category, ClothingCategory.accessory);
+    expect(notifier.state.single.correctedFields, {'category'});
   });
 
   testWidgets('retains palette removals and selected primary color', (
@@ -279,6 +292,10 @@ void main() {
     expect(notifier.state.single.colorHexes, ['#FF0000', '#0000FF']);
     expect(notifier.state.single.color, 'blue');
     expect(notifier.state.single.colorSource, 'manual');
+    expect(notifier.state.single.correctedFields, {
+      'dominant_colors',
+      'primary_color',
+    });
   });
 
   testWidgets('replacement and cancellation clean managed images', (
@@ -343,6 +360,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pumpAndSettle();
     expect(notifier.uploads, 1);
+    expect(notifier.uploadedCorrectedFields, isEmpty);
     expect(deleted, ['/managed/signed.jpg']);
   });
 

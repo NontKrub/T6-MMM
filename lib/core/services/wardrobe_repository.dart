@@ -74,6 +74,7 @@ class WardrobeRepository {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    Set<String> correctedFields = const {},
     ClothingAnalysisResult? localAnalysis,
   }) async {
     final client = _client;
@@ -99,8 +100,7 @@ class WardrobeRepository {
       tags: tags,
       pattern: pattern,
       silhouette: silhouette,
-      classificationSource: classificationSource,
-      colorSource: colorSource,
+      correctedFields: correctedFields,
     );
     final localMerged = _intelligence.merge(
       local: localResult,
@@ -117,7 +117,7 @@ class WardrobeRepository {
           fallbackCategory: fallbackCategory,
           requestedTags: tags,
           analysis: localMerged,
-          userCorrected: corrections != null,
+          correctedFields: correctedFields,
         ),
       );
     }
@@ -169,7 +169,7 @@ class WardrobeRepository {
         fallbackCategory: fallbackCategory,
         requestedTags: tags,
         analysis: merged,
-        userCorrected: corrections != null,
+        correctedFields: correctedFields,
       );
     } catch (error) {
       _log('Server clothing analysis failed for $itemId: $error');
@@ -183,7 +183,7 @@ class WardrobeRepository {
             fallbackCategory: fallbackCategory,
             requestedTags: tags,
             analysis: localMerged,
-            userCorrected: corrections != null,
+            correctedFields: correctedFields,
           ).copyWith(
             analysisStatus: AnalysisStatus.failed,
             analyzedAt: DateTime.now(),
@@ -290,7 +290,7 @@ class WardrobeRepository {
       imagePath: imagePath,
       name: item.name,
       brand: item.brand,
-      tags: item.tags,
+      tags: item.correctedFields.contains('tags') ? item.tags : const [],
     );
     final updated = _intelligence.mergeIntoItem(item, server: server);
     await client
@@ -415,19 +415,19 @@ class WardrobeRepository {
     required List<String> tags,
     required ClothingPattern pattern,
     required ClothingSilhouette silhouette,
-    required String? classificationSource,
-    required String? colorSource,
+    required Set<String> correctedFields,
   }) {
-    final corrected =
-        classificationSource == 'manual' || colorSource == 'manual';
-    if (!corrected) return null;
+    if (correctedFields.isEmpty) return null;
     return ClothingAnalysisCorrections(
-      category: fallbackCategory,
-      primaryColor: color,
-      colorHexes: colorHexes,
-      pattern: pattern == ClothingPattern.unknown ? null : pattern,
-      silhouette: silhouette == ClothingSilhouette.unknown ? null : silhouette,
-      tags: tags,
+      correctedFields: correctedFields,
+      category: correctedFields.contains('category') ? fallbackCategory : null,
+      primaryColor: correctedFields.contains('primary_color') ? color : null,
+      colorHexes: correctedFields.contains('dominant_colors')
+          ? colorHexes
+          : null,
+      pattern: correctedFields.contains('pattern') ? pattern : null,
+      silhouette: correctedFields.contains('silhouette') ? silhouette : null,
+      tags: correctedFields.contains('tags') ? tags : null,
     );
   }
 
@@ -440,7 +440,7 @@ class WardrobeRepository {
     required ClothingCategory fallbackCategory,
     required List<String> requestedTags,
     required ClothingAnalysisResult analysis,
-    required bool userCorrected,
+    required Set<String> correctedFields,
   }) {
     final now = DateTime.now();
     final colors = analysis.colorHexes.isEmpty
@@ -472,7 +472,8 @@ class WardrobeRepository {
       analysisSource: analysis.source,
       analysisStatus: analysis.status,
       analysisVersion: analysis.analysisVersion,
-      userCorrected: userCorrected || analysis.source == AnalysisSource.manual,
+      correctedFields: correctedFields,
+      userCorrected: correctedFields.isNotEmpty,
       analyzedAt: now,
       createdAt: now,
       updatedAt: now,

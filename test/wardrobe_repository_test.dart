@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
@@ -119,5 +120,33 @@ void main() {
 
     expect(payload['category'], 'dress');
     expect(payload['tags'], ['manual-dress']);
+  });
+
+  test('guest upload passes only explicit corrections into the item', () async {
+    SharedPreferences.setMockInitialValues({});
+    final local = LocalAccountRepository();
+    await local.startGuestAccount();
+    final repository = WardrobeRepository(local: local);
+
+    final item = await repository.uploadAndCreateItem(
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'item.jpg',
+      name: 'Corrected item',
+      fallbackCategory: ClothingCategory.dress,
+      correctedFields: const {'category'},
+      localAnalysis: const ClothingAnalysisResult(
+        category: ClothingCategory.top,
+        colorHexes: ['#111111'],
+        colorNames: ['black'],
+        fit: ClothingFit.regular,
+        pattern: ClothingPattern.striped,
+      ),
+    );
+
+    expect(item?.category, ClothingCategory.dress);
+    expect(item?.fit, ClothingFit.regular);
+    expect(item?.pattern, ClothingPattern.striped);
+    expect(item?.correctedFields, {'category'});
+    expect(item?.userCorrected, isTrue);
   });
 }

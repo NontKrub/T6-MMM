@@ -123,6 +123,7 @@ class ClothingAnalysisResult {
 
 class ClothingAnalysisCorrections {
   const ClothingAnalysisCorrections({
+    required this.correctedFields,
     this.category,
     this.subtype,
     this.primaryColor,
@@ -139,6 +140,7 @@ class ClothingAnalysisCorrections {
     this.tags,
   });
 
+  final Set<String> correctedFields;
   final ClothingCategory? category;
   final String? subtype;
   final String? primaryColor;
@@ -154,30 +156,33 @@ class ClothingAnalysisCorrections {
   final double? warmthLevel;
   final List<String>? tags;
 
+  bool contains(String field) => correctedFields.contains(field);
+
   factory ClothingAnalysisCorrections.fromItem(
     ClothingItem item,
-  ) => ClothingAnalysisCorrections(
-    category: item.category == ClothingCategory.unknown ? null : item.category,
-    subtype: item.subtype,
-    primaryColor: item.color,
-    colorHexes: item.colorHexes.isEmpty ? null : item.colorHexes,
-    pattern: item.pattern == ClothingPattern.unknown ? null : item.pattern,
-    material: item.material == ClothingMaterial.unknown ? null : item.material,
-    fit: item.fit == ClothingFit.unknown ? null : item.fit,
-    silhouette: item.silhouette == ClothingSilhouette.unknown
-        ? null
-        : item.silhouette,
-    clothingStyles: item.styles.isEmpty ? null : item.styles,
-    formality: item.formality == ClothingFormality.unknown
-        ? null
-        : item.formality,
-    seasons: item.seasons.isEmpty ? null : item.seasons,
-    weatherSuitability: item.weatherSuitability.isEmpty
-        ? null
-        : item.weatherSuitability,
-    warmthLevel: item.warmthLevel,
-    tags: item.tags.isEmpty ? null : item.tags,
-  );
+    Set<String> correctedFields,
+  ) {
+    final fields = correctedFields.intersection(clothingAnalysisFieldNames);
+    return ClothingAnalysisCorrections(
+      correctedFields: fields,
+      category: fields.contains('category') ? item.category : null,
+      subtype: fields.contains('subtype') ? item.subtype : null,
+      primaryColor: fields.contains('primary_color') ? item.color : null,
+      colorHexes: fields.contains('dominant_colors') ? item.colorHexes : null,
+      pattern: fields.contains('pattern') ? item.pattern : null,
+      material: fields.contains('material') ? item.material : null,
+      fit: fields.contains('fit') ? item.fit : null,
+      silhouette: fields.contains('silhouette') ? item.silhouette : null,
+      clothingStyles: fields.contains('styles') ? item.styles : null,
+      formality: fields.contains('formality') ? item.formality : null,
+      seasons: fields.contains('seasons') ? item.seasons : null,
+      weatherSuitability: fields.contains('weather_suitability')
+          ? item.weatherSuitability
+          : null,
+      warmthLevel: fields.contains('warmth_level') ? item.warmthLevel : null,
+      tags: fields.contains('tags') ? item.tags : null,
+    );
+  }
 }
 
 // The analyzer result keeps predictions only for the current run; it is not persisted.

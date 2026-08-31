@@ -9,80 +9,89 @@ class ClothingAnalysisMerger {
     ClothingAnalysisResult? server,
     ClothingAnalysisCorrections? corrections,
   }) {
-    final category = corrections?.category ?? _category(local, server);
-    final hexes =
-        corrections?.colorHexes ??
-        _mergeHexes(
-          local?.colorHexes ?? const [],
-          server?.colorHexes ?? const [],
-        );
-    final styles =
-        corrections?.clothingStyles ??
-        _mergeStyles(
-          local?.resolvedStyles ?? const [],
-          server?.resolvedStyles ?? const [],
-        );
+    final category = corrections?.contains('category') == true
+        ? corrections!.category
+        : _category(local, server);
+    final hexes = corrections?.contains('dominant_colors') == true
+        ? corrections!.colorHexes ?? const []
+        : _mergeHexes(
+            local?.colorHexes ?? const [],
+            server?.colorHexes ?? const [],
+          );
+    final styles = corrections?.contains('styles') == true
+        ? corrections!.clothingStyles ?? const []
+        : _mergeStyles(
+            local?.resolvedStyles ?? const [],
+            server?.resolvedStyles ?? const [],
+          );
     final source = _source(local, server, corrections);
 
     return ClothingAnalysisResult(
       category: category,
-      subtype: corrections?.subtype ?? server?.subtype ?? local?.subtype,
-      primaryColor:
-          corrections?.primaryColor ??
-          server?.primaryColor ??
-          local?.primaryColor ??
-          (server?.colorNames.firstOrNull ?? local?.colorNames.firstOrNull),
+      subtype: corrections?.contains('subtype') == true
+          ? corrections!.subtype
+          : server?.subtype ?? local?.subtype,
+      primaryColor: corrections?.contains('primary_color') == true
+          ? corrections!.primaryColor
+          : server?.primaryColor ??
+                local?.primaryColor ??
+                (server?.colorNames.firstOrNull ??
+                    local?.colorNames.firstOrNull),
       colorHexes: hexes,
       colorNames: hexes.map(_coarseColorName).toList(),
       styles: styles.map((style) => style.name).toList(),
       clothingStyles: styles,
-      pattern:
-          corrections?.pattern ??
-          _preferKnown(
-            server?.pattern,
-            local?.pattern,
-            ClothingPattern.unknown,
-          ),
-      material:
-          corrections?.material ??
-          _preferKnown(
-            server?.material,
-            local?.material,
-            ClothingMaterial.unknown,
-          ),
-      fit:
-          corrections?.fit ??
-          _preferKnown(server?.fit, local?.fit, ClothingFit.unknown),
-      silhouette:
-          corrections?.silhouette ??
-          _preferKnown(
-            server?.silhouette,
-            local?.silhouette,
-            ClothingSilhouette.unknown,
-          ),
-      formality:
-          corrections?.formality ??
-          _preferKnown(
-            server?.formality,
-            local?.formality,
-            ClothingFormality.unknown,
-          ),
-      seasons:
-          corrections?.seasons ??
-          _mergeEnums(server?.seasons ?? const [], local?.seasons ?? const []),
-      weatherSuitability:
-          corrections?.weatherSuitability ??
-          _mergeEnums(
-            server?.weatherSuitability ?? const [],
-            local?.weatherSuitability ?? const [],
-          ),
-      warmthLevel:
-          corrections?.warmthLevel ?? server?.warmthLevel ?? local?.warmthLevel,
-      tags:
-          corrections?.tags ??
-          (server?.tags.isNotEmpty == true
-              ? server!.tags
-              : local?.tags ?? const []),
+      pattern: corrections?.contains('pattern') == true
+          ? corrections!.pattern ?? ClothingPattern.unknown
+          : _preferKnown(
+              server?.pattern,
+              local?.pattern,
+              ClothingPattern.unknown,
+            ),
+      material: corrections?.contains('material') == true
+          ? corrections!.material ?? ClothingMaterial.unknown
+          : _preferKnown(
+              server?.material,
+              local?.material,
+              ClothingMaterial.unknown,
+            ),
+      fit: corrections?.contains('fit') == true
+          ? corrections!.fit ?? ClothingFit.unknown
+          : _preferKnown(server?.fit, local?.fit, ClothingFit.unknown),
+      silhouette: corrections?.contains('silhouette') == true
+          ? corrections!.silhouette ?? ClothingSilhouette.unknown
+          : _preferKnown(
+              server?.silhouette,
+              local?.silhouette,
+              ClothingSilhouette.unknown,
+            ),
+      formality: corrections?.contains('formality') == true
+          ? corrections!.formality ?? ClothingFormality.unknown
+          : _preferKnown(
+              server?.formality,
+              local?.formality,
+              ClothingFormality.unknown,
+            ),
+      seasons: corrections?.contains('seasons') == true
+          ? corrections!.seasons ?? const []
+          : _mergeEnums(
+              server?.seasons ?? const [],
+              local?.seasons ?? const [],
+            ),
+      weatherSuitability: corrections?.contains('weather_suitability') == true
+          ? corrections!.weatherSuitability ?? const []
+          : _mergeEnums(
+              server?.weatherSuitability ?? const [],
+              local?.weatherSuitability ?? const [],
+            ),
+      warmthLevel: corrections?.contains('warmth_level') == true
+          ? corrections!.warmthLevel
+          : server?.warmthLevel ?? local?.warmthLevel,
+      tags: corrections?.contains('tags') == true
+          ? corrections!.tags ?? const []
+          : server != null
+          ? server.tags
+          : local?.tags ?? const [],
       confidence: _confidence(local, server),
       classificationSource:
           server?.classificationSource ?? local?.classificationSource,
@@ -101,8 +110,11 @@ class ClothingAnalysisMerger {
   }) {
     final preservedCorrections =
         corrections ??
-        (item.userCorrected
-            ? ClothingAnalysisCorrections.fromItem(item)
+        (item.effectiveCorrectedFields.isNotEmpty
+            ? ClothingAnalysisCorrections.fromItem(
+                item,
+                item.effectiveCorrectedFields,
+              )
             : null);
     final result = merge(
       local: local,
@@ -110,14 +122,24 @@ class ClothingAnalysisMerger {
       corrections: preservedCorrections,
     );
     final now = DateTime.now();
+    final correctedFields = {
+      ...item.correctedFields,
+      ...?preservedCorrections?.correctedFields,
+    };
+    final hasAnalysis = local != null || server != null;
 
     return item.copyWith(
       category: result.category ?? item.category,
       subtype: result.subtype ?? item.subtype,
-      color: result.primaryColor ?? item.color,
-      colorHexes: result.colorHexes.isEmpty
-          ? item.colorHexes
-          : result.colorHexes,
+      color:
+          hasAnalysis || preservedCorrections?.contains('primary_color') == true
+          ? result.primaryColor
+          : item.color,
+      colorHexes:
+          hasAnalysis ||
+              preservedCorrections?.contains('dominant_colors') == true
+          ? result.colorHexes
+          : item.colorHexes,
       pattern: result.pattern,
       material: result.material,
       fit: result.fit,
@@ -127,7 +149,9 @@ class ClothingAnalysisMerger {
       seasons: result.seasons,
       weatherSuitability: result.weatherSuitability,
       warmthLevel: result.warmthLevel ?? item.warmthLevel,
-      tags: result.tags.isEmpty ? item.tags : result.tags,
+      tags: hasAnalysis || preservedCorrections?.contains('tags') == true
+          ? result.tags
+          : item.tags,
       analysisConfidence: result.confidence ?? item.analysisConfidence,
       classificationSource:
           result.classificationSource ?? item.classificationSource,
@@ -135,7 +159,8 @@ class ClothingAnalysisMerger {
       analysisSource: result.source,
       analysisStatus: result.status,
       analysisVersion: result.analysisVersion,
-      userCorrected: item.userCorrected || corrections != null,
+      correctedFields: correctedFields,
+      userCorrected: item.userCorrected || correctedFields.isNotEmpty,
       analyzedAt: now,
       updatedAt: now,
     );

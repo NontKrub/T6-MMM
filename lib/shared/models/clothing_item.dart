@@ -83,6 +83,23 @@ enum AnalysisSource { localVision, serverAI, merged, manual, unknown }
 
 enum AnalysisStatus { pending, analyzing, complete, partial, failed }
 
+const clothingAnalysisFieldNames = <String>{
+  'category',
+  'subtype',
+  'primary_color',
+  'dominant_colors',
+  'pattern',
+  'material',
+  'fit',
+  'silhouette',
+  'styles',
+  'formality',
+  'seasons',
+  'weather_suitability',
+  'warmth_level',
+  'tags',
+};
+
 enum ClothingSilhouette {
   fitted,
   regular,
@@ -270,7 +287,8 @@ class ClothingItem {
   final AnalysisSource analysisSource;
   final AnalysisStatus analysisStatus;
   final String analysisVersion;
-  final bool userCorrected;
+  final Set<String> correctedFields;
+  final bool _legacyUserCorrected;
   final DateTime? analyzedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -306,16 +324,25 @@ class ClothingItem {
     this.analysisSource = AnalysisSource.unknown,
     this.analysisStatus = AnalysisStatus.pending,
     this.analysisVersion = currentAnalysisVersion,
-    this.userCorrected = false,
+    this.correctedFields = const {},
+    bool userCorrected = false,
     this.analyzedAt,
     this.createdAt,
     this.updatedAt,
     this.wearCount = 0,
     this.lastWorn,
   }) : color = color ?? primaryColor,
-       colorHexes = dominantColors ?? colorHexes;
+       colorHexes = dominantColors ?? colorHexes,
+       _legacyUserCorrected = userCorrected;
 
   String? get primaryColor => color;
+
+  bool get userCorrected => _legacyUserCorrected || correctedFields.isNotEmpty;
+
+  Set<String> get effectiveCorrectedFields =>
+      correctedFields.isNotEmpty || !_legacyUserCorrected
+      ? correctedFields
+      : clothingAnalysisFieldNames;
 
   List<String> get dominantColors => colorHexes;
 
@@ -331,6 +358,15 @@ class ClothingItem {
         json['analysis_source'] ??
         attributes['analysis_source'] ??
         attributes['classification_source'];
+    final legacyUserCorrected = json['user_corrected'] == true;
+    final persistedCorrectedFields = _stringSet(
+      json['corrected_fields'],
+    ).where(clothingAnalysisFieldNames.contains).toSet();
+    final correctedFields = persistedCorrectedFields.isNotEmpty
+        ? persistedCorrectedFields
+        : legacyUserCorrected
+        ? clothingAnalysisFieldNames
+        : const <String>{};
     final confidence = _boundedDouble(
       json['analysis_confidence'] ?? json['ai_confidence'],
     );
@@ -396,7 +432,8 @@ class ClothingItem {
       ),
       analysisVersion:
           _stringValue(json['analysis_version']) ?? _legacyAnalysisVersion,
-      userCorrected: json['user_corrected'] == true,
+      correctedFields: correctedFields,
+      userCorrected: legacyUserCorrected,
       analyzedAt: _dateValue(json['analyzed_at']),
       createdAt: _dateValue(json['created_at']),
       updatedAt: _dateValue(json['updated_at']),
@@ -460,6 +497,7 @@ class ClothingItem {
       'analysis_source': analysisSource.name,
       'analysis_status': analysisStatus.name,
       'analysis_version': analysisVersion,
+      'corrected_fields': effectiveCorrectedFields.toList()..sort(),
       'user_corrected': userCorrected,
       'analyzed_at': analyzedAt?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
@@ -499,6 +537,7 @@ class ClothingItem {
     AnalysisSource? analysisSource,
     AnalysisStatus? analysisStatus,
     String? analysisVersion,
+    Set<String>? correctedFields,
     bool? userCorrected,
     DateTime? analyzedAt,
     DateTime? createdAt,
@@ -533,7 +572,8 @@ class ClothingItem {
       analysisSource: analysisSource ?? this.analysisSource,
       analysisStatus: analysisStatus ?? this.analysisStatus,
       analysisVersion: analysisVersion ?? this.analysisVersion,
-      userCorrected: userCorrected ?? this.userCorrected,
+      correctedFields: correctedFields ?? this.correctedFields,
+      userCorrected: userCorrected ?? _legacyUserCorrected,
       analyzedAt: analyzedAt ?? this.analyzedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -556,6 +596,8 @@ List<String> _stringList(Object? value) {
     return entry.isNotEmpty;
   }).toList();
 }
+
+Set<String> _stringSet(Object? value) => _stringList(value).toSet();
 
 List<T> _enumList<T extends Enum>(
   Object? value,
