@@ -66,6 +66,7 @@ class OutfitRepository {
       final items = await _local.fetchItems();
       final history = await _local.fetchWearEvents();
       final behavioralWeights = await _local.fetchBehavioralWeights();
+      final profile = await _local.fetchProfile();
       final generated = _localRecommendations.generate(
         items,
         style: style,
@@ -76,8 +77,8 @@ class OutfitRepository {
           targetHex: targetHex,
           history: history,
           styleProfile: UserStyleProfile(
-            explicitStyles: [style],
-            behavioralWeights: behavioralWeights,
+            explicitStyles: {...?profile?.stylePreferences, style}.toList(),
+            behavioralWeights: learnPreferences ? behavioralWeights : const {},
           ),
         ),
       );
