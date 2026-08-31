@@ -1,7 +1,10 @@
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
+import '../../shared/models/outfit_intelligence.dart';
 import 'clothing_analysis_service.dart';
 import 'local_account_repository.dart';
+import 'outfit_candidate_generator.dart';
+import 'outfit_scoring_service.dart';
 
 String combinationKey(Iterable<String> itemIds) =>
     (itemIds.toSet().toList()..sort()).join('|');
@@ -12,7 +15,13 @@ int repeatCount(Iterable<String> itemIds, Iterable<Iterable<String>> history) {
 }
 
 class OutfitRecommendationService {
-  const OutfitRecommendationService();
+  const OutfitRecommendationService({
+    this.candidateGenerator = const OutfitCandidateGenerator(),
+    this.scoringService = const OutfitScoringService(),
+  });
+
+  final OutfitCandidateGenerator candidateGenerator;
+  final OutfitScoringService scoringService;
 
   List<Outfit> generate(
     List<ClothingItem> wardrobe, {
@@ -21,39 +30,65 @@ class OutfitRecommendationService {
     bool rush = false,
     String? targetHex,
     List<LocalPreferenceEvent> preferences = const [],
+    OutfitContext? context,
   }) {
-    final tops = _category(wardrobe, ClothingCategory.top);
-    final pants = _category(wardrobe, ClothingCategory.pants);
-    final shoes = _category(wardrobe, ClothingCategory.shoes);
-    if (tops.isEmpty || pants.isEmpty || shoes.isEmpty) {
-      throw StateError('Add at least one top, pants, and shoes first.');
-    }
-    final extras = <ClothingItem?>[
-      null,
-      ..._category(wardrobe, ClothingCategory.hat),
-      ..._category(wardrobe, ClothingCategory.accessory),
-    ];
-    final candidates = <Outfit>[];
-    for (final top in tops) {
-      for (final bottom in pants) {
-        for (final shoe in shoes) {
-          for (final extra in extras) {
-            final items = [top, bottom, shoe, ?extra];
-            candidates.add(
-              _score(items, style, history, rush, targetHex, preferences),
-            );
-          }
-        }
+    final effectiveContext =
+        context ??
+        _legacyContext(
+          style: style,
+          history: history,
+          rush: rush,
+          targetHex: targetHex,
+          preferences: preferences,
+        );
+    final ranked =
+        generateCandidates(wardrobe, context: effectiveContext)
+            .map(
+              (candidate) => (
+                candidate: candidate,
+                score: scoreCandidate(candidate, context: effectiveContext),
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final byScore = b.score.total.compareTo(a.score.total);
+            return byScore != 0
+                ? byScore
+                : a.candidate.id.compareTo(b.candidate.id);
+          });
+    return ranked.take(rush ? 1 : 3).map((entry) {
+      final factors = entry.score.reasons.map((reason) => reason.code).toList();
+      if (effectiveContext.styleProfile.behavioralWeights.isNotEmpty &&
+          entry.score.preference > 50) {
+        factors.add('learned_preference');
       }
-    }
-    candidates.sort((a, b) {
-      final byScore = (b.score ?? 0).compareTo(a.score ?? 0);
-      return byScore != 0
-          ? byScore
-          : combinationKey(a.itemIds).compareTo(combinationKey(b.itemIds));
-    });
-    return candidates.take(rush ? 1 : 3).toList();
+      if (rush && entry.candidate.items.where(_isSimple).length >= 2) {
+        factors.add('simple_colors');
+      }
+      final itemIds = entry.candidate.itemIds;
+      return Outfit(
+        id: 'local_${style}_${combinationKey(itemIds)}',
+        name: rush ? 'Rush Outfit' : '${_title(style)} Outfit',
+        itemIds: itemIds,
+        style: style,
+        reason: entry.score.reasons.isEmpty
+            ? 'Balanced from your wardrobe.'
+            : entry.score.reasons.map((reason) => reason.text).join(' '),
+        score: entry.score.total,
+        selectionFactors: factors.toSet().toList(),
+      );
+    }).toList();
   }
+
+  List<OutfitCandidate> generateCandidates(
+    List<ClothingItem> wardrobe, {
+    OutfitContext? context,
+  }) => candidateGenerator.generate(wardrobe, context: context);
+
+  OutfitScore scoreCandidate(
+    OutfitCandidate candidate, {
+    OutfitContext context = const OutfitContext(),
+  }) => scoringService.score(candidate, context: context);
 
   double visualScore(List<ClothingItem> items) {
     var score = 0.0;
@@ -118,101 +153,39 @@ class OutfitRecommendationService {
     return 0;
   }
 
-  Outfit _score(
-    List<ClothingItem> items,
-    String style,
-    List<List<String>> history,
-    bool rush,
-    String? targetHex,
-    List<LocalPreferenceEvent> preferences,
-  ) {
-    var score = 50.0;
-    final factors = <String>[];
-    if (items.any((item) => item.tags.contains(style))) {
-      score += 12;
-      factors.add('style_match');
+  OutfitContext _legacyContext({
+    required String style,
+    required List<List<String>> history,
+    required bool rush,
+    required String? targetHex,
+    required List<LocalPreferenceEvent> preferences,
+  }) {
+    final now = DateTime.now();
+    final wearHistory = history.indexed
+        .map(
+          (entry) => WearEvent(
+            itemIds: entry.$2,
+            wornAt: now.subtract(Duration(days: history.length - entry.$1)),
+          ),
+        )
+        .toList();
+    final behavioral = <String, double>{};
+    for (final event in preferences) {
+      for (final value in [...event.tags, ...event.colors]) {
+        behavioral[value.toLowerCase()] = 1;
+      }
     }
-    final visual = visualScore(items);
-    score += visual;
-    if (visual > 0) factors.add('color_cohesion');
-    if (targetHex != null) {
-      final targetScore = targetColorScore(items, targetHex);
-      score += targetScore;
-      if (targetScore > 0) factors.add('target_color');
-    }
-    final learned = _learnedPreferenceScore(items, style, preferences);
-    score += learned;
-    if (learned > 0) factors.add('learned_preference');
-
-    final averageWear =
-        items.fold<int>(0, (sum, item) => sum + item.wearCount) / items.length;
-    score -= averageWear.clamp(0, 10);
-    final repeats = repeatCount(items.map((item) => item.id), history);
-    score -= repeats * (rush ? 16 : 10);
-    if (repeats == 0) factors.add('low_repetition');
-
-    if (rush) {
-      final neutralCount = items.where(_isSimple).length;
-      score += neutralCount * 4;
-      if (neutralCount >= 2) factors.add('simple_colors');
-    }
-    final ids = items.map((item) => item.id).toList();
-    return Outfit(
-      id: 'local_${style}_${combinationKey(ids)}',
-      name: rush ? 'Rush Outfit' : '${_title(style)} Outfit',
-      itemIds: ids,
-      style: style,
-      reason: factors.isEmpty
-          ? 'Balanced from your wardrobe.'
-          : factors.map((value) => value.replaceAll('_', ' ')).join(', '),
-      score: score.clamp(0, 100),
-      selectionFactors: factors,
+    return OutfitContext(
+      desiredStyle: style,
+      styleProfile: UserStyleProfile(
+        explicitStyles: [style],
+        behavioralWeights: behavioral,
+      ),
+      history: wearHistory,
+      inARush: rush,
+      targetHex: targetHex,
     );
   }
-
-  double _learnedPreferenceScore(
-    List<ClothingItem> items,
-    String style,
-    List<LocalPreferenceEvent> events,
-  ) {
-    if (events.isEmpty) return 0;
-    final tags = items
-        .expand((item) => item.tags)
-        .map((tag) => tag.toLowerCase())
-        .toSet();
-    final colors = items
-        .expand(
-          (item) => [
-            if (item.color != null) item.color!.toLowerCase(),
-            ...item.colorHexes.map(coarseColorName),
-          ],
-        )
-        .toSet();
-    var tagWeight = 0.0;
-    var colorWeight = 0.0;
-    var styleWeight = 0.0;
-    final now = DateTime.now();
-    for (final event in events) {
-      final recency = now.difference(event.selectedAt).inDays <= 90 ? 1.0 : .5;
-      if (event.tags.any((tag) => tags.contains(tag.toLowerCase()))) {
-        tagWeight += recency;
-      }
-      if (event.colors.any((color) => colors.contains(color.toLowerCase()))) {
-        colorWeight += recency;
-      }
-      if (event.style?.toLowerCase() == style.toLowerCase()) {
-        styleWeight += recency;
-      }
-    }
-    return (tagWeight * 3).clamp(0, 6) +
-        (colorWeight * 2).clamp(0, 2) +
-        styleWeight.clamp(0, 2);
-  }
-
-  List<ClothingItem> _category(
-    List<ClothingItem> items,
-    ClothingCategory category,
-  ) => items.where((item) => item.category == category).toList();
 
   bool _isSimple(ClothingItem item) {
     const neutralNames = {'black', 'white', 'gray', 'brown', 'beige'};
