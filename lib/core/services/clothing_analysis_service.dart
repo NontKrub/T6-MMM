@@ -35,6 +35,8 @@ class ClothingAnalysisService {
       codec = await ui.instantiateImageCodec(bytes, targetWidth: 64);
       frame = await codec.getNextFrame();
     }
+    final width = frame.image.width;
+    final height = frame.image.height;
     final data = await frame.image.toByteData(
       format: ui.ImageByteFormat.rawRgba,
     );
@@ -54,10 +56,17 @@ class ClothingAnalysisService {
       final green = pixels[i + 1];
       final blue = pixels[i + 2];
       final key = (red ~/ 32 << 16) | (green ~/ 32 << 8) | (blue ~/ 32);
-      (buckets[key] ??= _ColorBucket(i)).add(red, green, blue);
+      final pixel = i ~/ 4;
+      final x = ((pixel % width) + .5) / width;
+      final y = ((pixel ~/ width) + .5) / height;
+      (buckets[key] ??= _ColorBucket(
+        i,
+      )).add(red, green, blue, _centerWeight(x, y));
     }
     final ranked = buckets.values.toList()
       ..sort((a, b) {
+        final byWeight = b.weight.compareTo(a.weight);
+        if (byWeight != 0) return byWeight;
         final byCount = b.count.compareTo(a.count);
         return byCount != 0 ? byCount : a.firstPixel.compareTo(b.firstPixel);
       });
@@ -66,9 +75,17 @@ class ClothingAnalysisService {
     final labelResult = mapClothingLabels(predictions);
     return ClothingAnalysisResult(
       category: labelResult.category,
+      primaryColor: hexes.firstOrNull == null
+          ? null
+          : coarseColorName(hexes.first),
       colorHexes: hexes,
       colorNames: hexes.map(coarseColorName).toList(),
       styles: labelResult.styles,
+      clothingStyles: labelResult.styles
+          .map(clothingStyleFromString)
+          .where((style) => style != ClothingStyle.unknown)
+          .toSet()
+          .toList(),
       pattern: labelResult.pattern,
       silhouette: labelResult.silhouette,
       confidence: labelResult.confidence,
@@ -78,8 +95,21 @@ class ClothingAnalysisService {
           ? null
           : (_classificationSource ?? _platformClassificationSource),
       colorSource: 'pixel_palette',
+      source: predictions.isEmpty
+          ? AnalysisSource.unknown
+          : AnalysisSource.localVision,
+      status: predictions.isEmpty
+          ? AnalysisStatus.partial
+          : AnalysisStatus.complete,
     );
   }
+}
+
+double _centerWeight(double x, double y) {
+  final distance = math.max((x - .5).abs(), (y - .5).abs());
+  if (distance <= .3) return 1;
+  if (distance >= .5) return .05;
+  return 1 - ((distance - .3) / .2 * .95);
 }
 
 Future<List<ImageLabelPrediction>> _classifyOnDevice(Uint8List bytes) async {
@@ -298,12 +328,14 @@ class _ColorBucket {
 
   final int firstPixel;
   var count = 0;
+  var weight = 0.0;
   var red = 0;
   var green = 0;
   var blue = 0;
 
-  void add(int r, int g, int b) {
+  void add(int r, int g, int b, double pixelWeight) {
     count++;
+    weight += pixelWeight;
     red += r;
     green += g;
     blue += b;

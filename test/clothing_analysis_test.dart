@@ -47,6 +47,13 @@ void main() {
       expect(result.colorNames, ['beige']);
     });
 
+    test('weights the centered garment above an edge background', () async {
+      final result = await service.analyze(await _centeredPng());
+
+      expect(result.colorNames.first, 'black');
+      expect(result.colorHexes.first, '#000000');
+    });
+
     test(
       'combines pixel palette with classifier labels and confidence',
       () async {
@@ -62,6 +69,7 @@ void main() {
         expect(result.confidence, .93);
         expect(result.rawLabels, ['shirt']);
         expect(result.rawPredictions.single.confidence, .93);
+        expect(result.source, AnalysisSource.localVision);
       },
     );
   });
@@ -165,6 +173,22 @@ Future<Uint8List> _png(List<({ui.Color color, int width})> bands) async {
     left += band.width;
   }
   final image = await recorder.endRecording().toImage(left.toInt(), 8);
+  final data = await image.toByteData(format: ui.ImageByteFormat.png);
+  return data!.buffer.asUint8List();
+}
+
+Future<Uint8List> _centeredPng() async {
+  final recorder = ui.PictureRecorder();
+  final canvas = ui.Canvas(recorder);
+  canvas.drawRect(
+    const ui.Rect.fromLTWH(0, 0, 80, 80),
+    ui.Paint()..color = const ui.Color(0xFFFFFFFF),
+  );
+  canvas.drawRect(
+    const ui.Rect.fromLTWH(16, 16, 48, 48),
+    ui.Paint()..color = const ui.Color(0xFF000000),
+  );
+  final image = await recorder.endRecording().toImage(80, 80);
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
   return data!.buffer.asUint8List();
 }
