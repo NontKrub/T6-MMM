@@ -5,47 +5,15 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
+
+export '../../shared/models/clothing_analysis.dart';
 
 const _visionChannel = MethodChannel('mmm/clothing_analysis');
 
-class ImageLabelPrediction {
-  const ImageLabelPrediction({required this.text, required this.confidence});
-
-  final String text;
-  final double confidence;
-}
-
 typedef ImageClassifier =
     Future<List<ImageLabelPrediction>> Function(Uint8List bytes);
-
-class ClothingAnalysisResult {
-  const ClothingAnalysisResult({
-    this.category,
-    required this.colorHexes,
-    required this.colorNames,
-    this.styles = const [],
-    this.pattern = ClothingPattern.unknown,
-    this.silhouette = ClothingSilhouette.unknown,
-    this.confidence,
-    this.rawLabels = const [],
-    this.rawPredictions = const [],
-    this.classificationSource,
-    this.colorSource,
-  });
-
-  final ClothingCategory? category;
-  final List<String> colorHexes;
-  final List<String> colorNames;
-  final List<String> styles;
-  final ClothingPattern pattern;
-  final ClothingSilhouette silhouette;
-  final double? confidence;
-  final List<String> rawLabels;
-  final List<ImageLabelPrediction> rawPredictions;
-  final String? classificationSource;
-  final String? colorSource;
-}
 
 class ClothingAnalysisService {
   const ClothingAnalysisService({
