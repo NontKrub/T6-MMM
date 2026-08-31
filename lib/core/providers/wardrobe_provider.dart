@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/wardrobe_repository.dart';
+import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
 
 final wardrobeProvider =
@@ -10,11 +11,13 @@ final wardrobeProvider =
     });
 
 class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
-  WardrobeNotifier() : super(const []) {
+  WardrobeNotifier({WardrobeRepository? repository})
+    : _repository = repository ?? WardrobeRepository(),
+      super(const []) {
     load();
   }
 
-  final _repository = WardrobeRepository();
+  final WardrobeRepository _repository;
 
   Future<void> load() async {
     try {
@@ -24,8 +27,8 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   }
 
   Future<void> addItem(ClothingItem item) async {
-    state = [...state, item];
-    await _repository.insertItem(item);
+    final persisted = await _repository.insertItem(item);
+    state = [...state, persisted];
   }
 
   Future<void> addUploadedItem({
@@ -42,6 +45,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    ClothingAnalysisResult? localAnalysis,
   }) async {
     final item = await _repository.uploadAndCreateItem(
       bytes: bytes,
@@ -57,6 +61,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
       analysisConfidence: analysisConfidence,
       classificationSource: classificationSource,
       colorSource: colorSource,
+      localAnalysis: localAnalysis,
     );
     if (item != null) {
       state = [...state, item];
@@ -64,21 +69,19 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   }
 
   Future<void> removeItem(String id) async {
-    state = state.where((item) => item.id != id).toList();
     await _repository.archiveItem(id);
+    state = state.where((item) => item.id != id).toList();
   }
 
   Future<void> markWorn(String id) async {
+    await _repository.recordWear(itemIds: [id]);
+    final now = DateTime.now();
     state = state.map((item) {
       if (item.id == id) {
-        return item.copyWith(
-          wearCount: item.wearCount + 1,
-          lastWorn: DateTime.now(),
-        );
+        return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
       }
       return item;
     }).toList();
-    await _repository.recordWear(itemIds: [id]);
   }
 
   Future<void> markOutfitWorn({
@@ -86,20 +89,24 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     required List<String> itemIds,
     String? style,
   }) async {
-    state = state.map((item) {
-      if (itemIds.contains(item.id)) {
-        return item.copyWith(
-          wearCount: item.wearCount + 1,
-          lastWorn: DateTime.now(),
-        );
-      }
-      return item;
-    }).toList();
     await _repository.recordWear(
       outfitId: outfitId,
       itemIds: itemIds,
       style: style,
     );
+    final now = DateTime.now();
+    state = state.map((item) {
+      if (itemIds.contains(item.id)) {
+        return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
+      }
+      return item;
+    }).toList();
+  }
+
+  Future<void> reanalyzeItem(String id) async {
+    final updated = await _repository.reanalyzeItem(id);
+    if (updated == null) return;
+    state = state.map((item) => item.id == id ? updated : item).toList();
   }
 
   List<ClothingItem> byCategory(ClothingCategory category) {

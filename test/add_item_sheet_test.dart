@@ -56,6 +56,7 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    ClothingAnalysisResult? localAnalysis,
   }) async {
     if (uploadFails) throw StateError('upload failed');
     uploads++;

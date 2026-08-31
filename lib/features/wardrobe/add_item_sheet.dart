@@ -52,6 +52,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   bool _saving = false;
   bool _retainLocalImage = false;
   ClothingCategory? _category;
+  ClothingAnalysisResult? _localAnalysis;
   ClothingPattern _pattern = ClothingPattern.unknown;
   ClothingSilhouette _silhouette = ClothingSilhouette.unknown;
   double? _analysisConfidence;
@@ -180,6 +181,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         _pickedFile = XFile(managedFile.path);
         _imageBytes = bytes;
         _imagePath = managedFile.path;
+        _localAnalysis = null;
       });
       if (previousPath != null && previousPath != managedFile.path) {
         await _deleteImage(previousPath);
@@ -188,6 +190,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         final result = await _analyzeImage(bytes);
         if (!mounted) return;
         setState(() {
+          _localAnalysis = result;
           _category = result.category;
           _pattern = result.pattern;
           _silhouette = result.silhouette;
@@ -277,6 +280,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               analysisConfidence: _analysisConfidence,
               classificationSource: _classificationSource,
               colorSource: _colorSource,
+              localAnalysis: _localAnalysis,
             );
         try {
           await _deleteImage(_imagePath!);
@@ -312,6 +316,24 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       analysisConfidence: _analysisConfidence,
       classificationSource: _classificationSource,
       colorSource: _colorSource,
+      material: _localAnalysis?.material ?? ClothingMaterial.unknown,
+      fit: _localAnalysis?.fit ?? ClothingFit.unknown,
+      styles: _localAnalysis?.resolvedStyles ?? const [],
+      formality: _localAnalysis?.formality ?? ClothingFormality.unknown,
+      seasons: _localAnalysis?.seasons ?? const [],
+      weatherSuitability: _localAnalysis?.weatherSuitability ?? const [],
+      warmthLevel: _localAnalysis?.warmthLevel,
+      analysisSource:
+          _classificationSource == 'manual' || _colorSource == 'manual'
+          ? AnalysisSource.manual
+          : _localAnalysis?.source ?? AnalysisSource.unknown,
+      analysisStatus: _localAnalysis?.status ?? AnalysisStatus.failed,
+      analysisVersion: currentAnalysisVersion,
+      userCorrected:
+          _classificationSource == 'manual' || _colorSource == 'manual',
+      analyzedAt: DateTime.now(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
 
     setState(() => _saving = true);
