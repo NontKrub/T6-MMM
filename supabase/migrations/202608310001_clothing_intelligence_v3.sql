@@ -41,6 +41,14 @@ alter table public.clothing_items
   add constraint clothing_items_analysis_source_check
     check (analysis_source in ('localVision', 'serverAI', 'merged', 'manual', 'unknown'));
 
+alter table public.wear_events
+  add column if not exists source text not null default 'manual';
+
+alter table public.wear_events
+  drop constraint if exists wear_events_source_check,
+  add constraint wear_events_source_check
+    check (source in ('recommended', 'manual', 'in_a_rush'));
+
 create index if not exists clothing_items_analysis_status_idx
   on public.clothing_items(user_id, analysis_status)
   where archived_at is null;

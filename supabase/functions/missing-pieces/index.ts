@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
         supabase.from("style_preferences").select("kind,value"),
         supabase.from("clothing_items")
           .select(
-            "id,name,brand,category,tags,dominant_colors,primary_color,detected_attributes,wear_count,last_worn",
+            "id,name,brand,category,tags,dominant_colors,primary_color,subtype,pattern,material,fit,silhouette,styles,formality,seasons,weather_suitability,warmth_level,analysis_confidence,analysis_status,user_corrected,detected_attributes,wear_count,last_worn",
           )
           .is("archived_at", null),
       ]);

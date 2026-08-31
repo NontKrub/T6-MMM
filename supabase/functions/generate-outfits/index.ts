@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         supabase.from("style_preferences").select("kind,value"),
         supabase.from("clothing_items")
           .select(
-            "id,name,brand,category,tags,dominant_colors,primary_color,detected_attributes,ai_confidence,wear_count,last_worn",
+            "id,name,brand,category,tags,dominant_colors,primary_color,subtype,pattern,material,fit,silhouette,styles,formality,seasons,weather_suitability,warmth_level,analysis_confidence,analysis_status,user_corrected,detected_attributes,ai_confidence,wear_count,last_worn",
           )
           .is("archived_at", null)
           .order("last_worn", { ascending: true, nullsFirst: true }),
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     const candidates = buildValidOutfitCandidates(wardrobe, scoreOptions);
     if (candidates.length === 0) {
       return jsonResponse({
-        error: "Add at least one top, one bottom, and one pair of shoes first.",
+        error: "Add compatible clothing and at least one pair of shoes first.",
       }, 422);
     }
 

@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const [{ data: items, error }, { data: events }] = await Promise.all([
       supabase.from("clothing_items")
         .select(
-          "id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn",
+          "id,name,brand,category,tags,dominant_colors,primary_color,subtype,pattern,material,fit,silhouette,styles,formality,seasons,weather_suitability,warmth_level,analysis_confidence,analysis_status,user_corrected,wear_count,last_worn",
         )
         .is("archived_at", null)
         .order("last_worn", { ascending: true, nullsFirst: true }),
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     })[0] ?? null;
     if (!outfit) {
       return jsonResponse({
-        error: "Add at least one top, one bottom, and one pair of shoes first.",
+        error: "Add compatible clothing and at least one pair of shoes first.",
       }, 422);
     }
 
