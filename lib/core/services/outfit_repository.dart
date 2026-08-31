@@ -66,7 +66,7 @@ class OutfitRepository {
       final items = await _local.fetchItems();
       final history = await _local.fetchWearEvents();
       final behavioralWeights = await _local.fetchBehavioralWeights();
-      return _localRecommendations.generate(
+      final generated = _localRecommendations.generate(
         items,
         style: style,
         history: await _local.fetchWearCombinations(),
@@ -81,6 +81,8 @@ class OutfitRepository {
           ),
         ),
       );
+      await _recordRecommendationEvents(generated);
+      return generated;
     }
 
     final shouldMatchWeather =
@@ -108,9 +110,11 @@ class OutfitRepository {
       },
     );
     final data = Map<String, dynamic>.from(response.data as Map);
-    return (data['outfits'] as List? ?? const [])
+    final generated = (data['outfits'] as List? ?? const [])
         .map((row) => Outfit.fromJson(Map<String, dynamic>.from(row as Map)))
         .toList();
+    await _recordRecommendationEvents(generated);
+    return generated;
   }
 
   Future<void> recordPreferenceEvent({
@@ -258,4 +262,30 @@ class OutfitRepository {
     'colors': colors,
     'selection_factors': outfit.selectionFactors,
   };
+
+  Future<void> _recordRecommendationEvents(List<Outfit> outfits) async {
+    for (final outfit in outfits) {
+      for (final eventType in [
+        RecommendationEventType.generated,
+        RecommendationEventType.shown,
+      ]) {
+        try {
+          await recordRecommendationEvent(
+            RecommendationEvent(
+              eventType: eventType,
+              outfitId: outfit.id,
+              itemIds: outfit.itemIds,
+              metadata: {
+                'styles': outfit.style == null ? const [] : [outfit.style!],
+                'selection_factors': outfit.selectionFactors,
+              },
+              createdAt: DateTime.now(),
+            ),
+          );
+        } catch (_) {
+          // Recommendation telemetry must not block a usable outfit response.
+        }
+      }
+    }
+  }
 }

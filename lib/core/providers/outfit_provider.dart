@@ -31,7 +31,6 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
   }
 
   Future<void> selectOutfit(Outfit outfit, WidgetRef ref) async {
-    ref.read(currentOutfitProvider.notifier).state = outfit;
     await ref
         .read(wardrobeProvider.notifier)
         .markOutfitWorn(
@@ -39,6 +38,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
           itemIds: outfit.itemIds,
           style: outfit.style,
         );
+    ref.read(currentOutfitProvider.notifier).state = outfit;
 
     if (ref.read(appSettingsProvider).learnPreferences) {
       await _recordPreferenceSelection(outfit, ref);

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/local_account_repository.dart';
+import 'package:mix_match_mood/core/services/outfit_repository.dart';
 import 'package:mix_match_mood/core/services/recommendation_feedback_service.dart';
+import 'package:mix_match_mood/shared/models/clothing_item.dart';
 import 'package:mix_match_mood/shared/models/recommendation_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -67,6 +69,48 @@ void main() {
     expect(
       event.copyWith(eventType: RecommendationEventType.skipped).eventType,
       RecommendationEventType.skipped,
+    );
+  });
+
+  test('local generation records generated and shown events', () async {
+    SharedPreferences.setMockInitialValues({});
+    final local = LocalAccountRepository();
+    await local.insertItem(
+      const ClothingItem(
+        id: 'top',
+        name: 'Tee',
+        category: ClothingCategory.top,
+        imageUrl: '',
+      ),
+    );
+    await local.insertItem(
+      const ClothingItem(
+        id: 'pants',
+        name: 'Jeans',
+        category: ClothingCategory.pants,
+        imageUrl: '',
+      ),
+    );
+    await local.insertItem(
+      const ClothingItem(
+        id: 'shoes',
+        name: 'Sneakers',
+        category: ClothingCategory.shoes,
+        imageUrl: '',
+      ),
+    );
+
+    final repository = OutfitRepository(local: local);
+    final outfits = await repository.generateOutfits(style: 'casual');
+    final events = await local.fetchRecommendationEvents();
+
+    expect(outfits, hasLength(1));
+    expect(
+      events.map((event) => event.eventType),
+      containsAll([
+        RecommendationEventType.generated,
+        RecommendationEventType.shown,
+      ]),
     );
   });
 }
