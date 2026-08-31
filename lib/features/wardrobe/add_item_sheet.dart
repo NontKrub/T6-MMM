@@ -630,7 +630,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             backgroundColor: _colorFromHex(hex),
                           ),
                           label: Text(hex),
-                          onSelected: (_) => setState(() => _primaryHex = hex),
+                          onSelected: (_) => setState(() {
+                            _primaryHex = hex;
+                            _colorSource = 'manual';
+                          }),
                           onDeleted: () => setState(() {
                             _colorHexes.remove(hex);
                             _colorSource = 'manual';

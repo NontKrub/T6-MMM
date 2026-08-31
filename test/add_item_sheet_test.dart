@@ -278,6 +278,7 @@ void main() {
 
     expect(notifier.state.single.colorHexes, ['#FF0000', '#0000FF']);
     expect(notifier.state.single.color, 'blue');
+    expect(notifier.state.single.colorSource, 'manual');
   });
 
   testWidgets('replacement and cancellation clean managed images', (
