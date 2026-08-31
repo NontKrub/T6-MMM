@@ -305,6 +305,7 @@ class WardrobeRepository {
     String? outfitId,
     required List<String> itemIds,
     String? style,
+    String source = 'manual',
   }) async {
     final client = _client;
     if (client == null || client.auth.currentUser == null) {
@@ -321,12 +322,12 @@ class WardrobeRepository {
           outfitId: outfitId,
           itemIds: itemIds,
           wornAt: now,
-          source: 'manual',
+          source: _wearSource(source),
         ),
       );
       return;
     }
-    await client.rpc(
+    final response = await client.rpc(
       'record_wear_event',
       params: {
         'p_outfit_id': outfitId,
@@ -334,6 +335,17 @@ class WardrobeRepository {
         'p_style': style,
       },
     );
+    if (source != 'manual' && response is Map && response['id'] is String) {
+      try {
+        await client
+            .from('wear_events')
+            .update({'source': _wearSource(source)})
+            .eq('id', response['id'] as String)
+            .eq('user_id', client.auth.currentUser!.id);
+      } catch (error) {
+        _log('Unable to label wear event source: $error');
+      }
+    }
   }
 
   Future<ClothingAnalysisResult> _requestServerAnalysis({
@@ -491,4 +503,9 @@ class WardrobeRepository {
   void _log(String message) {
     if (kDebugMode) debugPrint('Clothing intelligence: $message');
   }
+
+  String _wearSource(String value) =>
+      const {'recommended', 'manual', 'in_a_rush'}.contains(value)
+      ? value
+      : 'manual';
 }

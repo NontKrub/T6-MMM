@@ -37,6 +37,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
           outfitId: outfit.id,
           itemIds: outfit.itemIds,
           style: outfit.style,
+          source: _wearSourceFor(outfit),
         );
     ref.read(currentOutfitProvider.notifier).state = outfit;
 
@@ -89,6 +90,11 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     final style = (outfit.style ?? '').trim().toLowerCase();
     if (style == 'rush') return 'rush';
     return 'generated';
+  }
+
+  String _wearSourceFor(Outfit outfit) {
+    final style = (outfit.style ?? '').trim().toLowerCase();
+    return style == 'rush' ? 'in_a_rush' : 'recommended';
   }
 
   Future<List<Outfit>> generateBackendOutfits(

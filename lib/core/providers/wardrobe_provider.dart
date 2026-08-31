@@ -88,11 +88,13 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     String? outfitId,
     required List<String> itemIds,
     String? style,
+    String source = 'manual',
   }) async {
     await _repository.recordWear(
       outfitId: outfitId,
       itemIds: itemIds,
       style: style,
+      source: source,
     );
     final now = DateTime.now();
     state = state.map((item) {

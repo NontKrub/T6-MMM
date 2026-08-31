@@ -25,6 +25,7 @@ class _FakeWardrobeRepository extends WardrobeRepository {
     String? outfitId,
     required List<String> itemIds,
     String? style,
+    String source = 'manual',
   }) async {
     if (wearError != null) throw wearError!;
   }
