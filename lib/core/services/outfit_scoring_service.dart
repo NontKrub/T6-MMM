@@ -138,7 +138,9 @@ class OutfitScoringService {
         .length;
     score -= avoidanceHits * 12;
     for (final entry in profile.behavioralWeights.entries) {
-      if (tokens.contains(entry.key.toLowerCase())) {
+      final key = entry.key.toLowerCase();
+      final rawKey = key.contains(':') ? key.split(':').last : key;
+      if (tokens.contains(key) || tokens.contains(rawKey)) {
         score += (entry.value.clamp(0, 1) - .5) * 10;
       }
     }

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
+import '../../shared/models/outfit_intelligence.dart';
 import 'clothing_intelligence_service.dart';
 import 'local_account_repository.dart';
 import 'image_storage_service.dart';
@@ -315,7 +316,14 @@ class WardrobeRepository {
           return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
         }).toList(),
       );
-      await _local.recordWearCombination(itemIds);
+      await _local.recordWearEvent(
+        WearEvent(
+          outfitId: outfitId,
+          itemIds: itemIds,
+          wornAt: now,
+          source: 'manual',
+        ),
+      );
       return;
     }
     await client.rpc(
