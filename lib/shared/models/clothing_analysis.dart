@@ -17,6 +17,7 @@ class ClothingAnalysisResult {
     this.seasons = const [],
     this.weatherSuitability = const [],
     this.warmthLevel,
+    this.tags = const [],
     this.confidence,
     this.rawLabels = const [],
     this.rawPredictions = const [],
@@ -44,6 +45,7 @@ class ClothingAnalysisResult {
   final List<Season> seasons;
   final List<WeatherSuitability> weatherSuitability;
   final double? warmthLevel;
+  final List<String> tags;
   final double? confidence;
   final List<String> rawLabels;
   final List<ImageLabelPrediction> rawPredictions;
@@ -61,6 +63,61 @@ class ClothingAnalysisResult {
       ...styles.map(clothingStyleFromString),
     ];
     return values.toSet().toList();
+  }
+
+  factory ClothingAnalysisResult.fromJson(Map<String, dynamic> json) {
+    final rawColors = _stringList(json['dominant_colors']);
+    final hexes = rawColors.map(_normalizeHex).whereType<String>().toList();
+    final colorNames = rawColors
+        .where((color) => _normalizeHex(color) == null)
+        .toList();
+    final primaryColor = _stringValue(json['primary_color']);
+    final rawStyles = _stringList(json['styles']);
+    return ClothingAnalysisResult(
+      category: clothingCategoryFromString(_stringValue(json['category'])),
+      subtype: _stringValue(json['subtype']),
+      primaryColor: primaryColor,
+      colorHexes: hexes,
+      colorNames: colorNames.isNotEmpty
+          ? colorNames
+          : primaryColor == null || _normalizeHex(primaryColor) != null
+          ? const []
+          : [primaryColor],
+      styles: rawStyles,
+      clothingStyles: rawStyles
+          .map(clothingStyleFromString)
+          .where((style) => style != ClothingStyle.unknown)
+          .toSet()
+          .toList(),
+      pattern: clothingPatternFromString(_stringValue(json['pattern'])),
+      material: clothingMaterialFromString(_stringValue(json['material'])),
+      fit: clothingFitFromString(_stringValue(json['fit'])),
+      silhouette: clothingSilhouetteFromString(
+        _stringValue(json['silhouette']),
+      ),
+      formality: clothingFormalityFromString(_stringValue(json['formality'])),
+      seasons: _stringList(json['seasons'])
+          .map(seasonFromString)
+          .where((season) => season != Season.unknown)
+          .toSet()
+          .toList(),
+      weatherSuitability: _stringList(json['weather_suitability'])
+          .map(weatherSuitabilityFromString)
+          .where((value) => value != WeatherSuitability.unknown)
+          .toSet()
+          .toList(),
+      warmthLevel: _boundedDouble(json['warmth_level']),
+      tags: _stringList(json['tags']),
+      confidence: _boundedDouble(json['confidence']),
+      source: json.containsKey('analysis_source')
+          ? analysisSourceFromString(_stringValue(json['analysis_source']))
+          : AnalysisSource.serverAI,
+      status: json.containsKey('analysis_status')
+          ? analysisStatusFromString(_stringValue(json['analysis_status']))
+          : AnalysisStatus.complete,
+      analysisVersion:
+          _stringValue(json['analysis_version']) ?? currentAnalysisVersion,
+    );
   }
 }
 
@@ -129,4 +186,25 @@ class ImageLabelPrediction {
 
   final String text;
   final double confidence;
+}
+
+String? _stringValue(Object? value) => value is String ? value : null;
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const [];
+  return value.whereType<String>().map((entry) => entry.trim()).where((entry) {
+    return entry.isNotEmpty;
+  }).toList();
+}
+
+double? _boundedDouble(Object? value) {
+  final number = value is num ? value.toDouble() : null;
+  if (number == null || number.isNaN) return null;
+  return number.clamp(0, 1).toDouble();
+}
+
+String? _normalizeHex(String value) {
+  final normalized = value.trim().toUpperCase();
+  final withHash = normalized.startsWith('#') ? normalized : '#$normalized';
+  return RegExp(r'^#[0-9A-F]{6}$').hasMatch(withHash) ? withHash : null;
 }

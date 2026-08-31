@@ -164,4 +164,46 @@ void main() {
     expect(json['created_at'], createdAt.toIso8601String());
     expect(json['updated_at'], updatedAt.toIso8601String());
   });
+
+  test('parses the server analysis contract defensively', () {
+    final result = ClothingAnalysisResult.fromJson({
+      'category': 'outerwear',
+      'subtype': 'light jacket',
+      'primary_color': 'black',
+      'dominant_colors': ['#111111', '#FFFFFF', 'red'],
+      'pattern': 'graphic',
+      'material': 'cotton',
+      'fit': 'oversized',
+      'silhouette': 'relaxed',
+      'styles': ['streetwear', 'casual'],
+      'formality': 'casual',
+      'seasons': ['spring'],
+      'weather_suitability': ['mild', 'dry'],
+      'warmth_level': 0.35,
+      'tags': ['jacket', 'black'],
+      'confidence': 0.9,
+      'analysis_source': 'serverAI',
+      'analysis_status': 'complete',
+    });
+
+    expect(result.category, ClothingCategory.outerwear);
+    expect(result.colorHexes, ['#111111', '#FFFFFF']);
+    expect(result.colorNames, ['red']);
+    expect(result.styles, ['streetwear', 'casual']);
+    expect(result.tags, ['jacket', 'black']);
+    expect(result.source, AnalysisSource.serverAI);
+    expect(result.status, AnalysisStatus.complete);
+
+    final malformed = ClothingAnalysisResult.fromJson({
+      'category': <String, Object?>{},
+      'dominant_colors': 'not-an-array',
+      'styles': [1],
+      'confidence': 3,
+      'warmth_level': -1,
+    });
+    expect(malformed.category, ClothingCategory.unknown);
+    expect(malformed.styles, isEmpty);
+    expect(malformed.confidence, 1);
+    expect(malformed.warmthLevel, 0);
+  });
 }

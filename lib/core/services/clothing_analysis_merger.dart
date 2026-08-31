@@ -78,6 +78,11 @@ class ClothingAnalysisMerger {
           ),
       warmthLevel:
           corrections?.warmthLevel ?? server?.warmthLevel ?? local?.warmthLevel,
+      tags:
+          corrections?.tags ??
+          (server?.tags.isNotEmpty == true
+              ? server!.tags
+              : local?.tags ?? const []),
       confidence: _confidence(local, server),
       classificationSource:
           server?.classificationSource ?? local?.classificationSource,
@@ -122,6 +127,7 @@ class ClothingAnalysisMerger {
       seasons: result.seasons,
       weatherSuitability: result.weatherSuitability,
       warmthLevel: result.warmthLevel ?? item.warmthLevel,
+      tags: result.tags.isEmpty ? item.tags : result.tags,
       analysisConfidence: result.confidence ?? item.analysisConfidence,
       classificationSource:
           result.classificationSource ?? item.classificationSource,
