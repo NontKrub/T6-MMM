@@ -137,6 +137,7 @@ void main() {
     expect(merged.category, ClothingCategory.dress);
     expect(merged.fit, ClothingFit.cropped);
     expect(merged.colorHexes, ['#FF0000']);
+    expect(merged.analysisSource, AnalysisSource.merged);
     expect(merged.analysisVersion, currentAnalysisVersion);
   });
 

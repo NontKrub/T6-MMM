@@ -187,14 +187,15 @@ class ClothingAnalysisMerger {
     ClothingAnalysisResult? server,
     ClothingAnalysisCorrections? corrections,
   ) {
+    if (corrections != null) {
+      return local != null || server != null
+          ? AnalysisSource.merged
+          : AnalysisSource.manual;
+    }
     if (local != null && server != null) return AnalysisSource.merged;
     if (server != null) return AnalysisSource.serverAI;
-    if (local != null) {
-      return corrections == null
-          ? AnalysisSource.localVision
-          : AnalysisSource.merged;
-    }
-    return corrections == null ? AnalysisSource.unknown : AnalysisSource.manual;
+    if (local != null) return AnalysisSource.localVision;
+    return AnalysisSource.unknown;
   }
 
   AnalysisStatus _status(
