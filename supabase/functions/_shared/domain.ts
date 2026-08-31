@@ -143,6 +143,7 @@ export function groupWardrobeItems(items: ClothingItemRow[]) {
     dress: sortedByPracticality(
       items.filter((item) => item.category === "dress"),
     ),
+    bag: sortedByPracticality(items.filter((item) => item.category === "bag")),
     accessory: sortedByPracticality(
       items.filter((item) => item.category === "accessory"),
     ),
@@ -169,7 +170,13 @@ export function buildValidOutfitCandidates(
   const hats = [null, ...groups.hat.slice(0, 2)] as Array<
     ClothingItemRow | null
   >;
-  const accessories = [null, ...groups.accessory.slice(0, 2)] as Array<
+  const extras = [
+    null,
+    ...sortedByPracticality([
+      ...groups.bag,
+      ...groups.accessory,
+    ]).slice(0, 2),
+  ] as Array<
     ClothingItemRow | null
   >;
   const candidateItemSets: ClothingItemRow[][] = [];
@@ -180,14 +187,14 @@ export function buildValidOutfitCandidates(
         for (const shoe of shoes) {
           for (const layer of outerwear) {
             for (const hat of hats) {
-              for (const accessory of accessories) {
+              for (const extra of extras) {
                 const candidateItems = [
                   top,
                   bottom,
                   shoe,
                   layer,
                   hat,
-                  accessory,
+                  extra,
                 ].filter(Boolean) as ClothingItemRow[];
                 candidateItemSets.push(candidateItems);
               }
@@ -200,13 +207,15 @@ export function buildValidOutfitCandidates(
 
   for (const onePiece of dresses) {
     for (const shoe of shoes) {
-      for (const hat of hats) {
-        for (const accessory of accessories) {
-          candidateItemSets.push(
-            [onePiece, shoe, hat, accessory].filter(
-              Boolean,
-            ) as ClothingItemRow[],
-          );
+      for (const layer of outerwear) {
+        for (const hat of hats) {
+          for (const extra of extras) {
+            candidateItemSets.push(
+              [onePiece, shoe, layer, hat, extra].filter(
+                Boolean,
+              ) as ClothingItemRow[],
+            );
+          }
         }
       }
     }
