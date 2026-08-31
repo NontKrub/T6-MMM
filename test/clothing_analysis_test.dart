@@ -109,8 +109,35 @@ void main() {
       );
       expect(
         mapClothingLabels([_label('handbag', .82)]).category,
-        ClothingCategory.accessory,
+        ClothingCategory.bag,
       );
+    });
+
+    test('maps V3 Vision labels to their dedicated categories', () {
+      const expected = {
+        'jacket': ClothingCategory.outerwear,
+        'coat': ClothingCategory.outerwear,
+        'blazer': ClothingCategory.outerwear,
+        'dress': ClothingCategory.dress,
+        'gown': ClothingCategory.dress,
+        'one-piece': ClothingCategory.dress,
+        'bag': ClothingCategory.bag,
+        'handbag': ClothingCategory.bag,
+        'backpack': ClothingCategory.bag,
+        'tote': ClothingCategory.bag,
+        'purse': ClothingCategory.bag,
+        'shirt': ClothingCategory.top,
+        'dress shoe': ClothingCategory.shoes,
+        'watch': ClothingCategory.accessory,
+      };
+
+      for (final entry in expected.entries) {
+        expect(
+          mapClothingLabels([_label(entry.key, .9)]).category,
+          entry.value,
+          reason: entry.key,
+        );
+      }
     });
 
     test('rejects unknown and low-confidence category labels', () {
@@ -147,7 +174,7 @@ void main() {
         _label('striped', .66),
       ]);
 
-      expect(result.category, ClothingCategory.top);
+      expect(result.category, ClothingCategory.outerwear);
       expect(result.confidence, .87);
       expect(result.styles, containsAll(['formal', 'work']));
       expect(result.pattern, ClothingPattern.striped);

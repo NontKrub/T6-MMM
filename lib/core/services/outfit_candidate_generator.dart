@@ -16,6 +16,8 @@ class OutfitCandidateGenerator {
     List<ClothingItem> wardrobe, {
     OutfitContext? context,
   }) {
+    if (maxItemsPerCategory <= 0 || maxCandidates <= 0) return const [];
+
     final tops = _items(wardrobe, ClothingCategory.top, context);
     final bottoms = _items(wardrobe, ClothingCategory.pants, context);
     final shoes = _items(wardrobe, ClothingCategory.shoes, context);
@@ -27,9 +29,22 @@ class OutfitCandidateGenerator {
       ..._items(wardrobe, ClothingCategory.bag, context),
       ..._items(wardrobe, ClothingCategory.accessory, context),
     ].take(maxAccessories).toList();
+    final dresses = _items(wardrobe, ClothingCategory.dress, context);
     final candidates = <OutfitCandidate>[];
+    final hasBasic = tops.isNotEmpty && bottoms.isNotEmpty;
+    final hasDress = dresses.isNotEmpty;
+    var basicLimit = maxCandidates;
+    var dressLimit = maxCandidates;
+    if (hasBasic && hasDress) {
+      basicLimit = (maxCandidates * 3) ~/ 4;
+      if (basicLimit == 0) basicLimit = 1;
+      if (basicLimit >= maxCandidates) basicLimit = maxCandidates - 1;
+      dressLimit = maxCandidates - basicLimit;
+    }
 
-    if (tops.isNotEmpty && bottoms.isNotEmpty) {
+    if (hasBasic && basicLimit > 0) {
+      var basicCount = 0;
+      basic:
       for (final top in tops) {
         for (final bottom in bottoms) {
           for (final shoe in shoes) {
@@ -44,7 +59,8 @@ class OutfitCandidateGenerator {
                     extra: extra,
                   ),
                 );
-                if (candidates.length >= maxCandidates) return candidates;
+                basicCount++;
+                if (basicCount >= basicLimit) break basic;
               }
             }
           }
@@ -52,20 +68,24 @@ class OutfitCandidateGenerator {
       }
     }
 
-    final dresses = _items(wardrobe, ClothingCategory.dress, context);
-    for (final dress in dresses) {
-      for (final shoe in shoes) {
-        for (final layer in [null, ...outerwear]) {
-          for (final extra in [null, ...extras]) {
-            candidates.add(
-              _candidate(
-                onePiece: dress,
-                shoes: shoe,
-                outerwear: layer,
-                extra: extra,
-              ),
-            );
-            if (candidates.length >= maxCandidates) return candidates;
+    if (hasDress && dressLimit > 0) {
+      var dressCount = 0;
+      dress:
+      for (final dress in dresses) {
+        for (final shoe in shoes) {
+          for (final layer in [null, ...outerwear]) {
+            for (final extra in [null, ...extras]) {
+              candidates.add(
+                _candidate(
+                  onePiece: dress,
+                  shoes: shoe,
+                  outerwear: layer,
+                  extra: extra,
+                ),
+              );
+              dressCount++;
+              if (dressCount >= dressLimit) break dress;
+            }
           }
         }
       }
@@ -77,14 +97,17 @@ class OutfitCandidateGenerator {
     List<ClothingItem> wardrobe,
     ClothingCategory category,
     OutfitContext? context,
-  ) =>
-      wardrobe
-          .where(
-            (item) =>
-                item.category == category && _allowedByContext(item, context),
-          )
-          .toList()
-        ..sort((a, b) => a.id.compareTo(b.id));
+  ) {
+    final items =
+        wardrobe
+            .where(
+              (item) =>
+                  item.category == category && _allowedByContext(item, context),
+            )
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+    return items.take(maxItemsPerCategory).toList();
+  }
 
   bool _allowedByContext(ClothingItem item, OutfitContext? context) {
     final weather = context?.weather;

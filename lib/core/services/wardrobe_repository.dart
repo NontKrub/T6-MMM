@@ -295,7 +295,7 @@ class WardrobeRepository {
     final updated = _intelligence.mergeIntoItem(item, server: server);
     await client
         .from('clothing_items')
-        .update(_analysisUpdateJson(updated))
+        .update(analysisUpdatePayload(updated))
         .eq('id', id)
         .eq('user_id', user.id);
     return updated;
@@ -479,27 +479,6 @@ class WardrobeRepository {
     );
   }
 
-  Map<String, dynamic> _analysisUpdateJson(ClothingItem item) {
-    final json = item.toJson();
-    for (final key in const [
-      'id',
-      'user_id',
-      'name',
-      'brand',
-      'category',
-      'image_url',
-      'image_path',
-      'tags',
-      'wear_count',
-      'last_worn',
-      'created_at',
-      'updated_at',
-    ]) {
-      json.remove(key);
-    }
-    return json;
-  }
-
   void _log(String message) {
     if (kDebugMode) debugPrint('Clothing intelligence: $message');
   }
@@ -508,4 +487,23 @@ class WardrobeRepository {
       const {'recommended', 'manual', 'in_a_rush'}.contains(value)
       ? value
       : 'manual';
+}
+
+Map<String, dynamic> analysisUpdatePayload(ClothingItem item) {
+  final json = item.toJson();
+  for (final key in const [
+    'id',
+    'user_id',
+    'name',
+    'brand',
+    'image_url',
+    'image_path',
+    'wear_count',
+    'last_worn',
+    'created_at',
+    'updated_at',
+  ]) {
+    json.remove(key);
+  }
+  return json;
 }

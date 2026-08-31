@@ -25,7 +25,6 @@ type ClothingAnalysis = {
   weather_suitability: string[];
   warmth_level: number | null;
   tags: string[];
-  attributes: Record<string, unknown>;
   confidence: number;
 };
 
@@ -71,7 +70,7 @@ Deno.serve(async (req) => {
     try {
       analysis = await openAiJson<ClothingAnalysis>({
         instructions:
-          "Analyze this single clothing item for outfit generation. Return practical metadata only: category, primary and dominant colors, concise lowercase tags, confidence 0..1, and detected attributes helpful for style/weather matching (material, fit, formality, seasonality, weather suitability, details).",
+          "Analyze this single clothing item for outfit generation. Return practical metadata only: category, primary and dominant colors, concise lowercase tags, confidence 0..1, and the explicit structured fields for subtype, pattern, material, fit, silhouette, styles, formality, seasons, weather suitability, and warmth.",
         input: [{
           role: "user",
           content: [
@@ -137,8 +136,6 @@ function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
       normalizeStringArray(analysis.tags).map(normalizeWord).filter(Boolean),
     ),
   ].slice(0, 8);
-  const attributes = isRecord(analysis.attributes) ? analysis.attributes : {};
-
   return {
     ...analysis,
     category: oneOf(analysis.category, clothingCategories),
@@ -164,7 +161,6 @@ function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
     ),
     warmth_level: boundedNumber(analysis.warmth_level),
     tags,
-    attributes,
     confidence: boundedNumber(analysis.confidence) ?? 0,
   };
 }
@@ -297,8 +293,4 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
 function boundedNumber(value: unknown) {
   if (typeof value !== "number" || !Number.isFinite(value)) return null;
   return Math.max(0, Math.min(1, value));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -169,7 +169,6 @@ export const clothingAnalysisSchema = {
     "weather_suitability",
     "warmth_level",
     "tags",
-    "attributes",
     "confidence",
   ],
   properties: {
@@ -311,12 +310,6 @@ export const clothingAnalysisSchema = {
       type: "array",
       items: { type: "string" },
       maxItems: 8,
-    },
-    attributes: {
-      type: "object",
-      additionalProperties: {
-        type: ["string", "number", "boolean", "array", "object", "null"],
-      },
     },
     confidence: { type: "number", minimum: 0, maximum: 1 },
   },

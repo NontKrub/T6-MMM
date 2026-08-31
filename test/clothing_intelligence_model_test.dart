@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/clothing_analysis_merger.dart';
-import 'package:mix_match_mood/shared/models/clothing_analysis.dart';
+import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
 
 void main() {
@@ -139,6 +139,26 @@ void main() {
     expect(merged.colorHexes, ['#FF0000']);
     expect(merged.analysisSource, AnalysisSource.merged);
     expect(merged.analysisVersion, currentAnalysisVersion);
+  });
+
+  test('aligned local and server outerwear remains outerwear', () {
+    final local = mapClothingLabels([
+      const ImageLabelPrediction(text: 'jacket', confidence: .95),
+    ]);
+    const server = ClothingAnalysisResult(
+      category: ClothingCategory.outerwear,
+      colorHexes: [],
+      colorNames: [],
+      confidence: .9,
+      source: AnalysisSource.serverAI,
+    );
+
+    final merged = const ClothingAnalysisMerger().merge(
+      local: local,
+      server: server,
+    );
+
+    expect(merged.category, ClothingCategory.outerwear);
   });
 
   test('insert serialization includes scoped identity and timestamps', () {

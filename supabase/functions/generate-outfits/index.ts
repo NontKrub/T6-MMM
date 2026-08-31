@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         }
       >({
         instructions:
-          "You are a fashion outfit planner. Choose only from the provided scored candidates. Return complete outfits with top, pants, and shoes. Preserve practical weather, lucky color, personal color, and low-repetition reasoning.",
+          "You are a fashion outfit planner. Choose only from the provided scored candidates. A complete outfit may be top + pants + shoes, or dress + shoes. Optional outerwear and accessories may be included when present in the candidate. Never invent clothing IDs. Preserve practical weather, lucky color, personal color, and low-repetition reasoning.",
         input: [{
           role: "user",
           content: [{

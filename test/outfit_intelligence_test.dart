@@ -42,6 +42,53 @@ void main() {
     },
   );
 
+  test('candidate generation caps category inputs', () {
+    const bounded = OutfitCandidateGenerator(
+      maxItemsPerCategory: 2,
+      maxCandidates: 200,
+    );
+    final candidates = bounded.generate([
+      for (var index = 0; index < 4; index++)
+        _item('top-$index', ClothingCategory.top),
+      for (var index = 0; index < 4; index++)
+        _item('pants-$index', ClothingCategory.pants),
+      for (var index = 0; index < 4; index++)
+        _item('shoes-$index', ClothingCategory.shoes),
+      _item('dress', ClothingCategory.dress),
+    ]);
+
+    expect(
+      candidates.expand((candidate) => candidate.itemIds),
+      isNot(contains('top-2')),
+    );
+    expect(
+      candidates.expand((candidate) => candidate.itemIds),
+      isNot(contains('pants-2')),
+    );
+    expect(
+      candidates.expand((candidate) => candidate.itemIds),
+      isNot(contains('shoes-2')),
+    );
+  });
+
+  test('large basic wardrobes reserve candidates for dresses', () {
+    final wardrobe = [
+      for (var index = 0; index < 13; index++)
+        _item('top-$index', ClothingCategory.top),
+      for (var index = 0; index < 13; index++)
+        _item('pants-$index', ClothingCategory.pants),
+      _item('shoes-a', ClothingCategory.shoes),
+      _item('shoes-b', ClothingCategory.shoes),
+      _item('dress', ClothingCategory.dress),
+    ];
+
+    final candidates = generator.generate(wardrobe);
+
+    expect(candidates.length, lessThanOrEqualTo(200));
+    expect(candidates.any((candidate) => candidate.onePiece != null), isTrue);
+    expect(candidates.every((candidate) => candidate.isComplete), isTrue);
+  });
+
   test(
     'color compatibility handles neutral, analogous, and contrast pairs',
     () {
@@ -76,6 +123,59 @@ void main() {
       service.score(casualStreetwear, desiredStyle: 'streetwear'),
       greaterThan(service.score(formalStreetwear, desiredStyle: 'streetwear')),
     );
+  });
+
+  test('style compatibility uses sorted casual-preppy matrix key', () {
+    expect(
+      const StyleCompatibilityService().isCompatible('casual', 'preppy'),
+      isTrue,
+    );
+  });
+
+  test('guest outfit contract supports dresses, rain, and target colors', () {
+    final dress = _item(
+      'dress',
+      ClothingCategory.dress,
+      hex: '#111111',
+      styles: [ClothingStyle.casual],
+    );
+    final shoes = _item('shoes', ClothingCategory.shoes, hex: '#FFFFFF');
+    final dressCandidate = generator.generate([dress, shoes]).single;
+    const scoring = OutfitScoringService();
+
+    expect(dressCandidate.onePiece, dress);
+    expect(
+      scoring
+          .score(
+            dressCandidate,
+            context: const OutfitContext(targetHex: '#111111'),
+          )
+          .context,
+      greaterThan(50),
+    );
+
+    final rainFriendly = scoring.score(
+      OutfitCandidate(
+        id: 'rain-friendly',
+        onePiece: dress,
+        shoes: _item('rain-boots', ClothingCategory.shoes),
+      ),
+      context: const OutfitContext(
+        weather: WeatherContext(temperatureC: 25, isRaining: true),
+      ),
+    );
+    final open = scoring.score(
+      OutfitCandidate(
+        id: 'open',
+        onePiece: dress,
+        shoes: _item('open-sandals', ClothingCategory.shoes),
+      ),
+      context: const OutfitContext(
+        weather: WeatherContext(temperatureC: 25, isRaining: true),
+      ),
+    );
+
+    expect(rainFriendly.weather, greaterThan(open.weather));
   });
 
   test('scoring weights weather, preferences, repetition, and reasons', () {
@@ -182,6 +282,32 @@ void main() {
 
     expect(repeated.total, lessThan(fresh.total));
     expect(repeated.total, greaterThan(0));
+  });
+
+  test('unrelated recent wardrobe activity does not penalize candidate', () {
+    const scoring = OutfitScoringService();
+    final candidate = OutfitCandidate(
+      id: 'candidate',
+      top: _item('top', ClothingCategory.top, hex: '#111111'),
+      bottom: _item('bottom', ClothingCategory.pants, hex: '#FFFFFF'),
+      shoes: _item('shoes', ClothingCategory.shoes, hex: '#FFFFFF'),
+    );
+    final now = DateTime.utc(2026, 8, 31);
+    final fresh = scoring.score(candidate, context: OutfitContext(date: now));
+    final unrelated = scoring.score(
+      candidate,
+      context: OutfitContext(
+        date: now,
+        history: [
+          WearEvent(
+            itemIds: [for (var index = 0; index < 10; index++) 'other-$index'],
+            wornAt: now.subtract(const Duration(days: 2)),
+          ),
+        ],
+      ),
+    );
+
+    expect(unrelated.total, fresh.total);
   });
 
   test('identical inputs produce identical candidate and score ordering', () {

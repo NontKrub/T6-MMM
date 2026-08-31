@@ -153,7 +153,6 @@ class OutfitScoringService {
     var score = 100.0;
     var exactRecent = 0;
     var itemRecent = 0;
-    var colorRecent = 0;
     for (final event in context.history) {
       final days = math.max(0, now.difference(event.wornAt).inDays);
       if (_key(event.itemIds) == key) {
@@ -170,12 +169,8 @@ class OutfitScoringService {
             .toSet()
             .length;
       }
-      if (days <= 30) {
-        colorRecent += event.itemIds.length;
-      }
     }
     score -= itemRecent * 5;
-    score -= math.min(10, colorRecent.toDouble());
     final lastWornDays = candidate.items
         .map((item) => item.lastWorn)
         .whereType<DateTime>()

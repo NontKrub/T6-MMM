@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
+import 'package:mix_match_mood/core/services/clothing_analysis_merger.dart';
 import 'package:mix_match_mood/core/services/clothing_intelligence_service.dart';
 import 'package:mix_match_mood/core/services/local_account_repository.dart';
 import 'package:mix_match_mood/core/services/wardrobe_repository.dart';
@@ -57,4 +58,66 @@ void main() {
       expect(stored.single.analysisVersion, currentAnalysisVersion);
     },
   );
+
+  test(
+    'analysis update payload preserves analysis-owned category and tags',
+    () {
+      const item = ClothingItem(
+        id: 'item-1',
+        userId: 'user-1',
+        name: 'Jacket',
+        category: ClothingCategory.top,
+        imageUrl: 'https://example.test/jacket.jpg',
+        tags: ['old-tag'],
+      );
+      const server = ClothingAnalysisResult(
+        category: ClothingCategory.outerwear,
+        colorHexes: [],
+        colorNames: [],
+        tags: ['jacket', 'black'],
+        confidence: .9,
+        source: AnalysisSource.serverAI,
+      );
+
+      final payload = analysisUpdatePayload(
+        const ClothingAnalysisMerger().mergeIntoItem(item, server: server),
+      );
+
+      expect(payload['category'], 'outerwear');
+      expect(payload['tags'], ['jacket', 'black']);
+      expect(payload, isNot(contains('id')));
+      expect(payload, isNot(contains('user_id')));
+      expect(payload, isNot(contains('name')));
+      expect(payload, isNot(contains('image_path')));
+      expect(payload, isNot(contains('wear_count')));
+    },
+  );
+
+  test('analysis update payload keeps corrected category and tags', () {
+    const item = ClothingItem(
+      id: 'item-1',
+      name: 'Corrected dress',
+      category: ClothingCategory.dress,
+      imageUrl: 'https://example.test/dress.jpg',
+      tags: ['manual-dress'],
+      userCorrected: true,
+    );
+    const server = ClothingAnalysisResult(
+      category: ClothingCategory.pants,
+      colorHexes: [],
+      colorNames: [],
+      tags: ['server-pants'],
+      confidence: .99,
+      source: AnalysisSource.serverAI,
+    );
+
+    final updated = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      server: server,
+    );
+    final payload = analysisUpdatePayload(updated);
+
+    expect(payload['category'], 'dress');
+    expect(payload['tags'], ['manual-dress']);
+  });
 }

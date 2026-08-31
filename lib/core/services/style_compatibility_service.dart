@@ -91,7 +91,7 @@ const _matrix = <String, double>{
   'casual|vintage': .72,
   'sport|streetwear': .76,
   'minimal|streetwear': .62,
-  'preppy|casual': .65,
+  'casual|preppy': .65,
   'formal|streetwear': .28,
   'formal|sport': .25,
   'business|streetwear': .35,
