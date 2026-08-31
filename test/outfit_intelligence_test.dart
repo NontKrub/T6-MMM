@@ -207,6 +207,101 @@ void main() {
     );
     expect(firstScores, secondScores);
   });
+
+  test('core scenario ranks a casual hot-weather outfit first', () {
+    final wardrobe = [
+      _item(
+        'black-tee',
+        ClothingCategory.top,
+        color: 'black',
+        hex: '#111111',
+        warmth: .2,
+        styles: [ClothingStyle.casual, ClothingStyle.streetwear],
+      ),
+      _item(
+        'blue-jeans',
+        ClothingCategory.pants,
+        color: 'blue',
+        hex: '#3366FF',
+        warmth: .35,
+        styles: [ClothingStyle.casual, ClothingStyle.streetwear],
+      ),
+      _item(
+        'white-sneakers',
+        ClothingCategory.shoes,
+        color: 'white',
+        hex: '#FFFFFF',
+        warmth: .2,
+        styles: [ClothingStyle.casual, ClothingStyle.streetwear],
+      ),
+      _item(
+        'formal-shirt',
+        ClothingCategory.top,
+        color: 'white',
+        hex: '#FFFFFF',
+        warmth: .4,
+        styles: [ClothingStyle.formal],
+      ),
+      _item(
+        'black-blazer',
+        ClothingCategory.outerwear,
+        color: 'black',
+        hex: '#111111',
+        warmth: .95,
+        styles: [ClothingStyle.formal, ClothingStyle.business],
+      ),
+      _item(
+        'formal-trousers',
+        ClothingCategory.pants,
+        color: 'black',
+        hex: '#111111',
+        warmth: .55,
+        styles: [ClothingStyle.formal, ClothingStyle.business],
+      ),
+      _item(
+        'formal-shoes',
+        ClothingCategory.shoes,
+        color: 'black',
+        hex: '#111111',
+        warmth: .2,
+        styles: [ClothingStyle.formal, ClothingStyle.business],
+      ),
+    ];
+    const context = OutfitContext(
+      weather: WeatherContext(temperatureC: 32),
+      desiredStyle: 'streetwear',
+      styleProfile: UserStyleProfile(
+        explicitStyles: ['casual', 'streetwear'],
+        explicitColors: ['black', 'white', 'blue'],
+      ),
+    );
+    const scoring = OutfitScoringService();
+    final ranked =
+        generator
+            .generate(wardrobe, context: context)
+            .map(
+              (candidate) => (
+                candidate: candidate,
+                score: scoring.score(candidate, context: context),
+              ),
+            )
+            .toList()
+          ..sort((a, b) => b.score.total.compareTo(a.score.total));
+
+    final best = ranked.first;
+    expect(best.candidate.itemIds, containsAll(['black-tee', 'blue-jeans']));
+    expect(best.candidate.itemIds, contains('white-sneakers'));
+    expect(best.score.reasons, isNotEmpty);
+    final formal = ranked.firstWhere(
+      (entry) => entry.candidate.itemIds.toSet().containsAll([
+        'formal-shirt',
+        'black-blazer',
+        'formal-trousers',
+        'formal-shoes',
+      ]),
+    );
+    expect(best.score.total, greaterThan(formal.score.total));
+  });
 }
 
 ClothingItem _item(
