@@ -33,9 +33,8 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (attemptError) throw attemptError;
 
-    await removeUserStorage(admin, userId);
-
     if (!data.user) {
+      await removeUserStorage(admin, userId);
       return jsonResponse({ deleted: true });
     }
 
@@ -57,6 +56,8 @@ Deno.serve(async (req) => {
       }, { onConflict: "user_id" });
       if (error) throw error;
     }
+
+    await removeUserStorage(admin, userId);
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
     if (deleteError && !/not found|user not found/i.test(deleteError.message)) {
