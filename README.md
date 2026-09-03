@@ -96,6 +96,19 @@ as validated and category remained unselected. Manual category, pattern, and
 silhouette entry remains the supported fallback. Physical camera capture was
 not tested and still requires a real iPhone.
 
+### Clothing recognition evaluation
+
+The integration harness records expected category, local prediction/confidence,
+optional signed-in server prediction/confidence, and whether manual review was
+requested. It requires an owned or licensed, non-personal fixture set with at
+least five examples of each category (`top`, `pants`, `shoes`, `hat`,
+`outerwear`, `dress`, `bag`, and `accessory`). Start from
+`integration_test/fixtures/clothing/evaluation_manifest.example.json`; the
+current one-image fixture is not a release evaluation set. Run it with
+`VISION_FIXTURE_DIR` and optionally write JSON with
+`VISION_EVALUATION_OUTPUT`. Guest evaluation never invokes a paid server
+analyzer; server comparison must use an authenticated, consented test account.
+
 ## Backend
 
 Supabase migrations live in `supabase/migrations/`, and Edge Functions live in `supabase/functions/`. See `BACKEND_SETUP.md` for required Supabase, OpenAI, and weather configuration.

@@ -1,0 +1,21 @@
+{
+  "required_category_counts": {
+    "top": 5,
+    "pants": 5,
+    "shoes": 5,
+    "hat": 5,
+    "outerwear": 5,
+    "dress": 5,
+    "bag": 5,
+    "accessory": 5
+  },
+  "conditions": [
+    "plain_background",
+    "cluttered_background",
+    "dark_garment",
+    "light_garment",
+    "partial_garment",
+    "low_light"
+  ],
+  "notes": "Copy this manifest into an owned/licensed evaluation set and add five fixtures per category. Do not use personal wardrobe images. metadata.json records the path, category, and conditions for each real image."
+}
