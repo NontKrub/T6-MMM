@@ -142,6 +142,27 @@ Deno.test("basic outfits can include bags", () => {
   );
 });
 
+Deno.test("signed-in extras do not starve bags", () => {
+  const wardrobe = [
+    baseItem({ id: "top", category: "top" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+    baseItem({ id: "bag", category: "bag", wear_count: 5 }),
+    baseItem({ id: "accessory-a", category: "accessory", wear_count: 0 }),
+    baseItem({ id: "accessory-b", category: "accessory", wear_count: 1 }),
+  ];
+  const candidates = buildValidOutfitCandidates(wardrobe);
+
+  assert(
+    candidates.some((candidate) => candidate.item_ids.includes("bag")),
+  );
+  assert(
+    candidates.some((candidate) =>
+      candidate.item_ids.includes("accessory-a")
+    ),
+  );
+});
+
 Deno.test("dress outfits can include bags and outerwear", () => {
   const wardrobe = [
     baseItem({ id: "dress", category: "dress" }),

@@ -172,10 +172,8 @@ export function buildValidOutfitCandidates(
   >;
   const extras = [
     null,
-    ...sortedByPracticality([
-      ...groups.bag,
-      ...groups.accessory,
-    ]).slice(0, 2),
+    ...groups.bag.slice(0, 1),
+    ...groups.accessory.slice(0, 1),
   ] as Array<
     ClothingItemRow | null
   >;
