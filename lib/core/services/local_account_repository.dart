@@ -82,6 +82,8 @@ class LocalAccountRepository {
   }
 
   Future<void> clearGuestAccount() async {
+    // Destructive: call only after an explicit local-account deletion or a
+    // verified guest-to-cloud migration.
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_guestEnabledKey);
     await prefs.remove(_profileKey);
@@ -91,6 +93,22 @@ class LocalAccountRepository {
     await prefs.remove(_preferenceHistoryKey);
     await prefs.remove(_recommendationEventsKey);
     await prefs.remove(_behavioralWeightsKey);
+    await prefs.remove(_migrationStateKey);
+  }
+
+  static const _migrationStateKey = 'mmm_guest_migration_state';
+
+  Future<Map<String, dynamic>?> fetchGuestMigrationState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_migrationStateKey);
+    if (raw == null || raw.isEmpty) return null;
+    final value = jsonDecode(raw);
+    return value is Map ? Map<String, dynamic>.from(value) : null;
+  }
+
+  Future<void> saveGuestMigrationState(Map<String, dynamic> state) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_migrationStateKey, jsonEncode(state));
   }
 
   Future<UserProfile?> fetchProfile() async {

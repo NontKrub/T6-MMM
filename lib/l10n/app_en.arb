@@ -18,6 +18,11 @@
   "authContinueWithFacebook": "Continue with Facebook",
   "authContinueAsGuest": "Continue as guest",
   "authUnavailable": "Sign in is unavailable until Supabase is configured.",
+  "authImportGuestTitle": "Import your guest wardrobe?",
+  "authImportGuestMessage": "MMM found a local guest wardrobe. Import it into this signed-in account?",
+  "authImportGuest": "Import wardrobe",
+  "authContinueWithoutImport": "Not now",
+  "authImportFailed": "Local wardrobe import failed",
 
   "onboardingStep": "{current} / {total}",
   "@onboardingStep": {
@@ -144,6 +149,10 @@
   "settingsNotifications": "Notifications",
   "settingsDailyReminder": "Daily outfit reminder",
   "settingsRepetitionAlerts": "Repetition alerts",
+  "settingsImportLocal": "Import local wardrobe",
+  "settingsImportLocalSubtitle": "Resume importing your guest wardrobe",
+  "settingsImportLocalComplete": "Local wardrobe imported.",
+  "settingsImportLocalFailed": "Import failed",
   "settingsAI": "AI Features",
   "settingsLearnPreferences": "Learn my preferences",
   "settingsLearnPreferencesSubtitle": "AI tracks your choices to improve suggestions",

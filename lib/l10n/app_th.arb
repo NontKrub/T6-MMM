@@ -18,6 +18,11 @@
   "authContinueWithFacebook": "ดำเนินการต่อด้วย Facebook",
   "authContinueAsGuest": "ดำเนินการต่อในฐานะผู้เยี่ยมชม",
   "authUnavailable": "ไม่สามารถเข้าสู่ระบบได้จนกว่าจะตั้งค่า Supabase",
+  "authImportGuestTitle": "นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมหรือไม่?",
+  "authImportGuestMessage": "MMM พบตู้เสื้อผ้าของผู้เยี่ยมชมในอุปกรณ์ ต้องการนำเข้าไปยังบัญชีนี้หรือไม่?",
+  "authImportGuest": "นำเข้าตู้เสื้อผ้า",
+  "authContinueWithoutImport": "ไว้ภายหลัง",
+  "authImportFailed": "นำเข้าตู้เสื้อผ้าไม่สำเร็จ",
 
   "onboardingStep": "{current} / {total}",
   "@onboardingStep": {
@@ -144,6 +149,10 @@
   "settingsNotifications": "การแจ้งเตือน",
   "settingsDailyReminder": "เตือนชุดประจำวัน",
   "settingsRepetitionAlerts": "แจ้งเตือนการซ้ำ",
+  "settingsImportLocal": "นำเข้าตู้เสื้อผ้าในเครื่อง",
+  "settingsImportLocalSubtitle": "นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมต่อ",
+  "settingsImportLocalComplete": "นำเข้าตู้เสื้อผ้าแล้ว",
+  "settingsImportLocalFailed": "นำเข้าไม่สำเร็จ",
   "settingsAI": "ฟีเจอร์ AI",
   "settingsLearnPreferences": "เรียนรู้ความชอบของฉัน",
   "settingsLearnPreferencesSubtitle": "AI ติดตามตัวเลือกของคุณเพื่อปรับปรุงคำแนะนำ",

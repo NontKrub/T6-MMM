@@ -21,14 +21,17 @@ class WardrobeRepository {
     LocalAccountRepository? local,
     ImageStorageService? imageStorage,
     ClothingIntelligenceService? intelligence,
+    SupabaseClient? client,
   }) : _local = local ?? LocalAccountRepository(),
        _imageStorage = imageStorage ?? ImageStorageService(),
-       _intelligence = intelligence ?? ClothingIntelligenceService();
+       _intelligence = intelligence ?? ClothingIntelligenceService(),
+       _clientOverride = client;
 
-  SupabaseClient? get _client => SupabaseService.client;
+  SupabaseClient? get _client => _clientOverride ?? SupabaseService.client;
   final LocalAccountRepository _local;
   final ImageStorageService _imageStorage;
   final ClothingIntelligenceService _intelligence;
+  final SupabaseClient? _clientOverride;
 
   Future<List<ClothingItem>> fetchItems() async {
     final client = _client;
@@ -236,6 +239,47 @@ class WardrobeRepository {
         .select()
         .single();
     return ClothingItem.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<ClothingItem> migrateLocalItem({
+    required ClothingItem item,
+    required String targetId,
+    required Uint8List bytes,
+  }) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError('A signed-in account is required to import a wardrobe.');
+    }
+
+    final extension = _safeImageExtension(item.imagePath ?? item.imageUrl);
+    final imagePath = '${user.id}/$targetId/original.$extension';
+    await client.storage
+        .from(bucket)
+        .uploadBinary(
+          imagePath,
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+    try {
+      final payload = item.toInsertJson(userId: user.id, imagePath: imagePath)
+        ..['id'] = targetId
+        ..['image_url'] = null;
+      final row = await client
+          .from('clothing_items')
+          .upsert(payload, onConflict: 'id')
+          .select()
+          .single();
+      return ClothingItem.fromJson(Map<String, dynamic>.from(row));
+    } catch (error) {
+      try {
+        await client.storage.from(bucket).remove([imagePath]);
+      } catch (cleanupError) {
+        _log('Could not clean failed migration upload: $cleanupError');
+      }
+      rethrow;
+    }
   }
 
   Future<void> archiveItem(String id) async {
@@ -491,6 +535,13 @@ class WardrobeRepository {
       const {'recommended', 'manual', 'in_a_rush'}.contains(value)
       ? value
       : 'manual';
+
+  String _safeImageExtension(String name) {
+    final extension = name.split('.').last.toLowerCase();
+    return const {'jpg', 'jpeg', 'png', 'webp', 'heic'}.contains(extension)
+        ? extension
+        : 'jpg';
+  }
 }
 
 Map<String, dynamic> analysisUpdatePayload(ClothingItem item) {

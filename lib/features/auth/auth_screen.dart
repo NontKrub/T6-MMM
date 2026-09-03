@@ -5,9 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
+import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
+import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/guest_account_migration_service.dart';
 import '../../core/services/local_account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -40,9 +43,79 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Future<void> _onAuthStateChange(AuthState authState) async {
     if (authState.event != AuthChangeEvent.signedIn) return;
     await ref.read(userProfileProvider.notifier).load();
+    final migration = GuestAccountMigrationService();
+    if (await migration.hasPendingMigration() && mounted) {
+      final shouldImport = await _askToImportGuestData();
+      if (shouldImport) {
+        final result = await _runGuestMigration(migration);
+        if (result.completed) {
+          await ref.read(userProfileProvider.notifier).load();
+          ref.invalidate(wardrobeProvider);
+          ref.invalidate(outfitsProvider);
+        } else if (mounted && result.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${AppLocalizations.of(context)?.authImportFailed ?? 'Local wardrobe import failed'}: ${result.error}',
+              ),
+            ),
+          );
+        }
+      }
+    }
     final profile = ref.read(userProfileProvider);
     if (!mounted) return;
     context.go(profile.onboardingComplete ? '/home' : '/onboarding');
+  }
+
+  Future<bool> _askToImportGuestData() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            final l10n = AppLocalizations.of(context);
+            return AlertDialog(
+              title: Text(
+                l10n?.authImportGuestTitle ?? 'Import your guest wardrobe?',
+              ),
+              content: Text(
+                l10n?.authImportGuestMessage ??
+                    'MMM found a local guest wardrobe. Import it into this signed-in account?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(l10n?.authContinueWithoutImport ?? 'Not now'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(l10n?.authImportGuest ?? 'Import wardrobe'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<GuestMigrationResult> _runGuestMigration(
+    GuestAccountMigrationService migration,
+  ) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Expanded(child: Text('Importing local wardrobe…')),
+          ],
+        ),
+      ),
+    );
+    final result = await migration.migrate();
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    return result;
   }
 
   Future<void> _handleGuestLogin() async {

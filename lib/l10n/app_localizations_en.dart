@@ -56,6 +56,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in is unavailable until Supabase is configured.';
 
   @override
+  String get authImportGuestTitle => 'Import your guest wardrobe?';
+
+  @override
+  String get authImportGuestMessage =>
+      'MMM found a local guest wardrobe. Import it into this signed-in account?';
+
+  @override
+  String get authImportGuest => 'Import wardrobe';
+
+  @override
+  String get authContinueWithoutImport => 'Not now';
+
+  @override
+  String get authImportFailed => 'Local wardrobe import failed';
+
+  @override
   String onboardingStep(int current, int total) {
     return '$current / $total';
   }
@@ -364,6 +380,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsRepetitionAlerts => 'Repetition alerts';
+
+  @override
+  String get settingsImportLocal => 'Import local wardrobe';
+
+  @override
+  String get settingsImportLocalSubtitle =>
+      'Resume importing your guest wardrobe';
+
+  @override
+  String get settingsImportLocalComplete => 'Local wardrobe imported.';
+
+  @override
+  String get settingsImportLocalFailed => 'Import failed';
 
   @override
   String get settingsAI => 'AI Features';

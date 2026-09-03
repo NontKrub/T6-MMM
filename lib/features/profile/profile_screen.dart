@@ -7,7 +7,6 @@ import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/local_account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../l10n/app_localizations.dart';
@@ -217,7 +216,6 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-  await LocalAccountRepository().clearGuestAccount();
   if (AppConfig.isSupabaseConfigured) {
     await AuthService().signOut();
   }

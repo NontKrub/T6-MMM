@@ -188,6 +188,36 @@ abstract class AppLocalizations {
   /// **'Sign in is unavailable until Supabase is configured.'**
   String get authUnavailable;
 
+  /// No description provided for @authImportGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import your guest wardrobe?'**
+  String get authImportGuestTitle;
+
+  /// No description provided for @authImportGuestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM found a local guest wardrobe. Import it into this signed-in account?'**
+  String get authImportGuestMessage;
+
+  /// No description provided for @authImportGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Import wardrobe'**
+  String get authImportGuest;
+
+  /// No description provided for @authContinueWithoutImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get authContinueWithoutImport;
+
+  /// No description provided for @authImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local wardrobe import failed'**
+  String get authImportFailed;
+
   /// No description provided for @onboardingStep.
   ///
   /// In en, this message translates to:
@@ -781,6 +811,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Repetition alerts'**
   String get settingsRepetitionAlerts;
+
+  /// No description provided for @settingsImportLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Import local wardrobe'**
+  String get settingsImportLocal;
+
+  /// No description provided for @settingsImportLocalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume importing your guest wardrobe'**
+  String get settingsImportLocalSubtitle;
+
+  /// No description provided for @settingsImportLocalComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Local wardrobe imported.'**
+  String get settingsImportLocalComplete;
+
+  /// No description provided for @settingsImportLocalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed'**
+  String get settingsImportLocalFailed;
 
   /// No description provided for @settingsAI.
   ///

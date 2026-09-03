@@ -4,7 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/locale_provider.dart';
+import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/theme_provider.dart';
+import '../../core/providers/user_profile_provider.dart';
+import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/guest_account_migration_service.dart';
+import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../l10n/app_localizations.dart';
@@ -19,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
     final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
     final appSettings = ref.watch(appSettingsProvider);
+    final pendingMigration = ref.watch(guestMigrationPendingProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.settingsTitle ?? 'Settings')),
@@ -75,6 +82,24 @@ class SettingsScreen extends ConsumerWidget {
             ),
             onTap: () => _showWeatherLocationSheet(context, ref, l10n),
           ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
+
+          if (SupabaseService.isSignedIn)
+            pendingMigration.when(
+              data: (pending) => pending
+                  ? _SettingsTile(
+                      icon: Icons.cloud_upload_outlined,
+                      iconColor: AppColors.seedColor,
+                      title:
+                          l10n?.settingsImportLocal ?? 'Import local wardrobe',
+                      subtitle:
+                          l10n?.settingsImportLocalSubtitle ??
+                          'Resume importing your guest wardrobe',
+                      onTap: () => _importLocalWardrobe(context, ref, l10n),
+                    ).animate(delay: 175.ms).fadeIn(duration: 300.ms)
+                  : const SizedBox.shrink(),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
 
           // Notifications
           _SectionHeader(title: l10n?.settingsNotifications ?? 'Notifications'),
@@ -301,6 +326,31 @@ class SettingsScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+
+  Future<void> _importLocalWardrobe(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    final result = await GuestAccountMigrationService().migrate();
+    ref.invalidate(guestMigrationPendingProvider);
+    if (result.completed) {
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.completed
+              ? (l10n?.settingsImportLocalComplete ??
+                    'Local wardrobe imported.')
+              : '${l10n?.settingsImportLocalFailed ?? 'Import failed'}: ${result.error}',
+        ),
+      ),
     );
   }
 }

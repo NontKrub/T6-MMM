@@ -55,6 +55,22 @@ class AppLocalizationsTh extends AppLocalizations {
       'ไม่สามารถเข้าสู่ระบบได้จนกว่าจะตั้งค่า Supabase';
 
   @override
+  String get authImportGuestTitle => 'นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมหรือไม่?';
+
+  @override
+  String get authImportGuestMessage =>
+      'MMM พบตู้เสื้อผ้าของผู้เยี่ยมชมในอุปกรณ์ ต้องการนำเข้าไปยังบัญชีนี้หรือไม่?';
+
+  @override
+  String get authImportGuest => 'นำเข้าตู้เสื้อผ้า';
+
+  @override
+  String get authContinueWithoutImport => 'ไว้ภายหลัง';
+
+  @override
+  String get authImportFailed => 'นำเข้าตู้เสื้อผ้าไม่สำเร็จ';
+
+  @override
   String onboardingStep(int current, int total) {
     return '$current / $total';
   }
@@ -360,6 +376,19 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsRepetitionAlerts => 'แจ้งเตือนการซ้ำ';
+
+  @override
+  String get settingsImportLocal => 'นำเข้าตู้เสื้อผ้าในเครื่อง';
+
+  @override
+  String get settingsImportLocalSubtitle =>
+      'นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมต่อ';
+
+  @override
+  String get settingsImportLocalComplete => 'นำเข้าตู้เสื้อผ้าแล้ว';
+
+  @override
+  String get settingsImportLocalFailed => 'นำเข้าไม่สำเร็จ';
 
   @override
   String get settingsAI => 'ฟีเจอร์ AI';

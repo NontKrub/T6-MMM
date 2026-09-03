@@ -1,12 +1,18 @@
 import '../../shared/models/user_profile.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
 class ProfileRepository {
+  ProfileRepository({SupabaseClient? client}) : _clientOverride = client;
+
+  final SupabaseClient? _clientOverride;
   final _local = LocalAccountRepository();
 
+  SupabaseClient? get _client => _clientOverride ?? SupabaseService.client;
+
   Future<UserProfile?> fetchProfile() async {
-    final client = SupabaseService.client;
+    final client = _client;
     final user = client?.auth.currentUser;
     if (client == null || user == null) return _local.fetchProfile();
 
@@ -36,7 +42,7 @@ class ProfileRepository {
   }
 
   Future<void> upsertProfile(UserProfile profile) async {
-    final client = SupabaseService.client;
+    final client = _client;
     final user = client?.auth.currentUser;
     if (client == null || user == null) {
       await _local.upsertProfile(profile);
@@ -63,7 +69,7 @@ class ProfileRepository {
   }
 
   Future<void> updateDisplayNameIfDefault(String displayName) async {
-    final client = SupabaseService.client;
+    final client = _client;
     final user = client?.auth.currentUser;
     if (client == null || user == null) return;
 
@@ -81,5 +87,66 @@ class ProfileRepository {
           .update({'display_name': displayName})
           .eq('id', user.id);
     }
+  }
+
+  Future<void> mergeGuestProfile(UserProfile guest) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError(
+        'A signed-in account is required to import a guest account.',
+      );
+    }
+
+    final existing = await fetchProfile();
+    final cloudIsDefault =
+        existing == null ||
+        (existing.name == 'MMM User' &&
+            existing.avatarUrl == null &&
+            existing.stylePreferences.isEmpty &&
+            existing.occasions.isEmpty &&
+            !existing.onboardingComplete &&
+            existing.bodyType == null &&
+            existing.brandTier == .3 &&
+            existing.birthDate == null);
+    final merged = cloudIsDefault
+        ? guest.copyWith()
+        : existing.copyWith(
+            stylePreferences: _union(
+              existing.stylePreferences,
+              guest.stylePreferences,
+            ),
+            occasions: _union(existing.occasions, guest.occasions),
+          );
+
+    await client.from('profiles').upsert({
+      ...merged.toProfileJson(),
+      'id': user.id,
+    });
+
+    final preferences = [
+      ...merged.stylePreferences.map(
+        (value) => {'user_id': user.id, 'kind': 'style', 'value': value},
+      ),
+      ...merged.occasions.map(
+        (value) => {'user_id': user.id, 'kind': 'occasion', 'value': value},
+      ),
+    ];
+    if (preferences.isNotEmpty) {
+      await client
+          .from('style_preferences')
+          .upsert(
+            preferences,
+            onConflict: 'user_id,kind,value',
+            ignoreDuplicates: true,
+          );
+    }
+  }
+
+  List<String> _union(List<String> first, List<String> second) {
+    return <String>{
+      ...first,
+      ...second,
+    }.where((value) => value.isNotEmpty).toList();
   }
 }
