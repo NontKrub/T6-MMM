@@ -57,6 +57,8 @@ visual, network, or physical-device evidence.
 The current implementation has passing local Flutter/Deno/database checks and
 automated five-test iOS 27 Device Hub simulator smoke coverage. Computer Use is
 not available in this environment, so GUI acceptance is **NOT EXECUTED**.
+The local Android build was attempted but stopped before compilation because
+the machine has not accepted the Android NDK `28.2.13676358` license.
 Physical-device full-matrix validation, hosted Supabase isolation, actual
 notification delivery, OAuth provider configuration, and the 40-image
 recognition set remain release blockers until separately evidenced.
