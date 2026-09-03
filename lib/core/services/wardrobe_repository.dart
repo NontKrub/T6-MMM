@@ -80,13 +80,16 @@ class WardrobeRepository {
     final client = _client;
     final user = client?.auth.currentUser;
     final itemId = _uuid.v4();
+    final manualTags = correctedFields.contains('tags')
+        ? tags
+        : const <String>[];
     final localResult =
         localAnalysis ??
         _fallbackAnalysis(
           category: fallbackCategory,
           color: color,
           colorHexes: colorHexes,
-          tags: tags,
+          tags: manualTags,
           pattern: pattern,
           silhouette: silhouette,
           confidence: analysisConfidence,
@@ -97,7 +100,7 @@ class WardrobeRepository {
       fallbackCategory: fallbackCategory,
       color: color,
       colorHexes: colorHexes,
-      tags: tags,
+      tags: manualTags,
       pattern: pattern,
       silhouette: silhouette,
       correctedFields: correctedFields,
@@ -115,7 +118,7 @@ class WardrobeRepository {
           imageUrl: fileName,
           imagePath: fileName,
           fallbackCategory: fallbackCategory,
-          requestedTags: tags,
+          requestedTags: manualTags,
           analysis: localMerged,
           correctedFields: correctedFields,
         ),
@@ -152,7 +155,7 @@ class WardrobeRepository {
         imagePath: imagePath,
         name: name,
         brand: brand,
-        tags: tags,
+        tags: manualTags,
       );
       _log('Server clothing analysis completed for $itemId');
       final merged = _intelligence.merge(
@@ -167,7 +170,7 @@ class WardrobeRepository {
         imageUrl: imageUrl,
         imagePath: imagePath,
         fallbackCategory: fallbackCategory,
-        requestedTags: tags,
+        requestedTags: manualTags,
         analysis: merged,
         correctedFields: correctedFields,
       );
@@ -181,7 +184,7 @@ class WardrobeRepository {
             imageUrl: imageUrl,
             imagePath: imagePath,
             fallbackCategory: fallbackCategory,
-            requestedTags: tags,
+            requestedTags: manualTags,
             analysis: localMerged,
             correctedFields: correctedFields,
           ).copyWith(

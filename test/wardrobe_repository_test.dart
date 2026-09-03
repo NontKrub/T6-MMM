@@ -149,4 +149,55 @@ void main() {
     expect(item?.correctedFields, {'category'});
     expect(item?.userCorrected, isTrue);
   });
+
+  test('automatic local tags remain styles, not manual item tags', () async {
+    SharedPreferences.setMockInitialValues({});
+    final local = LocalAccountRepository();
+    await local.startGuestAccount();
+    final repository = WardrobeRepository(local: local);
+
+    final item = await repository.uploadAndCreateItem(
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'item.jpg',
+      name: 'Local style item',
+      fallbackCategory: ClothingCategory.top,
+      tags: const ['formal'],
+      localAnalysis: const ClothingAnalysisResult(
+        category: ClothingCategory.top,
+        colorHexes: [],
+        colorNames: [],
+        styles: ['formal'],
+      ),
+    );
+
+    expect(item?.tags, isEmpty);
+    expect(item?.styles, contains(ClothingStyle.formal));
+    expect(item?.correctedFields, isEmpty);
+  });
+
+  test('manual tags remain item tags when explicitly corrected', () async {
+    SharedPreferences.setMockInitialValues({});
+    final local = LocalAccountRepository();
+    await local.startGuestAccount();
+    final repository = WardrobeRepository(local: local);
+
+    final item = await repository.uploadAndCreateItem(
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'item.jpg',
+      name: 'Manual tag item',
+      fallbackCategory: ClothingCategory.top,
+      tags: const ['minimal'],
+      correctedFields: const {'tags'},
+      localAnalysis: const ClothingAnalysisResult(
+        category: ClothingCategory.top,
+        colorHexes: [],
+        colorNames: [],
+        styles: ['formal'],
+      ),
+    );
+
+    expect(item?.tags, ['minimal']);
+    expect(item?.styles, contains(ClothingStyle.formal));
+    expect(item?.correctedFields, {'tags'});
+  });
 }
