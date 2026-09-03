@@ -355,7 +355,16 @@ export const recommendationsSchema = {
         properties: {
           category: {
             type: "string",
-            enum: ["hat", "top", "pants", "shoes", "accessory"],
+            enum: [
+              "hat",
+              "top",
+              "pants",
+              "shoes",
+              "outerwear",
+              "dress",
+              "bag",
+              "accessory",
+            ],
           },
           title: { type: "string" },
           reason: { type: "string" },

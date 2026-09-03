@@ -76,7 +76,15 @@ Deno.serve(async (req) => {
     try {
       result = await openAiJson<{
         recommendations: Array<{
-          category: "hat" | "top" | "pants" | "shoes" | "accessory";
+          category:
+            | "hat"
+            | "top"
+            | "pants"
+            | "shoes"
+            | "outerwear"
+            | "dress"
+            | "bag"
+            | "accessory";
           title: string;
           reason: string;
           suggestion: string;
