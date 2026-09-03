@@ -182,9 +182,18 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
         _pickedFile = XFile(managedFile.path);
         _imageBytes = bytes;
         _imagePath = managedFile.path;
+        _category = null;
         _localAnalysis = null;
+        _pattern = ClothingPattern.unknown;
+        _silhouette = ClothingSilhouette.unknown;
+        _analysisConfidence = null;
+        _classificationSource = null;
+        _colorSource = null;
+        _colorHexes.clear();
+        _primaryHex = null;
         _correctedFields.clear();
         _tags.clear();
+        _hexController.clear();
       });
       if (previousPath != null && previousPath != managedFile.path) {
         await _deleteImage(previousPath);

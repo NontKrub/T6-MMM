@@ -323,6 +323,67 @@ void main() {
     expect(deleted, ['/managed/first.jpg', '/managed/second.jpg']);
   });
 
+  testWidgets('replacement analysis failure clears prior image metadata', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/first.jpg');
+    final notifier = _TestWardrobeNotifier();
+    var analysisCalls = 0;
+
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+      deleteImage: (_) async {},
+      analyzeImage: (_) async {
+        analysisCalls++;
+        if (analysisCalls == 1) {
+          return const ClothingAnalysisResult(
+            category: ClothingCategory.top,
+            colorHexes: ['#FF0000'],
+            colorNames: ['red'],
+            pattern: ClothingPattern.striped,
+            silhouette: ClothingSilhouette.fitted,
+            styles: ['casual'],
+            confidence: .95,
+            classificationSource: 'vision',
+            colorSource: 'vision',
+          );
+        }
+        throw StateError('vision failed');
+      },
+    );
+
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('add-item-color-#FF0000')), findsOneWidget);
+    expect(find.byKey(const Key('add-item-category-required')), findsNothing);
+    expect(find.text('striped'), findsOneWidget);
+
+    pickerClient.pickResult = XFile('/tmp/second.jpg');
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('add-item-category-required')), findsOneWidget);
+    expect(find.byKey(const Key('add-item-color-#FF0000')), findsNothing);
+    expect(find.text('No colors selected'), findsOneWidget);
+
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add-item-category-pants')));
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(notifier.state.single.category, ClothingCategory.pants);
+    expect(notifier.state.single.colorHexes, isEmpty);
+    expect(notifier.state.single.pattern, ClothingPattern.unknown);
+    expect(notifier.state.single.silhouette, ClothingSilhouette.unknown);
+    expect(notifier.state.single.tags, isEmpty);
+    expect(notifier.state.single.analysisConfidence, isNull);
+    expect(notifier.state.single.classificationSource, 'manual');
+    expect(notifier.state.single.colorSource, isNull);
+  });
+
   testWidgets('guest save retains managed image', (tester) async {
     final pickerClient = _FakeImagePickerClient()
       ..pickResult = XFile('/tmp/guest.jpg');
