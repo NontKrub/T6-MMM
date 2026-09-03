@@ -361,6 +361,88 @@ void main() {
     );
   });
 
+  test(
+    'copyWith preserves omitted nullable values and clears explicit nulls',
+    () {
+      final timestamp = DateTime.utc(2026, 8, 30);
+      final item = ClothingItem(
+        id: 'item-1',
+        name: 'Red jacket',
+        brand: 'MMM',
+        category: ClothingCategory.outerwear,
+        subtype: 'bomber',
+        imageUrl: 'https://example.test/jacket.jpg',
+        imagePath: 'user-1/item-1/jacket.jpg',
+        color: 'red',
+        warmthLevel: .8,
+        analysisConfidence: .9,
+        classificationSource: 'vision',
+        colorSource: 'vision',
+        analyzedAt: timestamp,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        lastWorn: timestamp,
+      );
+
+      expect(item.copyWith().primaryColor, 'red');
+
+      final cleared = item.copyWith(
+        brand: null,
+        subtype: null,
+        color: null,
+        imagePath: null,
+        warmthLevel: null,
+        analysisConfidence: null,
+        classificationSource: null,
+        colorSource: null,
+        analyzedAt: null,
+        updatedAt: null,
+        lastWorn: null,
+      );
+
+      expect(cleared.brand, isNull);
+      expect(cleared.subtype, isNull);
+      expect(cleared.primaryColor, isNull);
+      expect(cleared.imagePath, isNull);
+      expect(cleared.warmthLevel, isNull);
+      expect(cleared.analysisConfidence, isNull);
+      expect(cleared.classificationSource, isNull);
+      expect(cleared.colorSource, isNull);
+      expect(cleared.analyzedAt, isNull);
+      expect(cleared.updatedAt, isNull);
+      expect(cleared.lastWorn, isNull);
+      expect(cleared.toJson()['primary_color'], isNull);
+      expect(cleared.toJson()['subtype'], isNull);
+      expect(cleared.toJson()['warmth_level'], isNull);
+    },
+  );
+
+  test('corrected null metadata clears stale values in merged item JSON', () {
+    final item = ClothingItem(
+      id: 'item-1',
+      name: 'Corrected jacket',
+      category: ClothingCategory.outerwear,
+      subtype: 'bomber',
+      imageUrl: 'https://example.test/jacket.jpg',
+      color: 'red',
+      warmthLevel: .8,
+      correctedFields: const {'subtype', 'primary_color', 'warmth_level'},
+    );
+    final merged = const ClothingAnalysisMerger().mergeIntoItem(
+      item,
+      corrections: const ClothingAnalysisCorrections(
+        correctedFields: {'subtype', 'primary_color', 'warmth_level'},
+      ),
+    );
+
+    expect(merged.subtype, isNull);
+    expect(merged.primaryColor, isNull);
+    expect(merged.warmthLevel, isNull);
+    expect(merged.toJson()['primary_color'], isNull);
+    expect(merged.toJson()['subtype'], isNull);
+    expect(merged.toJson()['warmth_level'], isNull);
+  });
+
   test('parses the server analysis contract defensively', () {
     final result = ClothingAnalysisResult.fromJson({
       'category': 'outerwear',

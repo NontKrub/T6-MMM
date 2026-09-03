@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 
 const currentAnalysisVersion = 'visual-v3';
 const _legacyAnalysisVersion = 'legacy';
+const _copyWithUnset = Object();
 
 enum ClothingCategory {
   hat,
@@ -510,18 +511,18 @@ class ClothingItem {
   }
 
   ClothingItem copyWith({
-    String? userId,
+    Object? userId = _copyWithUnset,
     String? name,
-    String? brand,
+    Object? brand = _copyWithUnset,
     ClothingCategory? category,
-    String? subtype,
+    Object? subtype = _copyWithUnset,
     String? imageUrl,
-    String? imagePath,
+    Object? imagePath = _copyWithUnset,
     List<String>? tags,
-    String? color,
-    String? primaryColor,
-    List<String>? colorHexes,
-    List<String>? dominantColors,
+    Object? color = _copyWithUnset,
+    Object? primaryColor = _copyWithUnset,
+    Object? colorHexes = _copyWithUnset,
+    Object? dominantColors = _copyWithUnset,
     ClothingPattern? pattern,
     ClothingMaterial? material,
     ClothingFit? fit,
@@ -530,33 +531,44 @@ class ClothingItem {
     ClothingFormality? formality,
     List<Season>? seasons,
     List<WeatherSuitability>? weatherSuitability,
-    double? warmthLevel,
-    double? analysisConfidence,
-    String? classificationSource,
-    String? colorSource,
+    Object? warmthLevel = _copyWithUnset,
+    Object? analysisConfidence = _copyWithUnset,
+    Object? classificationSource = _copyWithUnset,
+    Object? colorSource = _copyWithUnset,
     AnalysisSource? analysisSource,
     AnalysisStatus? analysisStatus,
     String? analysisVersion,
     Set<String>? correctedFields,
     bool? userCorrected,
-    DateTime? analyzedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    Object? analyzedAt = _copyWithUnset,
+    Object? createdAt = _copyWithUnset,
+    Object? updatedAt = _copyWithUnset,
     int? wearCount,
-    DateTime? lastWorn,
+    Object? lastWorn = _copyWithUnset,
   }) {
+    final resolvedColor = !identical(color, _copyWithUnset)
+        ? color as String?
+        : !identical(primaryColor, _copyWithUnset)
+        ? primaryColor as String?
+        : this.color;
+    final resolvedColorHexes = dominantColors is List<String>
+        ? dominantColors
+        : colorHexes is List<String>
+        ? colorHexes
+        : this.colorHexes;
+
     return ClothingItem(
       id: id,
-      userId: userId ?? this.userId,
+      userId: _copyWithNullable(userId, this.userId),
       name: name ?? this.name,
-      brand: brand ?? this.brand,
+      brand: _copyWithNullable(brand, this.brand),
       category: category ?? this.category,
-      subtype: subtype ?? this.subtype,
+      subtype: _copyWithNullable(subtype, this.subtype),
       imageUrl: imageUrl ?? this.imageUrl,
-      imagePath: imagePath ?? this.imagePath,
+      imagePath: _copyWithNullable(imagePath, this.imagePath),
       tags: tags ?? this.tags,
-      color: color ?? primaryColor ?? this.color,
-      colorHexes: dominantColors ?? colorHexes ?? this.colorHexes,
+      color: resolvedColor,
+      colorHexes: resolvedColorHexes,
       pattern: pattern ?? this.pattern,
       material: material ?? this.material,
       fit: fit ?? this.fit,
@@ -565,23 +577,32 @@ class ClothingItem {
       formality: formality ?? this.formality,
       seasons: seasons ?? this.seasons,
       weatherSuitability: weatherSuitability ?? this.weatherSuitability,
-      warmthLevel: warmthLevel ?? this.warmthLevel,
-      analysisConfidence: analysisConfidence ?? this.analysisConfidence,
-      classificationSource: classificationSource ?? this.classificationSource,
-      colorSource: colorSource ?? this.colorSource,
+      warmthLevel: _copyWithNullable(warmthLevel, this.warmthLevel),
+      analysisConfidence: _copyWithNullable(
+        analysisConfidence,
+        this.analysisConfidence,
+      ),
+      classificationSource: _copyWithNullable(
+        classificationSource,
+        this.classificationSource,
+      ),
+      colorSource: _copyWithNullable(colorSource, this.colorSource),
       analysisSource: analysisSource ?? this.analysisSource,
       analysisStatus: analysisStatus ?? this.analysisStatus,
       analysisVersion: analysisVersion ?? this.analysisVersion,
       correctedFields: correctedFields ?? this.correctedFields,
       userCorrected: userCorrected ?? _legacyUserCorrected,
-      analyzedAt: analyzedAt ?? this.analyzedAt,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      analyzedAt: _copyWithNullable(analyzedAt, this.analyzedAt),
+      createdAt: _copyWithNullable(createdAt, this.createdAt),
+      updatedAt: _copyWithNullable(updatedAt, this.updatedAt),
       wearCount: wearCount ?? this.wearCount,
-      lastWorn: lastWorn ?? this.lastWorn,
+      lastWorn: _copyWithNullable(lastWorn, this.lastWorn),
     );
   }
 }
+
+T? _copyWithNullable<T>(Object? value, T? current) =>
+    identical(value, _copyWithUnset) ? current : value as T?;
 
 Map<String, dynamic> _mapValue(Object? value) {
   if (value is Map) return Map<String, dynamic>.from(value);

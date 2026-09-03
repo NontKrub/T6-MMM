@@ -130,7 +130,9 @@ class ClothingAnalysisMerger {
 
     return item.copyWith(
       category: result.category ?? item.category,
-      subtype: result.subtype ?? item.subtype,
+      subtype: preservedCorrections?.contains('subtype') == true
+          ? result.subtype
+          : result.subtype ?? item.subtype,
       color:
           hasAnalysis || preservedCorrections?.contains('primary_color') == true
           ? result.primaryColor
@@ -148,7 +150,9 @@ class ClothingAnalysisMerger {
       formality: result.formality,
       seasons: result.seasons,
       weatherSuitability: result.weatherSuitability,
-      warmthLevel: result.warmthLevel ?? item.warmthLevel,
+      warmthLevel: preservedCorrections?.contains('warmth_level') == true
+          ? result.warmthLevel
+          : result.warmthLevel ?? item.warmthLevel,
       tags: hasAnalysis || preservedCorrections?.contains('tags') == true
           ? result.tags
           : item.tags,
