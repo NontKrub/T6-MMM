@@ -214,6 +214,65 @@ void main() {
   });
 
   test(
+    'candidate generation supports independent hat and extra dimensions',
+    () {
+      final candidates = generator.generate([
+        _item('top', ClothingCategory.top),
+        _item('pants', ClothingCategory.pants),
+        _item('shoes', ClothingCategory.shoes),
+        _item('hat', ClothingCategory.hat),
+        _item('bag', ClothingCategory.bag),
+        _item('watch', ClothingCategory.accessory),
+      ]);
+
+      expect(
+        candidates.any(
+          (candidate) =>
+              candidate.itemIds.contains('hat') &&
+              candidate.itemIds.contains('bag'),
+        ),
+        isTrue,
+      );
+      expect(
+        candidates.any(
+          (candidate) =>
+              candidate.itemIds.contains('hat') &&
+              !candidate.itemIds.contains('bag') &&
+              !candidate.itemIds.contains('watch'),
+        ),
+        isTrue,
+      );
+      expect(
+        candidates.any(
+          (candidate) =>
+              !candidate.itemIds.contains('hat') &&
+              candidate.itemIds.contains('bag'),
+        ),
+        isTrue,
+      );
+      expect(
+        candidates.every((candidate) => candidate.accessories.length <= 2),
+        isTrue,
+      );
+    },
+  );
+
+  test('hat and bag dimensions still honor candidate cap', () {
+    const bounded = OutfitCandidateGenerator(maxCandidates: 3);
+    final candidates = bounded.generate([
+      _item('top', ClothingCategory.top),
+      _item('pants', ClothingCategory.pants),
+      _item('shoes', ClothingCategory.shoes),
+      for (var index = 0; index < 5; index++)
+        _item('hat-$index', ClothingCategory.hat),
+      for (var index = 0; index < 5; index++)
+        _item('bag-$index', ClothingCategory.bag),
+    ]);
+
+    expect(candidates.length, lessThanOrEqualTo(3));
+  });
+
+  test(
     'color compatibility handles neutral, analogous, and contrast pairs',
     () {
       const service = ColorCompatibilityService();

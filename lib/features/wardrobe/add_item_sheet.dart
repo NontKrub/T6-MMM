@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/clothing_analysis_service.dart';
 import '../../core/services/image_pick_service.dart';
@@ -15,8 +14,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
-
-const _uuid = Uuid();
 
 class AddItemSheet extends ConsumerStatefulWidget {
   const AddItemSheet({
@@ -277,89 +274,39 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       if (!hadPrimary) _correctedFields.add('primary_color');
     }
     final trimmedName = _nameController.text.trim();
-    final itemName = trimmedName.isNotEmpty ? trimmedName : 'Wardrobe item';
     final brand = _brandController.text.trim();
 
-    if (_isSignedIn) {
-      setState(() => _saving = true);
-      try {
-        await ref
-            .read(wardrobeProvider.notifier)
-            .addUploadedItem(
-              bytes: _imageBytes ?? await _pickedFile!.readAsBytes(),
-              fileName: _pickedFile!.name,
-              name: trimmedName,
-              brand: brand.isEmpty ? null : brand,
-              fallbackCategory: _category!,
-              tags: _tags,
-              colorHexes: List.unmodifiable(_colorHexes),
-              color: _primaryHex == null ? null : coarseColorName(_primaryHex!),
-              pattern: _pattern,
-              silhouette: _silhouette,
-              analysisConfidence: _analysisConfidence,
-              classificationSource: _classificationSource,
-              colorSource: _colorSource,
-              correctedFields: Set.unmodifiable(_correctedFields),
-              localAnalysis: _localAnalysis,
-            );
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(wardrobeProvider.notifier)
+          .addUploadedItem(
+            bytes: _imageBytes ?? await _pickedFile!.readAsBytes(),
+            fileName: _isSignedIn ? _pickedFile!.name : _imagePath!,
+            name: trimmedName,
+            brand: brand.isEmpty ? null : brand,
+            fallbackCategory: _category!,
+            tags: _tags,
+            colorHexes: List.unmodifiable(_colorHexes),
+            color: _primaryHex == null ? null : coarseColorName(_primaryHex!),
+            pattern: _pattern,
+            silhouette: _silhouette,
+            analysisConfidence: _analysisConfidence,
+            classificationSource: _classificationSource,
+            colorSource: _colorSource,
+            correctedFields: Set.unmodifiable(_correctedFields),
+            localAnalysis: _localAnalysis,
+          );
+      if (_isSignedIn) {
         try {
           await _deleteImage(_imagePath!);
           _imagePath = null;
         } catch (error) {
           debugPrint('Could not remove uploaded staging image: $error');
         }
-        if (!mounted) return;
-        Navigator.pop(context);
-        return;
-      } catch (error) {
-        if (mounted) {
-          _showError('Could not save item: $error');
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _saving = false);
-        }
+      } else {
+        _retainLocalImage = true;
       }
-    }
-
-    final item = ClothingItem(
-      id: _uuid.v4(),
-      name: itemName,
-      brand: brand.isEmpty ? null : brand,
-      category: _category!,
-      imageUrl: _imagePath!,
-      tags: _tags,
-      color: _primaryHex == null ? null : coarseColorName(_primaryHex!),
-      colorHexes: List.unmodifiable(_colorHexes),
-      pattern: _pattern,
-      silhouette: _silhouette,
-      analysisConfidence: _analysisConfidence,
-      classificationSource: _classificationSource,
-      colorSource: _colorSource,
-      material: _localAnalysis?.material ?? ClothingMaterial.unknown,
-      fit: _localAnalysis?.fit ?? ClothingFit.unknown,
-      styles: _localAnalysis?.resolvedStyles ?? const [],
-      formality: _localAnalysis?.formality ?? ClothingFormality.unknown,
-      seasons: _localAnalysis?.seasons ?? const [],
-      weatherSuitability: _localAnalysis?.weatherSuitability ?? const [],
-      warmthLevel: _localAnalysis?.warmthLevel,
-      analysisSource:
-          _classificationSource == 'manual' || _colorSource == 'manual'
-          ? AnalysisSource.manual
-          : _localAnalysis?.source ?? AnalysisSource.unknown,
-      analysisStatus: _localAnalysis?.status ?? AnalysisStatus.failed,
-      analysisVersion: currentAnalysisVersion,
-      correctedFields: Set.unmodifiable(_correctedFields),
-      userCorrected: _correctedFields.isNotEmpty,
-      analyzedAt: DateTime.now(),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    setState(() => _saving = true);
-    try {
-      await ref.read(wardrobeProvider.notifier).addItem(item);
-      _retainLocalImage = true;
       if (!mounted) return;
       Navigator.pop(context);
     } catch (error) {

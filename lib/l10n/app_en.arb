@@ -220,6 +220,7 @@
   "rushGotIt": "Got It",
   "rushWearThis": "Wear This",
   "rushErrorNeedWardrobe": "Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.",
+  "rushErrorUnavailable": "No compatible rush outfit is available. Add shoes and a top + bottom or a dress.",
   "rushErrorSignIn": "Rush outfit uses your saved backend wardrobe. Sign in to use it.",
   "rushErrorNotDeployed": "Rush outfit is not deployed yet. Please try again after the backend is updated.",
   "rushErrorGeneric": "Could not pick a rush outfit right now. Check your wardrobe and try again.",

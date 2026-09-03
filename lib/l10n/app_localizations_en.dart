@@ -579,6 +579,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.';
 
   @override
+  String get rushErrorUnavailable =>
+      'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.';
+
+  @override
   String get rushErrorSignIn =>
       'Rush outfit uses your saved backend wardrobe. Sign in to use it.';
 

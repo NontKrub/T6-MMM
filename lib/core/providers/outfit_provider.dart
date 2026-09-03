@@ -6,6 +6,9 @@ import 'app_settings_provider.dart';
 import 'repetition_insight_provider.dart';
 import 'wardrobe_provider.dart';
 
+const rushOutfitUnavailableMessage =
+    'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.';
+
 final outfitsProvider = StateNotifierProvider<OutfitNotifier, List<Outfit>>((
   ref,
 ) {
@@ -124,7 +127,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
   Future<Outfit> rushBackendOutfit(WidgetRef ref) async {
     final outfit = await _repository.rushOutfit();
     if (outfit == null) {
-      throw StateError('Rush outfit requires a signed-in account.');
+      throw StateError(rushOutfitUnavailableMessage);
     }
     state = [outfit, ...state];
     return outfit;

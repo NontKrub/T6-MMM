@@ -24,8 +24,8 @@ class OutfitCandidateGenerator {
     if (shoes.isEmpty) return const [];
 
     final outerwear = _items(wardrobe, ClothingCategory.outerwear, context);
+    final headwear = _items(wardrobe, ClothingCategory.hat, context);
     final extras = _balancedExtras([
-      _items(wardrobe, ClothingCategory.hat, context),
       _items(wardrobe, ClothingCategory.bag, context),
       _items(wardrobe, ClothingCategory.accessory, context),
     ]);
@@ -38,12 +38,14 @@ class OutfitCandidateGenerator {
               bottoms.length *
               shoes.length *
               (outerwear.length + 1) *
+              (headwear.length + 1) *
               (extras.length + 1)
         : 0;
     final dressPotential = hasDress
         ? dresses.length *
               shoes.length *
               (outerwear.length + 1) *
+              (headwear.length + 1) *
               (extras.length + 1)
         : 0;
     var basicLimit = basicPotential < maxCandidates
@@ -83,18 +85,21 @@ class OutfitCandidateGenerator {
         for (final bottom in bottoms) {
           for (final shoe in shoes) {
             for (final layer in [null, ...outerwear]) {
-              for (final extra in [null, ...extras]) {
-                candidates.add(
-                  _candidate(
-                    top: top,
-                    bottom: bottom,
-                    shoes: shoe,
-                    outerwear: layer,
-                    extra: extra,
-                  ),
-                );
-                basicCount++;
-                if (basicCount >= basicLimit) break basic;
+              for (final hat in [null, ...headwear]) {
+                for (final extra in [null, ...extras]) {
+                  candidates.add(
+                    _candidate(
+                      top: top,
+                      bottom: bottom,
+                      shoes: shoe,
+                      outerwear: layer,
+                      headwear: hat,
+                      extra: extra,
+                    ),
+                  );
+                  basicCount++;
+                  if (basicCount >= basicLimit) break basic;
+                }
               }
             }
           }
@@ -108,17 +113,20 @@ class OutfitCandidateGenerator {
       for (final dress in dresses) {
         for (final shoe in shoes) {
           for (final layer in [null, ...outerwear]) {
-            for (final extra in [null, ...extras]) {
-              candidates.add(
-                _candidate(
-                  onePiece: dress,
-                  shoes: shoe,
-                  outerwear: layer,
-                  extra: extra,
-                ),
-              );
-              dressCount++;
-              if (dressCount >= dressLimit) break dress;
+            for (final hat in [null, ...headwear]) {
+              for (final extra in [null, ...extras]) {
+                candidates.add(
+                  _candidate(
+                    onePiece: dress,
+                    shoes: shoe,
+                    outerwear: layer,
+                    headwear: hat,
+                    extra: extra,
+                  ),
+                );
+                dressCount++;
+                if (dressCount >= dressLimit) break dress;
+              }
             }
           }
         }
@@ -198,9 +206,18 @@ class OutfitCandidateGenerator {
     ClothingItem? shoes,
     ClothingItem? outerwear,
     ClothingItem? onePiece,
+    ClothingItem? headwear,
     ClothingItem? extra,
   }) {
-    final items = [?onePiece, ?top, ?bottom, ?outerwear, ?shoes, ?extra];
+    final items = [
+      ?onePiece,
+      ?top,
+      ?bottom,
+      ?outerwear,
+      ?shoes,
+      ?headwear,
+      ?extra,
+    ];
     final key = items.map((item) => item.id).toList()..sort();
     return OutfitCandidate(
       id: 'candidate_${key.join('|')}',
@@ -209,7 +226,7 @@ class OutfitCandidateGenerator {
       shoes: shoes,
       outerwear: outerwear,
       onePiece: onePiece,
-      accessories: extra == null ? const [] : [extra],
+      accessories: [?headwear, ?extra],
     );
   }
 }

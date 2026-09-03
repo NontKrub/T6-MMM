@@ -33,6 +33,15 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
   bool uploadFails = false;
   int uploads = 0;
   Set<String> uploadedCorrectedFields = const {};
+  ClothingAnalysisResult? uploadedLocalAnalysis;
+  List<String> uploadedTags = const [];
+  List<String> uploadedColorHexes = const [];
+  String? uploadedColor;
+  ClothingPattern uploadedPattern = ClothingPattern.unknown;
+  ClothingSilhouette uploadedSilhouette = ClothingSilhouette.unknown;
+  double? uploadedAnalysisConfidence;
+  String? uploadedClassificationSource;
+  String? uploadedColorSource;
 
   @override
   Future<void> load() async {}
@@ -63,6 +72,49 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
     if (uploadFails) throw StateError('upload failed');
     uploads++;
     uploadedCorrectedFields = correctedFields;
+    uploadedLocalAnalysis = localAnalysis;
+    uploadedTags = tags;
+    uploadedColorHexes = colorHexes;
+    uploadedColor = color;
+    uploadedPattern = pattern;
+    uploadedSilhouette = silhouette;
+    uploadedAnalysisConfidence = analysisConfidence;
+    uploadedClassificationSource = classificationSource;
+    uploadedColorSource = colorSource;
+    final result = localAnalysis;
+    state = [
+      ...state,
+      ClothingItem(
+        id: 'uploaded-$uploads',
+        name: name.isEmpty ? 'Wardrobe item' : name,
+        brand: brand,
+        category: result?.category ?? fallbackCategory,
+        subtype: result?.subtype,
+        imageUrl: fileName,
+        imagePath: fileName,
+        tags: correctedFields.contains('tags') ? tags : const [],
+        color: color ?? result?.primaryColor,
+        colorHexes: colorHexes,
+        pattern: pattern,
+        material: result?.material ?? ClothingMaterial.unknown,
+        fit: result?.fit ?? ClothingFit.unknown,
+        silhouette: silhouette,
+        styles: result?.resolvedStyles ?? const [],
+        formality: result?.formality ?? ClothingFormality.unknown,
+        seasons: result?.seasons ?? const [],
+        weatherSuitability: result?.weatherSuitability ?? const [],
+        warmthLevel: result?.warmthLevel,
+        analysisConfidence: analysisConfidence ?? result?.confidence,
+        classificationSource:
+            classificationSource ?? result?.classificationSource,
+        colorSource: colorSource ?? result?.colorSource,
+        analysisSource: result?.source ?? AnalysisSource.unknown,
+        analysisStatus: result?.status ?? AnalysisStatus.failed,
+        analysisVersion: currentAnalysisVersion,
+        correctedFields: correctedFields,
+        userCorrected: correctedFields.isNotEmpty,
+      ),
+    ];
   }
 }
 
@@ -399,7 +451,66 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pumpAndSettle();
+    expect(notifier.uploads, 1);
     expect(deleted, isEmpty);
+  });
+
+  testWidgets('guest save sends rich metadata through upload path', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/guest-rich.jpg');
+    final notifier = _TestWardrobeNotifier();
+    const analysis = ClothingAnalysisResult(
+      category: ClothingCategory.top,
+      subtype: 'linen shirt',
+      primaryColor: 'blue',
+      colorHexes: ['#3366FF', '#FFFFFF'],
+      colorNames: ['blue', 'white'],
+      styles: ['casual'],
+      pattern: ClothingPattern.striped,
+      material: ClothingMaterial.linen,
+      fit: ClothingFit.relaxed,
+      silhouette: ClothingSilhouette.regular,
+      formality: ClothingFormality.casual,
+      seasons: [Season.summer],
+      weatherSuitability: [WeatherSuitability.warm],
+      warmthLevel: .2,
+      tags: ['linen'],
+      confidence: .91,
+      classificationSource: 'vision',
+      colorSource: 'palette',
+      source: AnalysisSource.localVision,
+      status: AnalysisStatus.partial,
+    );
+
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+      analysis: analysis,
+    );
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('work'));
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pumpAndSettle();
+
+    expect(notifier.uploads, 1);
+    expect(notifier.uploadedLocalAnalysis?.subtype, 'linen shirt');
+    expect(notifier.uploadedLocalAnalysis?.material, ClothingMaterial.linen);
+    expect(notifier.uploadedLocalAnalysis?.styles, ['casual']);
+    expect(notifier.uploadedTags, ['casual', 'work']);
+    expect(notifier.uploadedColorHexes, ['#3366FF', '#FFFFFF']);
+    expect(notifier.uploadedColor, 'blue');
+    expect(notifier.uploadedPattern, ClothingPattern.striped);
+    expect(notifier.uploadedSilhouette, ClothingSilhouette.regular);
+    expect(notifier.uploadedLocalAnalysis?.confidence, .91);
+    expect(notifier.uploadedLocalAnalysis?.source, AnalysisSource.localVision);
+    expect(notifier.uploadedAnalysisConfidence, isNull);
+    expect(notifier.uploadedClassificationSource, 'manual');
+    expect(notifier.uploadedColorSource, 'palette');
+    expect(notifier.uploadedCorrectedFields, {'tags'});
   });
 
   testWidgets('signed upload cleans staging only after success', (

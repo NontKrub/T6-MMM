@@ -1184,6 +1184,12 @@ abstract class AppLocalizations {
   /// **'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.'**
   String get rushErrorNeedWardrobe;
 
+  /// No description provided for @rushErrorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.'**
+  String get rushErrorUnavailable;
+
   /// No description provided for @rushErrorSignIn.
   ///
   /// In en, this message translates to:

@@ -54,6 +54,10 @@ class _InARushModalState extends ConsumerState<InARushModal> {
 
   String _friendlyRushError(Object error, AppLocalizations? l) {
     final text = error.toString();
+    if (text.contains('No compatible rush outfit')) {
+      return l?.rushErrorUnavailable ??
+          'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.';
+    }
     if (text.contains('Add at least one top')) {
       return l?.rushErrorNeedWardrobe ??
           'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.';
