@@ -112,7 +112,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
         }
         if (action != 'wear') return;
       }
-      await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
+      await ref
+          .read(outfitsProvider.notifier)
+          .selectOutfit(outfit, ref, previousRepeatCount: count);
       if (mounted) Navigator.pop(context);
     } finally {
       if (mounted) setState(() => _wearing = false);

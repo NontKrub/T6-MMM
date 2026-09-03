@@ -408,6 +408,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDailyReminder => 'Daily outfit reminder';
 
   @override
+  String get settingsNotificationsPermissionDenied =>
+      'Notifications are disabled. MMM will continue without reminders.';
+
+  @override
   String get settingsRepetitionAlerts => 'Repetition alerts';
 
   @override

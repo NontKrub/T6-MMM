@@ -860,6 +860,12 @@ abstract class AppLocalizations {
   /// **'Daily outfit reminder'**
   String get settingsDailyReminder;
 
+  /// No description provided for @settingsNotificationsPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are disabled. MMM will continue without reminders.'**
+  String get settingsNotificationsPermissionDenied;
+
   /// No description provided for @settingsRepetitionAlerts.
   ///
   /// In en, this message translates to:

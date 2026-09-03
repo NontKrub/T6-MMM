@@ -157,6 +157,7 @@
   "settingsWeatherValue": "ตรวจจับอัตโนมัติ",
   "settingsNotifications": "การแจ้งเตือน",
   "settingsDailyReminder": "เตือนชุดประจำวัน",
+  "settingsNotificationsPermissionDenied": "ปิดการแจ้งเตือนแล้ว MMM จะทำงานต่อได้โดยไม่มีการเตือน",
   "settingsRepetitionAlerts": "แจ้งเตือนการซ้ำ",
   "settingsImportLocal": "นำเข้าตู้เสื้อผ้าในเครื่อง",
   "settingsImportLocalSubtitle": "นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมต่อ",

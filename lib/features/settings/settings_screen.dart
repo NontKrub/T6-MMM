@@ -14,6 +14,7 @@ import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/guest_account_migration_service.dart';
 import '../../core/services/ai_consent_repository.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -113,13 +114,17 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: const Color(0xFF34D399),
             title: l10n?.settingsDailyReminder ?? 'Daily outfit reminder',
             subtitle: appSettings.dailyOutfitReminder
-                ? (l10n?.settingsDarkModeOn ?? 'On')
+                ? '${l10n?.settingsDarkModeOn ?? 'On'} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay(hour: appSettings.dailyOutfitReminderMinutes ~/ 60, minute: appSettings.dailyOutfitReminderMinutes % 60))}'
                 : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
               value: appSettings.dailyOutfitReminder,
-              onChanged: (value) => ref
-                  .read(appSettingsProvider.notifier)
-                  .setDailyOutfitReminder(value),
+              onChanged: (value) => _setDailyOutfitReminder(
+                context,
+                ref,
+                appSettings,
+                l10n,
+                value,
+              ),
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
@@ -132,9 +137,8 @@ class SettingsScreen extends ConsumerWidget {
                 : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
               value: appSettings.repetitionAlerts,
-              onChanged: (value) => ref
-                  .read(appSettingsProvider.notifier)
-                  .setRepetitionAlerts(value),
+              onChanged: (value) =>
+                  _setRepetitionAlerts(context, ref, l10n, value),
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
@@ -452,6 +456,75 @@ class SettingsScreen extends ConsumerWidget {
         context,
       ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
+  }
+
+  Future<void> _setDailyOutfitReminder(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    final notifier = ref.read(appSettingsProvider.notifier);
+    if (!value) {
+      await notificationService.disableDailyReminder();
+      await notifier.setDailyOutfitReminder(false);
+      return;
+    }
+
+    final current = TimeOfDay(
+      hour: settings.dailyOutfitReminderMinutes ~/ 60,
+      minute: settings.dailyOutfitReminderMinutes % 60,
+    );
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: current,
+    );
+    if (selected == null) return;
+    await notifier.setDailyOutfitReminderMinutes(
+      selected.hour * 60 + selected.minute,
+    );
+    final scheduled = await notificationService.enableDailyReminder(selected);
+    if (!scheduled) {
+      await notifier.setDailyOutfitReminder(false);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsNotificationsPermissionDenied ??
+                'Notifications are disabled. MMM will continue without reminders.',
+          ),
+        ),
+      );
+      return;
+    }
+    await notifier.setDailyOutfitReminder(true);
+  }
+
+  Future<void> _setRepetitionAlerts(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    if (value) {
+      final permission = await notificationService.requestPermission();
+      if (!permission) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n?.settingsNotificationsPermissionDenied ??
+                  'Notifications are disabled. MMM will continue without reminders.',
+            ),
+          ),
+        );
+        return;
+      }
+    } else {
+      await notificationService.disableRepetitionAlerts();
+    }
+    await ref.read(appSettingsProvider.notifier).setRepetitionAlerts(value);
   }
 }
 

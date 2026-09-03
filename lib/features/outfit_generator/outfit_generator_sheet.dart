@@ -117,7 +117,9 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
         }
         if (action != 'wear') return;
       }
-      await ref.read(outfitsProvider.notifier).selectOutfit(outfit, ref);
+      await ref
+          .read(outfitsProvider.notifier)
+          .selectOutfit(outfit, ref, previousRepeatCount: count);
       if (mounted) Navigator.pop(context);
     } finally {
       if (mounted) setState(() => _wearing = false);

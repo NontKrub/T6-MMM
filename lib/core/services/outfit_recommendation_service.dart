@@ -9,6 +9,8 @@ import 'outfit_scoring_service.dart';
 String combinationKey(Iterable<String> itemIds) =>
     (itemIds.toSet().toList()..sort()).join('|');
 
+const repetitionAlertThreshold = 4;
+
 int repeatCount(Iterable<String> itemIds, Iterable<Iterable<String>> history) {
   final key = combinationKey(itemIds);
   return history.where((entry) => combinationKey(entry) == key).length;

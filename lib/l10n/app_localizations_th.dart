@@ -404,6 +404,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsDailyReminder => 'เตือนชุดประจำวัน';
 
   @override
+  String get settingsNotificationsPermissionDenied =>
+      'ปิดการแจ้งเตือนแล้ว MMM จะทำงานต่อได้โดยไม่มีการเตือน';
+
+  @override
   String get settingsRepetitionAlerts => 'แจ้งเตือนการซ้ำ';
 
   @override

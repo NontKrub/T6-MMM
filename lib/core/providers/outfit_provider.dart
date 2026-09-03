@@ -4,6 +4,8 @@ import '../../shared/models/outfit.dart';
 import '../services/outfit_repository.dart';
 import 'app_settings_provider.dart';
 import 'repetition_insight_provider.dart';
+import '../services/notification_service.dart';
+import '../services/outfit_recommendation_service.dart';
 import 'wardrobe_provider.dart';
 
 const rushOutfitUnavailableMessage =
@@ -33,7 +35,13 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     } catch (_) {}
   }
 
-  Future<void> selectOutfit(Outfit outfit, WidgetRef ref) async {
+  Future<void> selectOutfit(
+    Outfit outfit,
+    WidgetRef ref, {
+    int? previousRepeatCount,
+  }) async {
+    final repeats =
+        previousRepeatCount ?? await _repository.repeatCountFor(outfit.itemIds);
     await ref
         .read(wardrobeProvider.notifier)
         .markOutfitWorn(
@@ -42,6 +50,11 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
           style: outfit.style,
           source: _wearSourceFor(outfit),
         );
+    if (ref.read(appSettingsProvider).repetitionAlerts &&
+        repeats < repetitionAlertThreshold &&
+        repeats + 1 >= repetitionAlertThreshold) {
+      await notificationService.showRepetitionAlert(outfit.itemIds);
+    }
     ref.read(currentOutfitProvider.notifier).state = outfit;
 
     if (ref.read(appSettingsProvider).learnPreferences) {
