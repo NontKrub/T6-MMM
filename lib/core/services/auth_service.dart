@@ -21,7 +21,7 @@ class AuthService {
     final client = _client;
     if (client == null) {
       throw StateError(
-        'Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY.',
+        'Supabase is not configured. Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.',
       );
     }
     await client.auth.signInWithOAuth(

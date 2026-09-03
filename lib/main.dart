@@ -16,7 +16,7 @@ void main() async {
   if (AppConfig.isSupabaseConfigured) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
-      publishableKey: AppConfig.supabaseAnonKey,
+      publishableKey: AppConfig.supabasePublishableKey,
     );
   }
 

@@ -29,11 +29,21 @@ flutter run
 Run against Supabase:
 
 ```sh
-flutter run \
-  --dart-define=SUPABASE_URL=... \
-  --dart-define=SUPABASE_ANON_KEY=... \
-  --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
+cp config/runtime.example.json config/runtime.local.json
+# Fill config/runtime.local.json with the public project values.
+flutter run --dart-define-from-file=config/runtime.local.json
 ```
+
+For a release build, use a local untracked production file:
+
+```sh
+flutter build ipa --release \
+  --dart-define-from-file=config/runtime.production.json
+```
+
+The mobile binary intentionally contains the Supabase publishable key. RLS
+and database grants protect data; privileged Supabase, OpenRouter/OpenAI,
+Apple, Google, and Facebook secrets remain server-side.
 
 ## Quality Checks
 

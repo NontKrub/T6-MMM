@@ -9,25 +9,28 @@
   chat.
 - Open-Meteo forecast API for weather-aware outfit context.
 
-Facebook OAuth is intentionally out of scope for this build. Do not add a
-Facebook provider, login button, redirect setup, or related secrets unless that
-scope changes later.
+Facebook OAuth is available only when the Flutter runtime flag enables it and
+the Supabase/Meta provider configuration is complete.
 
 ## Flutter Runtime Config
 
-Run Flutter with compile-time environment values:
+Copy the example runtime file and fill in public project configuration:
 
 ```sh
-flutter run \
-  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY \
-  --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
+cp config/runtime.example.json config/runtime.local.json
+flutter run --dart-define-from-file=config/runtime.local.json
 ```
 
-If `SUPABASE_URL` or `SUPABASE_ANON_KEY` is missing, OAuth sign-in is shown as
-unavailable. Continue as guest still creates a local-only account for profile
-and wardrobe data; AI/backend features remain locked until Supabase is
+If `SUPABASE_URL` or `SUPABASE_PUBLISHABLE_KEY` is missing, OAuth sign-in is
+shown as unavailable. Continue as guest still creates a local-only account for
+profile and wardrobe data; AI/backend features remain locked until Supabase is
 configured and the user signs in.
+
+The publishable key is intended for code shipped to mobile clients. It is not a
+privileged secret: database grants and RLS enforce access. The Supabase Edge
+Function runtime may still expose its managed `SUPABASE_ANON_KEY` to the
+user-scoped client and uses `SUPABASE_SERVICE_ROLE_KEY` only for explicitly
+privileged server operations. Never place either server value in Flutter code.
 
 ## OAuth Redirect Setup
 
@@ -59,6 +62,12 @@ supabase secrets set WEATHER_API_URL=https://api.open-meteo.com/v1/forecast
 `OPENROUTER_MODEL` and `WEATHER_API_URL` are optional defaults. Open-Meteo does
 not require a weather API key. `OPENAI_API_KEY` and `OPENAI_MODEL` are still
 supported as a fallback if `OPENROUTER_API_KEY` is not set.
+
+## Facebook OAuth
+
+Configure Facebook in Supabase and Meta before setting `ENABLE_FACEBOOK_AUTH`
+to `true` in the runtime file. Leave it `false` until the provider has been
+verified; the app then hides the Facebook button.
 
 ## Deploy
 

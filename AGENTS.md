@@ -8,7 +8,7 @@ This is a Flutter app named `Mix Match Mood` (`MMM` for short). The Dart package
 
 - `flutter pub get`: install Dart and Flutter dependencies.
 - `flutter run`: run the app locally, using mock/guest mode if backend defines are absent.
-- `flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=AUTH_REDIRECT_URL=mmm://login-callback`: run against Supabase.
+- `flutter run --dart-define-from-file=config/runtime.local.json`: run against Supabase with local public configuration.
 - `flutter analyze`: run static analysis using `analysis_options.yaml`.
 - `flutter test`: run the Flutter test suite.
 - `dart format lib test`: format Dart source and tests.
@@ -29,4 +29,9 @@ This checkout has no Git history available, so no existing commit convention can
 
 ## Security & Configuration Tips
 
-Do not commit API keys or Supabase secrets. Runtime Flutter config should be passed with `--dart-define`; Edge Function secrets should be set with `supabase secrets set`. See `BACKEND_SETUP.md` for required Supabase, OpenAI, and weather configuration.
+The Supabase publishable key is safe to embed in the mobile binary when RLS
+and grants are correct. Do not commit privileged API keys or Supabase
+secrets. Runtime Flutter config should be passed with
+`--dart-define-from-file`; Edge Function secrets should be set with
+`supabase secrets set`. See `BACKEND_SETUP.md` for required Supabase,
+OpenAI, and weather configuration.
