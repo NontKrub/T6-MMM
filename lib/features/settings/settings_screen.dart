@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
+import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/locale_provider.dart';
 import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
@@ -10,6 +13,7 @@ import '../../core/providers/theme_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/guest_account_migration_service.dart';
+import '../../core/services/ai_consent_repository.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
@@ -26,6 +30,7 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final appSettings = ref.watch(appSettingsProvider);
     final pendingMigration = ref.watch(guestMigrationPendingProvider);
+    final aiConsent = ref.watch(aiConsentProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.settingsTitle ?? 'Settings')),
@@ -151,6 +156,12 @@ class SettingsScreen extends ConsumerWidget {
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 300.ms).fadeIn(duration: 300.ms),
+          _aiConsentTile(
+            context,
+            ref,
+            l10n,
+            aiConsent,
+          ).animate(delay: 325.ms).fadeIn(duration: 300.ms),
 
           // About
           _SectionHeader(title: l10n?.settingsAbout ?? 'About'),
@@ -165,7 +176,7 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: Colors.grey,
             title: l10n?.settingsPrivacy ?? 'Privacy Policy',
             subtitle: l10n?.settingsPrivacy ?? 'Privacy Policy',
-            onTap: () => _showPrivacyDialog(context, l10n),
+            onTap: () => _openPrivacyPolicy(context, l10n),
           ).animate(delay: 400.ms).fadeIn(duration: 300.ms),
         ],
       ),
@@ -307,25 +318,36 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showPrivacyDialog(BuildContext context, AppLocalizations? l10n) {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        final innerL10n = AppLocalizations.of(context);
-        return AlertDialog(
-          title: Text(innerL10n?.settingsPrivacy ?? 'Privacy Policy'),
+  Future<void> _openPrivacyPolicy(
+    BuildContext context,
+    AppLocalizations? l10n,
+  ) async {
+    final uri = Uri.tryParse(AppConfig.privacyPolicyUrl.trim());
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
           content: Text(
-            innerL10n?.settingsPrivacyContent ??
-                'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.',
+            l10n?.settingsPrivacyNotConfigured ??
+                'A public HTTPS privacy-policy URL has not been configured yet.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(innerL10n?.dialogClose ?? 'Close'),
+              child: Text(l10n?.dialogClose ?? 'Close'),
             ),
           ],
-        );
-      },
+        ),
+      );
+      return;
+    }
+
+    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n?.settingsPrivacy ?? 'Privacy Policy')),
     );
   }
 
@@ -352,6 +374,84 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _aiConsentTile(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    AsyncValue<bool> consent,
+  ) {
+    final signedIn = SupabaseService.isSignedIn;
+    final granted = consent.maybeWhen(
+      data: (value) => value,
+      orElse: () => false,
+    );
+    return _SettingsTile(
+      icon: Icons.privacy_tip_outlined,
+      iconColor: AppColors.seedColor,
+      title: l10n?.settingsAIConsent ?? 'Third-party AI analysis',
+      subtitle: !signedIn
+          ? (l10n?.settingsAIConsentSignIn ??
+                'Sign in to manage third-party AI consent')
+          : granted
+          ? (l10n?.settingsAIConsentGranted ?? 'Allowed — revoke anytime')
+          : (l10n?.settingsAIConsentOff ??
+                'Off — local and deterministic fallbacks stay available'),
+      trailing: Switch(
+        value: granted,
+        onChanged: signedIn
+            ? (value) => _setAiConsent(context, ref, l10n, value)
+            : null,
+        activeThumbColor: AppColors.seedColor,
+      ),
+    );
+  }
+
+  Future<void> _setAiConsent(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    if (value) {
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
+          content: Text(
+            l10n?.settingsAIConsentMessage ??
+                'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
+            ),
+          ],
+        ),
+      );
+      if (accepted != true) return;
+    }
+
+    try {
+      final repository = AiConsentRepository();
+      if (value) {
+        await repository.grantCurrentConsent();
+      } else {
+        await repository.revokeCurrentConsent();
+      }
+      ref.invalidate(aiConsentProvider);
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 }
 

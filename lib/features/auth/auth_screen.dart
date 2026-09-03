@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
+import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
@@ -42,6 +43,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _onAuthStateChange(AuthState authState) async {
     if (authState.event != AuthChangeEvent.signedIn) return;
+    ref.invalidate(aiConsentProvider);
     await ref.read(userProfileProvider.notifier).load();
     final migration = GuestAccountMigrationService();
     if (await migration.hasPendingMigration() && mounted) {
@@ -103,12 +105,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 20),
-            Expanded(child: Text('Importing local wardrobe…')),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.authImportingGuest ??
+                    'Importing local wardrobe…',
+              ),
+            ),
           ],
         ),
       ),

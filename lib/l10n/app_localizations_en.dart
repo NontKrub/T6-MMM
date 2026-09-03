@@ -294,6 +294,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatStatusLocked => 'Sign in required';
 
   @override
+  String get chatStatusConsentRequired => 'Consent required';
+
+  @override
   String get chatStatusUnlocked => 'Always styled';
 
   @override
@@ -305,6 +308,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatLockedMessage =>
       'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.';
+
+  @override
+  String get authImportingGuest => 'Importing local wardrobe…';
+
+  @override
+  String get chatConsentTitle => 'Fashion AI needs your consent';
+
+  @override
+  String get chatConsentMessage =>
+      'Allow MMM to send wardrobe images, wardrobe metadata, and fashion questions to its configured AI provider. You can revoke this permission in Settings.';
 
   @override
   String get chatPrompt1 => 'What\'s my color season?';
@@ -421,6 +434,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'AI tracks your choices to improve suggestions';
 
   @override
+  String get settingsAIConsent => 'Third-party AI analysis';
+
+  @override
+  String get settingsAIConsentGranted => 'Allowed — revoke anytime';
+
+  @override
+  String get settingsAIConsentOff =>
+      'Off — local and deterministic fallbacks stay available';
+
+  @override
+  String get settingsAIConsentSignIn =>
+      'Sign in to manage third-party AI consent';
+
+  @override
+  String get settingsAIConsentTitle => 'Allow third-party AI?';
+
+  @override
+  String get settingsAIConsentMessage =>
+      'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.';
+
+  @override
+  String get settingsAIConsentAccept => 'Allow AI analysis';
+
+  @override
   String get settingsAbout => 'About';
 
   @override
@@ -431,6 +468,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacy => 'Privacy Policy';
+
+  @override
+  String get settingsPrivacyNotConfigured =>
+      'A public HTTPS privacy-policy URL has not been configured yet.';
 
   @override
   String get settingsLanguage => 'Language';
@@ -787,7 +828,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyContent =>
-      'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.';
+      'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase. The app contains public Supabase configuration, while privileged API keys and secrets remain server-side.';
 
   @override
   String get dialogClose => 'Close';

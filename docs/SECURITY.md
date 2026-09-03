@@ -14,3 +14,12 @@ The Edge Function user-scoped client may use Supabase's managed
 `SUPABASE_ANON_KEY` together with the caller's JWT. That server runtime name is
 separate from the mobile `SUPABASE_PUBLISHABLE_KEY` name and must not be copied
 into the app.
+
+Third-party AI is opt-in. `user_consents` stores the consent type and policy
+version, and AI-capable Edge Functions verify the current unrevoked row before
+transmitting wardrobe data or questions. Revocation is enforced server-side;
+the client setting is not the security boundary.
+
+Account deletion derives the user ID from the caller JWT, removes Storage
+objects before deleting the Auth user, and keeps Apple revocation credentials
+inside Edge Function secrets only.

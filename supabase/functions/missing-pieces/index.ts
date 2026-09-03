@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { hasAiConsent } from "../_shared/ai_consent.ts";
 import {
   type ClothingItemRow,
   normalizeMissingPieceItems,
@@ -49,6 +50,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ recommendation: data });
     }
 
+    const aiConsent = await hasAiConsent(supabase, userId);
+
     const [{ data: profile }, { data: preferences }, { data: wardrobe }] =
       await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
@@ -74,44 +77,48 @@ Deno.serve(async (req) => {
     const selectedItems = normalizeMissingPieceItems(selectedRows);
     let result;
     try {
-      result = await openAiJson<{
-        recommendations: Array<{
-          category:
-            | "hat"
-            | "top"
-            | "pants"
-            | "shoes"
-            | "outerwear"
-            | "dress"
-            | "bag"
-            | "accessory";
-          title: string;
-          reason: string;
-          suggestion: string;
-          priority: string;
-        }>;
-      }>({
-        instructions:
-          "Recommend missing wardrobe pieces. When selected_items is non-empty, complete those garments first using category, color, pattern, silhouette, and style tags. Do not recommend an owned item unless explaining how to use it.",
-        input: [{
-          role: "user",
-          content: [{
-            type: "input_text",
-            text: JSON.stringify({
-              profile,
-              preferences,
-              wardrobe: wardrobeContext,
-              selected_items: selectedItems,
-            }),
+      if (!aiConsent) {
+        result = fallbackRecommendations(wardrobe ?? []);
+      } else {
+        result = await openAiJson<{
+          recommendations: Array<{
+            category:
+              | "hat"
+              | "top"
+              | "pants"
+              | "shoes"
+              | "outerwear"
+              | "dress"
+              | "bag"
+              | "accessory";
+            title: string;
+            reason: string;
+            suggestion: string;
+            priority: string;
+          }>;
+        }>({
+          instructions:
+            "Recommend missing wardrobe pieces. When selected_items is non-empty, complete those garments first using category, color, pattern, silhouette, and style tags. Do not recommend an owned item unless explaining how to use it.",
+          input: [{
+            role: "user",
+            content: [{
+              type: "input_text",
+              text: JSON.stringify({
+                profile,
+                preferences,
+                wardrobe: wardrobeContext,
+                selected_items: selectedItems,
+              }),
+            }],
           }],
-        }],
-        responseFormat: {
-          type: "json_schema",
-          name: "missing_piece_recommendations",
-          schema: recommendationsSchema,
-          strict: true,
-        },
-      });
+          responseFormat: {
+            type: "json_schema",
+            name: "missing_piece_recommendations",
+            schema: recommendationsSchema,
+            strict: true,
+          },
+        });
+      }
     } catch (error) {
       console.error(
         error instanceof Error

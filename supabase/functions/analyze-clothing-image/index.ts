@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { hasAiConsent } from "../_shared/ai_consent.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
 import { clothingAnalysisSchema, openAiJson } from "../_shared/openai.ts";
 
@@ -44,7 +45,13 @@ Deno.serve(async (req) => {
   if (options) return options;
 
   try {
-    const { userId } = await requireUser(req);
+    const { supabase, userId } = await requireUser(req);
+    if (!await hasAiConsent(supabase, userId)) {
+      return jsonResponse({
+        error: "Third-party AI consent is required for server image analysis.",
+        code: "ai_consent_required",
+      }, 403);
+    }
     const body = await readJson<Body>(req);
     if (typeof body.image_path !== "string" || !body.image_path.trim()) {
       return jsonResponse({ error: "image_path is required." }, 400);

@@ -9,6 +9,12 @@
   chat.
 - Open-Meteo forecast API for weather-aware outfit context.
 
+Third-party AI is opt-in. The app records the versioned grant in
+`user_consents`; image analysis, AI outfit ranking, missing-piece generation,
+and fashion chat verify that grant on the server. Without it, image analysis
+falls back to local/manual handling, outfit and missing-piece generation stay
+deterministic, and fashion chat is unavailable.
+
 Facebook OAuth is available only when the Flutter runtime flag enables it and
 the Supabase/Meta provider configuration is complete.
 
@@ -84,6 +90,10 @@ supabase secrets set WEATHER_API_URL=https://api.open-meteo.com/v1/forecast
 `OPENROUTER_MODEL` and `WEATHER_API_URL` are optional defaults. Open-Meteo does
 not require a weather API key. `OPENAI_API_KEY` and `OPENAI_MODEL` are still
 supported as a fallback if `OPENROUTER_API_KEY` is not set.
+
+The public privacy-policy URL is a build-time Flutter value. Set
+`PRIVACY_POLICY_URL` to a real HTTPS page in the untracked production runtime
+file before release; the example intentionally leaves it empty.
 
 ## Facebook OAuth
 

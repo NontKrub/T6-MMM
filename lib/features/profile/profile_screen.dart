@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/config/app_config.dart';
+import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
@@ -264,6 +265,7 @@ Future<void> _deleteAccount(
     await AuthService().deleteAccount();
     await LocalAccountRepository().clearGuestAccount();
     ref.invalidate(userProfileProvider);
+    ref.invalidate(aiConsentProvider);
     ref.invalidate(sessionProvider);
     ref.invalidate(wardrobeProvider);
     if (!context.mounted) return;
@@ -285,6 +287,7 @@ Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     await AuthService().signOut();
   }
   ref.invalidate(userProfileProvider);
+  ref.invalidate(aiConsentProvider);
   ref.invalidate(sessionProvider);
   ref.invalidate(wardrobeProvider);
   if (!context.mounted) return;

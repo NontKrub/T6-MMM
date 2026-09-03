@@ -290,6 +290,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get chatStatusLocked => 'ต้องเข้าสู่ระบบ';
 
   @override
+  String get chatStatusConsentRequired => 'ต้องให้ความยินยอม';
+
+  @override
   String get chatStatusUnlocked => 'พร้อมแนะนำเสมอ';
 
   @override
@@ -301,6 +304,16 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get chatLockedMessage =>
       'แชทใช้ตู้เสื้อผ้าที่บันทึกไว้และ AI ดำเนินการต่อด้วย Google หลังจากตั้งค่า Supabase';
+
+  @override
+  String get authImportingGuest => 'กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…';
+
+  @override
+  String get chatConsentTitle => 'Fashion AI ต้องการความยินยอม';
+
+  @override
+  String get chatConsentMessage =>
+      'อนุญาตให้ MMM ส่งรูปภาพ ข้อมูลตู้เสื้อผ้า และคำถามแฟชั่นไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้ คุณเพิกถอนสิทธิ์ได้ในการตั้งค่า';
 
   @override
   String get chatPrompt1 => 'ฤดูกาลสีของฉันคืออะไร?';
@@ -417,6 +430,30 @@ class AppLocalizationsTh extends AppLocalizations {
       'AI ติดตามตัวเลือกของคุณเพื่อปรับปรุงคำแนะนำ';
 
   @override
+  String get settingsAIConsent => 'การวิเคราะห์ด้วย AI ภายนอก';
+
+  @override
+  String get settingsAIConsentGranted => 'อนุญาตแล้ว — เพิกถอนได้ทุกเมื่อ';
+
+  @override
+  String get settingsAIConsentOff =>
+      'ปิด — ยังคงใช้การวิเคราะห์ในเครื่องและการสำรองแบบกำหนดแน่นอนได้';
+
+  @override
+  String get settingsAIConsentSignIn =>
+      'เข้าสู่ระบบเพื่อจัดการความยินยอม AI ภายนอก';
+
+  @override
+  String get settingsAIConsentTitle => 'อนุญาต AI ภายนอกหรือไม่?';
+
+  @override
+  String get settingsAIConsentMessage =>
+      'MMM อาจส่งรูปภาพ ข้อมูลตู้เสื้อผ้า และคำถามแฟชั่นไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้เพื่อวิเคราะห์และให้คำแนะนำ การอนุญาตนี้เป็นทางเลือกและเพิกถอนได้ในการตั้งค่า';
+
+  @override
+  String get settingsAIConsentAccept => 'อนุญาตการวิเคราะห์ด้วย AI';
+
+  @override
   String get settingsAbout => 'เกี่ยวกับ';
 
   @override
@@ -427,6 +464,10 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsPrivacy => 'นโยบายความเป็นส่วนตัว';
+
+  @override
+  String get settingsPrivacyNotConfigured =>
+      'ยังไม่ได้ตั้งค่าลิงก์นโยบายความเป็นส่วนตัวแบบ HTTPS สาธารณะ';
 
   @override
   String get settingsLanguage => 'ภาษา';
@@ -783,7 +824,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsPrivacyContent =>
-      'ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase เพื่อให้ฟีเจอร์ AI สร้างคำแนะนำได้ API keys และ secrets ไม่ถูกเก็บในแอป';
+      'ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase แอปมีเพียงการตั้งค่า Supabase ที่เปิดเผยได้ ส่วนคีย์ API และข้อมูลลับที่มีสิทธิ์สูงจะอยู่บนเซิร์ฟเวอร์';
 
   @override
   String get dialogClose => 'ปิด';

@@ -158,6 +158,12 @@ VALUES
     'generated'
   );
 
+INSERT INTO public.user_consents
+  (user_id, consent_type, policy_version)
+VALUES
+  ('10000000-0000-4000-8000-000000000001', 'third_party_ai', '2026-09-04-v1'),
+  ('20000000-0000-4000-8000-000000000002', 'third_party_ai', '2026-09-04-v1');
+
 INSERT INTO storage.objects (bucket_id, name, owner_id, metadata)
 VALUES (
   'wardrobe-images',
@@ -182,6 +188,7 @@ SELECT is((SELECT count(*) FROM public.chat_threads), 1::bigint, 'A reads own ch
 SELECT is((SELECT count(*) FROM public.chat_messages), 1::bigint, 'A reads own chat messages');
 SELECT is((SELECT count(*) FROM public.outfit_preference_events), 1::bigint, 'A reads own preference events');
 SELECT is((SELECT count(*) FROM public.recommendation_events), 1::bigint, 'A reads own recommendation events');
+SELECT is((SELECT count(*) FROM public.user_consents), 1::bigint, 'A reads own consent');
 
 SELECT results_eq(
   $$INSERT INTO public.style_preferences (user_id, kind, value)
@@ -270,6 +277,7 @@ SELECT is_empty($$SELECT * FROM public.chat_threads WHERE user_id = '10000000-00
 SELECT is_empty($$SELECT * FROM public.chat_messages WHERE thread_id = 'b0000000-0000-4000-8000-00000000000b'$$, 'B cannot read A chat messages');
 SELECT is_empty($$SELECT * FROM public.outfit_preference_events WHERE user_id = '10000000-0000-4000-8000-000000000001'$$, 'B cannot read A preference events');
 SELECT is_empty($$SELECT * FROM public.recommendation_events WHERE user_id = '10000000-0000-4000-8000-000000000001'$$, 'B cannot read A recommendation events');
+SELECT is_empty($$SELECT * FROM public.user_consents WHERE user_id = '10000000-0000-4000-8000-000000000001'$$, 'B cannot read A consent');
 
 SELECT is_empty($$UPDATE public.profiles SET display_name = 'hacked' WHERE id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot update A profile');
 SELECT is_empty($$UPDATE public.style_preferences SET value = 'hacked' WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot update A style preferences');
@@ -282,6 +290,7 @@ SELECT is_empty($$UPDATE public.chat_threads SET title = 'hacked' WHERE user_id 
 SELECT is_empty($$UPDATE public.chat_messages SET content = 'hacked' WHERE thread_id = 'b0000000-0000-4000-8000-00000000000b' RETURNING id$$, 'B cannot update A chat messages');
 SELECT is_empty($$UPDATE public.outfit_preference_events SET style = 'hacked' WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot update A preference events');
 SELECT is_empty($$UPDATE public.recommendation_events SET metadata = '{"hacked":true}'::jsonb WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot update A recommendation events');
+SELECT is_empty($$UPDATE public.user_consents SET revoked_at = now() WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING user_id$$, 'B cannot update A consent');
 
 SELECT is_empty($$DELETE FROM public.profiles WHERE id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot delete A profile');
 SELECT is_empty($$DELETE FROM public.style_preferences WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot delete A style preferences');
@@ -294,6 +303,7 @@ SELECT is_empty($$DELETE FROM public.chat_threads WHERE user_id = '10000000-0000
 SELECT is_empty($$DELETE FROM public.chat_messages WHERE thread_id = 'b0000000-0000-4000-8000-00000000000b' RETURNING id$$, 'B cannot delete A chat messages');
 SELECT is_empty($$DELETE FROM public.outfit_preference_events WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot delete A preference events');
 SELECT is_empty($$DELETE FROM public.recommendation_events WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING id$$, 'B cannot delete A recommendation events');
+SELECT is_empty($$DELETE FROM public.user_consents WHERE user_id = '10000000-0000-4000-8000-000000000001' RETURNING user_id$$, 'B cannot delete A consent');
 
 -- with-check policies reject attempts to create rows owned by A.
 SELECT throws_ok(
@@ -354,6 +364,11 @@ SELECT throws_ok(
       ARRAY['30000000-0000-4000-8000-000000000003'::uuid], 'shown')$$,
   '42501', null, 'B cannot create A recommendation events'
 );
+SELECT throws_ok(
+  $$INSERT INTO public.user_consents (user_id, consent_type, policy_version)
+    VALUES ('10000000-0000-4000-8000-000000000001', 'third_party_ai', 'stolen')$$,
+  '42501', null, 'B cannot create A consent'
+);
 
 -- An unauthenticated role has no table grant.
 SET LOCAL ROLE anon;
@@ -368,6 +383,7 @@ SELECT throws_ok($$SELECT * FROM public.chat_threads$$, '42501', null, 'anon can
 SELECT throws_ok($$SELECT * FROM public.chat_messages$$, '42501', null, 'anon cannot read chat messages');
 SELECT throws_ok($$SELECT * FROM public.outfit_preference_events$$, '42501', null, 'anon cannot read preference events');
 SELECT throws_ok($$SELECT * FROM public.recommendation_events$$, '42501', null, 'anon cannot read recommendation events');
+SELECT throws_ok($$SELECT * FROM public.user_consents$$, '42501', null, 'anon cannot read consent');
 
 -- Storage follows both the UID folder and owner_id.
 SET LOCAL ROLE authenticated;

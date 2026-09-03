@@ -118,10 +118,14 @@
 
   "chatTitle": "Fashion AI",
   "chatStatusLocked": "ต้องเข้าสู่ระบบ",
+  "chatStatusConsentRequired": "ต้องให้ความยินยอม",
   "chatStatusUnlocked": "พร้อมแนะนำเสมอ",
   "chatInputHint": "ถามเกี่ยวกับแฟชั่น…",
   "chatLockedTitle": "Fashion AI ต้องการการเข้าสู่ระบบ",
   "chatLockedMessage": "แชทใช้ตู้เสื้อผ้าที่บันทึกไว้และ AI ดำเนินการต่อด้วย Google หลังจากตั้งค่า Supabase",
+  "authImportingGuest": "กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…",
+  "chatConsentTitle": "Fashion AI ต้องการความยินยอม",
+  "chatConsentMessage": "อนุญาตให้ MMM ส่งรูปภาพ ข้อมูลตู้เสื้อผ้า และคำถามแฟชั่นไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้ คุณเพิกถอนสิทธิ์ได้ในการตั้งค่า",
   "chatPrompt1": "ฤดูกาลสีของฉันคืออะไร?",
   "chatPrompt2": "สไตล์นี้ชื่ออะไร",
   "chatPrompt3": "สร้างตู้เสื้อผ้าแคปซูล",
@@ -161,10 +165,18 @@
   "settingsAI": "ฟีเจอร์ AI",
   "settingsLearnPreferences": "เรียนรู้ความชอบของฉัน",
   "settingsLearnPreferencesSubtitle": "AI ติดตามตัวเลือกของคุณเพื่อปรับปรุงคำแนะนำ",
+  "settingsAIConsent": "การวิเคราะห์ด้วย AI ภายนอก",
+  "settingsAIConsentGranted": "อนุญาตแล้ว — เพิกถอนได้ทุกเมื่อ",
+  "settingsAIConsentOff": "ปิด — ยังคงใช้การวิเคราะห์ในเครื่องและการสำรองแบบกำหนดแน่นอนได้",
+  "settingsAIConsentSignIn": "เข้าสู่ระบบเพื่อจัดการความยินยอม AI ภายนอก",
+  "settingsAIConsentTitle": "อนุญาต AI ภายนอกหรือไม่?",
+  "settingsAIConsentMessage": "MMM อาจส่งรูปภาพ ข้อมูลตู้เสื้อผ้า และคำถามแฟชั่นไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้เพื่อวิเคราะห์และให้คำแนะนำ การอนุญาตนี้เป็นทางเลือกและเพิกถอนได้ในการตั้งค่า",
+  "settingsAIConsentAccept": "อนุญาตการวิเคราะห์ด้วย AI",
   "settingsAbout": "เกี่ยวกับ",
   "settingsVersion": "เวอร์ชัน",
   "settingsVersionValue": "1.0.0 (build 1)",
   "settingsPrivacy": "นโยบายความเป็นส่วนตัว",
+  "settingsPrivacyNotConfigured": "ยังไม่ได้ตั้งค่าลิงก์นโยบายความเป็นส่วนตัวแบบ HTTPS สาธารณะ",
   "settingsLanguage": "ภาษา",
   "settingsLanguageValue": "ภาษาไทย",
 
@@ -310,7 +322,7 @@
   "settingsWeatherAutoDetectSubtitle": "ใช้ตำแหน่งของอุปกรณ์เมื่อเปิดใช้การจับคู่สภาพอากาศ",
   "settingsWeatherOff": "ปิด",
   "settingsWeatherOffSubtitle": "การสร้างชุดจะข้ามการจับคู่สภาพอากาศ",
-  "settingsPrivacyContent": "ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase เพื่อให้ฟีเจอร์ AI สร้างคำแนะนำได้ API keys และ secrets ไม่ถูกเก็บในแอป",
+  "settingsPrivacyContent": "ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase แอปมีเพียงการตั้งค่า Supabase ที่เปิดเผยได้ ส่วนคีย์ API และข้อมูลลับที่มีสิทธิ์สูงจะอยู่บนเซิร์ฟเวอร์",
 
   "dialogClose": "ปิด"
 }

@@ -638,6 +638,12 @@ abstract class AppLocalizations {
   /// **'Sign in required'**
   String get chatStatusLocked;
 
+  /// No description provided for @chatStatusConsentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Consent required'**
+  String get chatStatusConsentRequired;
+
   /// No description provided for @chatStatusUnlocked.
   ///
   /// In en, this message translates to:
@@ -661,6 +667,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.'**
   String get chatLockedMessage;
+
+  /// No description provided for @authImportingGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing local wardrobe…'**
+  String get authImportingGuest;
+
+  /// No description provided for @chatConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fashion AI needs your consent'**
+  String get chatConsentTitle;
+
+  /// No description provided for @chatConsentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow MMM to send wardrobe images, wardrobe metadata, and fashion questions to its configured AI provider. You can revoke this permission in Settings.'**
+  String get chatConsentMessage;
 
   /// No description provided for @chatPrompt1.
   ///
@@ -884,6 +908,48 @@ abstract class AppLocalizations {
   /// **'AI tracks your choices to improve suggestions'**
   String get settingsLearnPreferencesSubtitle;
 
+  /// No description provided for @settingsAIConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party AI analysis'**
+  String get settingsAIConsent;
+
+  /// No description provided for @settingsAIConsentGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed — revoke anytime'**
+  String get settingsAIConsentGranted;
+
+  /// No description provided for @settingsAIConsentOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off — local and deterministic fallbacks stay available'**
+  String get settingsAIConsentOff;
+
+  /// No description provided for @settingsAIConsentSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to manage third-party AI consent'**
+  String get settingsAIConsentSignIn;
+
+  /// No description provided for @settingsAIConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow third-party AI?'**
+  String get settingsAIConsentTitle;
+
+  /// No description provided for @settingsAIConsentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.'**
+  String get settingsAIConsentMessage;
+
+  /// No description provided for @settingsAIConsentAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow AI analysis'**
+  String get settingsAIConsentAccept;
+
   /// No description provided for @settingsAbout.
   ///
   /// In en, this message translates to:
@@ -907,6 +973,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy Policy'**
   String get settingsPrivacy;
+
+  /// No description provided for @settingsPrivacyNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'A public HTTPS privacy-policy URL has not been configured yet.'**
+  String get settingsPrivacyNotConfigured;
 
   /// No description provided for @settingsLanguage.
   ///
@@ -1559,7 +1631,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyContent.
   ///
   /// In en, this message translates to:
-  /// **'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.'**
+  /// **'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase. The app contains public Supabase configuration, while privileged API keys and secrets remain server-side.'**
   String get settingsPrivacyContent;
 
   /// No description provided for @dialogClose.

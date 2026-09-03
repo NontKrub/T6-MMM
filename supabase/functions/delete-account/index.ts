@@ -1,4 +1,7 @@
-import { batches, parseDeleteAccountRequest } from "../_shared/account_deletion.ts";
+import {
+  batches,
+  parseDeleteAccountRequest,
+} from "../_shared/account_deletion.ts";
 import { revokeAppleAuthorizationCode } from "../_shared/apple_account_deletion.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
@@ -16,7 +19,9 @@ Deno.serve(async (req) => {
     const { userId } = await requireUser(req);
     const request = parseDeleteAccountRequest(await readJson<unknown>(req));
     const admin = serviceClient();
-    const { data, error: userError } = await admin.auth.admin.getUserById(userId);
+    const { data, error: userError } = await admin.auth.admin.getUserById(
+      userId,
+    );
     if (userError || !data.user) {
       return jsonResponse({ deleted: true });
     }
@@ -56,7 +61,9 @@ Deno.serve(async (req) => {
       error instanceof Error ? error.message : "Account deletion failed.",
     );
     return jsonResponse({
-      error: error instanceof Error ? error.message : "Account deletion failed.",
+      error: error instanceof Error
+        ? error.message
+        : "Account deletion failed.",
     }, 500);
   }
 });

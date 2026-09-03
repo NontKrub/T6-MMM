@@ -118,10 +118,14 @@
 
   "chatTitle": "Fashion AI",
   "chatStatusLocked": "Sign in required",
+  "chatStatusConsentRequired": "Consent required",
   "chatStatusUnlocked": "Always styled",
   "chatInputHint": "Ask about fashion…",
   "chatLockedTitle": "Fashion AI needs a login",
   "chatLockedMessage": "Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.",
+  "authImportingGuest": "Importing local wardrobe…",
+  "chatConsentTitle": "Fashion AI needs your consent",
+  "chatConsentMessage": "Allow MMM to send wardrobe images, wardrobe metadata, and fashion questions to its configured AI provider. You can revoke this permission in Settings.",
   "chatPrompt1": "What's my color season?",
   "chatPrompt2": "Name this style",
   "chatPrompt3": "Build a capsule wardrobe",
@@ -161,10 +165,18 @@
   "settingsAI": "AI Features",
   "settingsLearnPreferences": "Learn my preferences",
   "settingsLearnPreferencesSubtitle": "AI tracks your choices to improve suggestions",
+  "settingsAIConsent": "Third-party AI analysis",
+  "settingsAIConsentGranted": "Allowed — revoke anytime",
+  "settingsAIConsentOff": "Off — local and deterministic fallbacks stay available",
+  "settingsAIConsentSignIn": "Sign in to manage third-party AI consent",
+  "settingsAIConsentTitle": "Allow third-party AI?",
+  "settingsAIConsentMessage": "MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.",
+  "settingsAIConsentAccept": "Allow AI analysis",
   "settingsAbout": "About",
   "settingsVersion": "Version",
   "settingsVersionValue": "1.0.0 (build 1)",
   "settingsPrivacy": "Privacy Policy",
+  "settingsPrivacyNotConfigured": "A public HTTPS privacy-policy URL has not been configured yet.",
   "settingsLanguage": "Language",
   "settingsLanguageValue": "English",
 
@@ -310,7 +322,7 @@
   "settingsWeatherAutoDetectSubtitle": "Uses device location when weather matching is enabled.",
   "settingsWeatherOff": "Off",
   "settingsWeatherOffSubtitle": "Outfit generation will skip weather matching.",
-  "settingsPrivacyContent": "Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.",
+  "settingsPrivacyContent": "Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase. The app contains public Supabase configuration, while privileged API keys and secrets remain server-side.",
 
   "dialogClose": "Close"
 }

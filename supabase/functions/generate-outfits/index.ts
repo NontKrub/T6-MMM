@@ -7,6 +7,7 @@ import {
   selectUsableOutfitsFromGenerated,
   WearEventRow,
 } from "../_shared/domain.ts";
+import { hasAiConsent } from "../_shared/ai_consent.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { openAiJson, outfitSchema } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
@@ -28,6 +29,7 @@ Deno.serve(async (req) => {
 
   try {
     const { supabase, userId } = await requireUser(req);
+    const aiConsent = await hasAiConsent(supabase, userId);
     const body = await readJson<Body>(req);
     const style = body.style ?? "casual";
 
@@ -94,77 +96,81 @@ Deno.serve(async (req) => {
         }
       >;
     } | null = null;
-    try {
-      generated = await openAiJson<
-        {
-          outfits: Array<
-            {
-              name: string;
-              item_ids: string[];
-              style: string;
-              reason: string;
-              score: number;
-            }
-          >;
-        }
-      >({
-        instructions:
-          "You are a fashion outfit planner. Choose only from the provided scored candidates. A complete outfit may be top + pants + shoes, or dress + shoes. Optional outerwear and accessories may be included when present in the candidate. Never invent clothing IDs. Preserve practical weather, lucky color, personal color, and low-repetition reasoning.",
-        input: [{
-          role: "user",
-          content: [{
-            type: "input_text",
-            text: JSON.stringify({
-              requested_style: style,
-              use_personal_color: body.use_personal_color ?? false,
-              use_lucky_color: body.use_lucky_color ?? false,
-              match_weather: body.match_weather ?? false,
-              weather: body.weather ?? null,
-              lucky_colors: body.lucky_colors ?? [],
-              target_hex: body.target_hex ?? null,
-              profile: {
-                color_season: profile?.color_season ?? null,
-                body_type: profile?.body_type ?? null,
-                style_preferences: stylePreferences,
-              },
-              candidates: candidates.slice(0, 16).map((candidate) => ({
-                name: candidate.name,
-                item_ids: candidate.item_ids,
-                style: candidate.style,
-                reason: candidate.reason,
-                score: candidate.score,
-                selection_factors: candidate.selection_factors,
-                items: candidate.item_ids.map((id) => {
-                  const item = wardrobe.find((wardrobeItem) =>
-                    wardrobeItem.id === id
-                  );
-                  return item
-                    ? {
-                      id: item.id,
-                      name: item.name,
-                      category: item.category,
-                      color: item.primary_color,
-                      tags: item.tags,
-                      detected_attributes: item.detected_attributes ?? {},
-                      ai_confidence: item.ai_confidence ?? null,
-                    }
-                    : null;
-                }).filter(Boolean),
-              })),
-            }),
+    if (aiConsent) {
+      try {
+        generated = await openAiJson<
+          {
+            outfits: Array<
+              {
+                name: string;
+                item_ids: string[];
+                style: string;
+                reason: string;
+                score: number;
+              }
+            >;
+          }
+        >({
+          instructions:
+            "You are a fashion outfit planner. Choose only from the provided scored candidates. A complete outfit may be top + pants + shoes, or dress + shoes. Optional outerwear and accessories may be included when present in the candidate. Never invent clothing IDs. Preserve practical weather, lucky color, personal color, and low-repetition reasoning.",
+          input: [{
+            role: "user",
+            content: [{
+              type: "input_text",
+              text: JSON.stringify({
+                requested_style: style,
+                use_personal_color: body.use_personal_color ?? false,
+                use_lucky_color: body.use_lucky_color ?? false,
+                match_weather: body.match_weather ?? false,
+                weather: body.weather ?? null,
+                lucky_colors: body.lucky_colors ?? [],
+                target_hex: body.target_hex ?? null,
+                profile: {
+                  color_season: profile?.color_season ?? null,
+                  body_type: profile?.body_type ?? null,
+                  style_preferences: stylePreferences,
+                },
+                candidates: candidates.slice(0, 16).map((candidate) => ({
+                  name: candidate.name,
+                  item_ids: candidate.item_ids,
+                  style: candidate.style,
+                  reason: candidate.reason,
+                  score: candidate.score,
+                  selection_factors: candidate.selection_factors,
+                  items: candidate.item_ids.map((id) => {
+                    const item = wardrobe.find((wardrobeItem) =>
+                      wardrobeItem.id === id
+                    );
+                    return item
+                      ? {
+                        id: item.id,
+                        name: item.name,
+                        category: item.category,
+                        color: item.primary_color,
+                        tags: item.tags,
+                        detected_attributes: item.detected_attributes ?? {},
+                        ai_confidence: item.ai_confidence ?? null,
+                      }
+                      : null;
+                  }).filter(Boolean),
+                })),
+              }),
+            }],
           }],
-        }],
-        responseFormat: {
-          type: "json_schema",
-          name: "outfit_generation",
-          schema: outfitSchema,
-          strict: true,
-        },
-      });
-    } catch (error) {
-      console.error(
-        error instanceof Error ? error.message : "AI outfit generation failed.",
-      );
+          responseFormat: {
+            type: "json_schema",
+            name: "outfit_generation",
+            schema: outfitSchema,
+            strict: true,
+          },
+        });
+      } catch (error) {
+        console.error(
+          error instanceof Error
+            ? error.message
+            : "AI outfit generation failed.",
+        );
+      }
     }
 
     const validIds = new Set(wardrobe.map((item) => item.id));

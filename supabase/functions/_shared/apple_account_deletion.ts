@@ -26,13 +26,17 @@ export async function revokeAppleAuthorizationCode(
     }),
   });
   if (!tokenResponse.ok) {
-    throw new Error(`Apple authorization exchange failed (${tokenResponse.status}).`);
+    throw new Error(
+      `Apple authorization exchange failed (${tokenResponse.status}).`,
+    );
   }
   const tokenPayload = await tokenResponse.json() as {
     refresh_token?: unknown;
   };
-  if (typeof tokenPayload.refresh_token !== "string" ||
-      !tokenPayload.refresh_token) {
+  if (
+    typeof tokenPayload.refresh_token !== "string" ||
+    !tokenPayload.refresh_token
+  ) {
     throw new Error("Apple did not return a refresh token for revocation.");
   }
 
@@ -47,7 +51,9 @@ export async function revokeAppleAuthorizationCode(
     }),
   });
   if (!revokeResponse.ok) {
-    throw new Error(`Apple token revocation failed (${revokeResponse.status}).`);
+    throw new Error(
+      `Apple token revocation failed (${revokeResponse.status}).`,
+    );
   }
 }
 

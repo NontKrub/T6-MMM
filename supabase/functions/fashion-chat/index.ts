@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { hasAiConsent } from "../_shared/ai_consent.ts";
 import { chatSchema, openAiJson } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
@@ -13,6 +14,12 @@ Deno.serve(async (req) => {
 
   try {
     const { supabase, userId } = await requireUser(req);
+    if (!await hasAiConsent(supabase, userId)) {
+      return jsonResponse({
+        error: "Third-party AI consent is required for fashion chat.",
+        code: "ai_consent_required",
+      }, 403);
+    }
     const body = await readJson<Body>(req);
     if (!body.message?.trim()) {
       return jsonResponse({ error: "message is required." }, 400);
