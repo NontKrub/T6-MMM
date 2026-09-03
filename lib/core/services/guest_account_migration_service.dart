@@ -198,6 +198,15 @@ class GuestAccountMigrationService {
           targetId = Uuid.isValidUUID(fromString: item.id)
               ? item.id
               : _uuid.v4();
+          if (await _wardrobe.hasCloudItem(targetId)) {
+            final alternateId = _uuid.v5(
+              Namespace.url.value,
+              'mmm-guest-item:${user.id}:${item.id}',
+            );
+            targetId = await _wardrobe.hasCloudItem(alternateId)
+                ? _uuid.v4()
+                : alternateId;
+          }
           state = await _save(
             state.copyWith(itemIdMap: {...state.itemIdMap, item.id: targetId}),
           );
@@ -211,7 +220,7 @@ class GuestAccountMigrationService {
             bytes: bytes,
           );
         } on PostgrestException catch (error) {
-          if (error.code != '23505') rethrow;
+          if (error.code != '23505' && error.code != '42501') rethrow;
           final alternateId = _uuid.v5(
             Namespace.url.value,
             'mmm-guest-item:${user.id}:${item.id}',
@@ -328,7 +337,7 @@ class GuestAccountMigrationService {
           .toSet()
           .toList();
       await client.from('wear_events').upsert({
-        'id': _eventId(userId, 'wear', index, jsonEncode(_wearJson(event))),
+        'id': _eventId(userId, 'wear', _wearEventKey(event)),
         'user_id': userId,
         'outfit_id': null,
         'clothing_item_ids': itemIds,
@@ -342,7 +351,7 @@ class GuestAccountMigrationService {
     for (var index = 0; index < snapshot.preferenceEvents.length; index++) {
       final event = snapshot.preferenceEvents[index];
       await client.from('outfit_preference_events').upsert({
-        'id': _eventId(userId, 'preference', index, jsonEncode(event.toJson())),
+        'id': _eventId(userId, 'preference', jsonEncode(event.toJson())),
         'user_id': userId,
         'outfit_id': null,
         'style': event.style,
@@ -364,8 +373,7 @@ class GuestAccountMigrationService {
         'id': _eventId(
           userId,
           'recommendation',
-          index,
-          jsonEncode(event.toJson()),
+          _recommendationEventKey(event),
         ),
         'user_id': userId,
         'outfit_id': null,
@@ -419,17 +427,11 @@ class GuestAccountMigrationService {
 
     final eventIds = [
       for (var i = 0; i < snapshot.wearEvents.length; i++)
-        _eventId(
-          userId,
-          'wear',
-          i,
-          jsonEncode(_wearJson(snapshot.wearEvents[i])),
-        ),
+        _eventId(userId, 'wear', _wearEventKey(snapshot.wearEvents[i])),
       for (var i = 0; i < snapshot.preferenceEvents.length; i++)
         _eventId(
           userId,
           'preference',
-          i,
           jsonEncode(snapshot.preferenceEvents[i].toJson()),
         ),
       for (var i = 0; i < snapshot.recommendationEvents.length; i++)
@@ -438,8 +440,7 @@ class GuestAccountMigrationService {
           _eventId(
             userId,
             'recommendation',
-            i,
-            jsonEncode(snapshot.recommendationEvents[i].toJson()),
+            _recommendationEventKey(snapshot.recommendationEvents[i]),
           ),
     ];
     if (eventIds.isEmpty) return;
@@ -474,14 +475,16 @@ class GuestAccountMigrationService {
   List<String> _mappedItemIds(
     List<String> itemIds,
     GuestMigrationState state,
-  ) => itemIds
-      .map((id) => state.itemIdMap[id])
-      .whereType<String>()
-      .toSet()
-      .toList();
+  ) => mapGuestItemIds(itemIds, state);
 
-  String _eventId(String userId, String type, int index, String source) => _uuid
-      .v5(Namespace.url.value, 'mmm-guest-event:$userId:$type:$index:$source');
+  String _eventId(String userId, String type, String source) =>
+      _uuid.v5(Namespace.url.value, 'mmm-guest-event:$userId:$type:$source');
+
+  String _wearEventKey(WearEvent event) =>
+      event.id ?? jsonEncode(_wearJson(event));
+
+  String _recommendationEventKey(RecommendationEvent event) =>
+      event.id ?? jsonEncode(event.toJson());
 
   Map<String, dynamic> _wearJson(WearEvent event) => {
     'id': event.id,
@@ -495,6 +498,18 @@ class GuestAccountMigrationService {
       const {'recommended', 'manual', 'in_a_rush'}.contains(value)
       ? value
       : 'manual';
+}
+
+List<String> mapGuestItemIds(List<String> itemIds, GuestMigrationState state) {
+  final sourceIds = itemIds.toSet();
+  final mappedIds = sourceIds
+      .map((id) => state.itemIdMap[id])
+      .whereType<String>()
+      .toSet();
+  if (mappedIds.length != sourceIds.length) {
+    throw StateError('A migrated event references an unknown wardrobe item.');
+  }
+  return mappedIds.toList();
 }
 
 T _enumValue<T extends Enum>(Iterable<T> values, String? raw, T fallback) =>

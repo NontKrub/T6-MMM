@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run with backend (compile-time env vars required)
 flutter run \
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY \
   --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
 
 # Run in guest/mock mode (no backend)
@@ -45,7 +45,7 @@ lib/
 
 ### Key patterns
 
-- **Mock/guest mode**: `AppConfig.isSupabaseConfigured` is false when `SUPABASE_URL`/`SUPABASE_ANON_KEY` are missing. Every provider catches repository errors and silently keeps mock data. Supabase is **never** initialized unless configured.
+- **Mock/guest mode**: `AppConfig.isSupabaseConfigured` is false when `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` are missing. Every provider catches repository errors and silently keeps mock data. Supabase is **never** initialized unless configured.
 - **Provider → Repository**: providers (e.g. `wardrobeProvider`) hold state and call repositories (e.g. `WardrobeRepository`) for all persistence. Repositories talk to Supabase directly via `SupabaseService.client`.
 - **Hive local storage**: manual adapters only — no code generation (`hive_generator` is not a dependency).
 - **Glass UI**: use `GlassContainer` (`lib/core/theme/glass_container.dart`) for all frosted-glass surfaces. It auto-adapts tint and border to dark/light mode using `AppColors` constants.

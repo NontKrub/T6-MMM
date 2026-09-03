@@ -22,20 +22,26 @@ Deno.serve(async (req) => {
     const { data, error: userError } = await admin.auth.admin.getUserById(
       userId,
     );
-    if (userError || !data.user) {
+    if (userError && !/not found|does not exist/i.test(userError.message)) {
+      throw userError;
+    }
+
+    const { data: attempt, error: attemptError } = await admin
+      .from("account_deletion_attempts")
+      .select("apple_revoked_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (attemptError) throw attemptError;
+
+    await removeUserStorage(admin, userId);
+
+    if (!data.user) {
       return jsonResponse({ deleted: true });
     }
 
     const hasAppleIdentity = (data.user.identities ?? []).some((identity) =>
       identity.provider === "apple"
     );
-    const { data: attempt } = await admin
-      .from("account_deletion_attempts")
-      .select("apple_revoked_at")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    await removeUserStorage(admin, userId);
 
     if (hasAppleIdentity && !attempt?.apple_revoked_at) {
       if (!request.appleAuthorizationCode) {
@@ -45,10 +51,11 @@ Deno.serve(async (req) => {
         }, 400);
       }
       await revokeAppleAuthorizationCode(request.appleAuthorizationCode);
-      await admin.from("account_deletion_attempts").upsert({
+      const { error } = await admin.from("account_deletion_attempts").upsert({
         user_id: userId,
         apple_revoked_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
+      if (error) throw error;
     }
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
@@ -84,16 +91,23 @@ async function listPaths(
   storage: ReturnType<ReturnType<typeof serviceClient>["storage"]["from"]>,
   prefix: string,
 ): Promise<string[]> {
-  const { data, error } = await storage.list(prefix, { limit: 1000 });
-  if (error) throw error;
   const paths: string[] = [];
-  for (const entry of data ?? []) {
-    const path = `${prefix}/${entry.name}`;
-    if (entry.id === null && entry.metadata === null) {
-      paths.push(...await listPaths(storage, path));
-    } else {
-      paths.push(path);
+  const limit = 1000;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await storage.list(prefix, { limit, offset });
+    if (error) throw error;
+    const entries = data ?? [];
+    for (const entry of entries) {
+      const path = `${prefix}/${entry.name}`;
+      if (entry.id === null && entry.metadata === null) {
+        paths.push(...await listPaths(storage, path));
+      } else {
+        paths.push(path);
+      }
     }
+    if (entries.length < limit) break;
+    offset += entries.length;
   }
   return paths;
 }

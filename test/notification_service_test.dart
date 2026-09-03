@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:mix_match_mood/core/services/notification_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as timezone;
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   setUpAll(() {
     tz.initializeTimeZones();
   });
@@ -39,5 +43,21 @@ void main() {
       repetitionNotificationKey(['top', 'shoes']),
       repetitionNotificationKey(['shoes', 'top']),
     );
+  });
+
+  test('notification operations are harmless on unsupported hosts', () async {
+    final previousPlatform = debugDefaultTargetPlatformOverride;
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      final service = NotificationService();
+
+      expect(await service.requestPermission(), isFalse);
+      await service.enableDailyReminder(const TimeOfDay(hour: 8, minute: 0));
+      await service.disableDailyReminder();
+      await service.showRepetitionAlert(['top']);
+      await service.disableRepetitionAlerts();
+    } finally {
+      debugDefaultTargetPlatformOverride = previousPlatform;
+    }
   });
 }

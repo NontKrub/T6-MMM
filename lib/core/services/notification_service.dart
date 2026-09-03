@@ -73,7 +73,7 @@ class NotificationService {
       debugPrint('Unable to load device timezone: $error');
     }
 
-    await _plugin.initialize(
+    final initialized = await _plugin.initialize(
       settings: InitializationSettings(
         android: const AndroidInitializationSettings('mmm_notification_icon'),
         iOS: DarwinInitializationSettings(
@@ -83,6 +83,9 @@ class NotificationService {
         ),
       ),
     );
+    if (initialized == false) {
+      throw StateError('The notification plugin did not initialize.');
+    }
     _initialized = true;
   }
 
@@ -91,8 +94,7 @@ class NotificationService {
     if (prefs.getBool(dailyReminderEnabledKey) != true) return;
     final minutes = prefs.getInt(dailyReminderMinutesKey);
     if (minutes == null) return;
-    await initialize();
-    if (!_isMobile) return;
+    if (!await _ensureInitialized()) return;
     try {
       await _scheduleDailyReminder(normalizeReminderMinutes(minutes));
     } catch (error) {
@@ -101,8 +103,7 @@ class NotificationService {
   }
 
   Future<bool> enableDailyReminder(TimeOfDay time) async {
-    await initialize();
-    if (!_isMobile) return false;
+    if (!await _ensureInitialized()) return false;
     final permission = await requestPermission();
     if (!permission) return false;
     try {
@@ -115,8 +116,7 @@ class NotificationService {
   }
 
   Future<void> disableDailyReminder() async {
-    await initialize();
-    if (!_isMobile) return;
+    if (!await _ensureInitialized()) return;
     try {
       await _plugin.cancel(id: dailyReminderId);
     } catch (error) {
@@ -125,8 +125,7 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    await initialize();
-    if (!_isMobile) return false;
+    if (!await _ensureInitialized()) return false;
     try {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         return await _plugin
@@ -149,8 +148,7 @@ class NotificationService {
   }
 
   Future<void> showRepetitionAlert(Iterable<String> itemIds) async {
-    await initialize();
-    if (!_isMobile) return;
+    if (!await _ensureInitialized()) return;
     final key = repetitionNotificationKey(itemIds);
     if (!_repetitionAlertKeys.add(key)) return;
     try {
@@ -168,13 +166,22 @@ class NotificationService {
   }
 
   Future<void> disableRepetitionAlerts() async {
-    await initialize();
     _repetitionAlertKeys.clear();
-    if (!_isMobile) return;
+    if (!await _ensureInitialized()) return;
     try {
       await _plugin.cancel(id: repetitionAlertId);
     } catch (error) {
       debugPrint('Unable to cancel repetition alert: $error');
+    }
+  }
+
+  Future<bool> _ensureInitialized() async {
+    try {
+      await initialize();
+      return _isMobile;
+    } catch (error) {
+      debugPrint('Notifications are unavailable: $error');
+      return false;
     }
   }
 

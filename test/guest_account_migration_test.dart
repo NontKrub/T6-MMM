@@ -58,4 +58,18 @@ void main() {
     expect(await local.hasGuestAccount(), isTrue);
     expect(await local.fetchItems(), hasLength(1));
   });
+
+  test('event item mapping fails instead of dropping unknown references', () {
+    const state = GuestMigrationState(
+      status: GuestMigrationStatus.running,
+      targetUserId: 'cloud-user',
+      itemIdMap: {'local-item': 'cloud-item'},
+    );
+
+    expect(
+      () => mapGuestItemIds(['local-item', 'missing-item'], state),
+      throwsStateError,
+    );
+    expect(mapGuestItemIds(['local-item'], state), ['cloud-item']);
+  });
 }

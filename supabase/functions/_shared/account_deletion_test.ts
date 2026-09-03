@@ -2,10 +2,7 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-  batches,
-  parseDeleteAccountRequest,
-} from "./account_deletion.ts";
+import { batches, parseDeleteAccountRequest } from "./account_deletion.ts";
 
 Deno.test("delete requests ignore caller-supplied user ids", () => {
   assertEquals(

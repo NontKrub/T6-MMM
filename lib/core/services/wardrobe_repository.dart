@@ -282,6 +282,20 @@ class WardrobeRepository {
     }
   }
 
+  Future<bool> hasCloudItem(String id) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError('A signed-in account is required to import a wardrobe.');
+    }
+    final row = await client
+        .from('clothing_items')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+    return row != null;
+  }
+
   Future<void> archiveItem(String id) async {
     final client = _client;
     if (client == null || client.auth.currentUser == null) {
