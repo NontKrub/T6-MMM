@@ -343,6 +343,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSignOut => 'Sign Out';
 
   @override
+  String get profileDeleteAccount => 'Delete Account';
+
+  @override
+  String get profileDeleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get profileDeleteAccountMessage =>
+      'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.';
+
+  @override
+  String get profileDeleteAccountConfirm => 'Delete Account';
+
+  @override
+  String get profileDeleteAccountFailed => 'Account deletion failed';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

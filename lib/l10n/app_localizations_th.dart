@@ -339,6 +339,22 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileSignOut => 'ออกจากระบบ';
 
   @override
+  String get profileDeleteAccount => 'ลบบัญชี';
+
+  @override
+  String get profileDeleteAccountTitle => 'ต้องการลบบัญชีหรือไม่?';
+
+  @override
+  String get profileDeleteAccountMessage =>
+      'การดำเนินการนี้จะลบโปรไฟล์ รูปตู้เสื้อผ้า ชุด และกิจกรรมทั้งหมดจาก MMM อย่างถาวร';
+
+  @override
+  String get profileDeleteAccountConfirm => 'ลบบัญชี';
+
+  @override
+  String get profileDeleteAccountFailed => 'ลบบัญชีไม่สำเร็จ';
+
+  @override
   String get settingsTitle => 'การตั้งค่า';
 
   @override

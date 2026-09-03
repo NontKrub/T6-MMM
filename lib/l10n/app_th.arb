@@ -135,6 +135,11 @@
   "profileColorSeason": "ฤดูกาลสี",
   "profileStylePreferences": "สไตล์ที่ชื่นชอบ",
   "profileSignOut": "ออกจากระบบ",
+  "profileDeleteAccount": "ลบบัญชี",
+  "profileDeleteAccountTitle": "ต้องการลบบัญชีหรือไม่?",
+  "profileDeleteAccountMessage": "การดำเนินการนี้จะลบโปรไฟล์ รูปตู้เสื้อผ้า ชุด และกิจกรรมทั้งหมดจาก MMM อย่างถาวร",
+  "profileDeleteAccountConfirm": "ลบบัญชี",
+  "profileDeleteAccountFailed": "ลบบัญชีไม่สำเร็จ",
 
   "settingsTitle": "การตั้งค่า",
   "settingsAppearance": "การแสดงผล",

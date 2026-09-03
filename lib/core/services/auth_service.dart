@@ -92,6 +92,61 @@ class AuthService {
   Future<void> signOut() async {
     await _client?.auth.signOut();
   }
+
+  Future<void> deleteAccount() async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError('No signed-in account is available to delete.');
+    }
+
+    String? appleAuthorizationCode;
+    final hasAppleIdentity =
+        user.identities?.any((identity) => identity.provider == 'apple') ??
+        false;
+    if (hasAppleIdentity) {
+      appleAuthorizationCode = await _reauthenticateWithApple(user.id);
+    }
+
+    final response = await client.functions.invoke(
+      'delete-account',
+      body: {'apple_authorization_code': appleAuthorizationCode},
+    );
+    if (response.status < 200 || response.status >= 300) {
+      throw StateError('Account deletion failed (${response.status}).');
+    }
+    await client.auth.signOut(scope: SignOutScope.local);
+  }
+
+  Future<String> _reauthenticateWithApple(String userId) async {
+    final client = _client!;
+    final rawNonce = client.auth.generateRawNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+    final idToken = credential.identityToken;
+    if (idToken == null || credential.authorizationCode.isEmpty) {
+      throw const AuthException(
+        'Fresh Sign in with Apple authorization is required to delete the account.',
+      );
+    }
+    final response = await client.auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
+    if (response.user?.id != userId) {
+      throw const AuthException(
+        'The Apple account does not match the signed-in account.',
+      );
+    }
+    return credential.authorizationCode;
+  }
 }
 
 String? appleDisplayName(String? givenName, String? familyName) {

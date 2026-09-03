@@ -135,6 +135,11 @@
   "profileColorSeason": "Color Season",
   "profileStylePreferences": "Style Preferences",
   "profileSignOut": "Sign Out",
+  "profileDeleteAccount": "Delete Account",
+  "profileDeleteAccountTitle": "Delete your account?",
+  "profileDeleteAccountMessage": "This permanently removes your profile, wardrobe images, outfits, and activity from MMM.",
+  "profileDeleteAccountConfirm": "Delete Account",
+  "profileDeleteAccountFailed": "Account deletion failed",
 
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",

@@ -734,6 +734,36 @@ abstract class AppLocalizations {
   /// **'Sign Out'**
   String get profileSignOut;
 
+  /// No description provided for @profileDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get profileDeleteAccount;
+
+  /// No description provided for @profileDeleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get profileDeleteAccountTitle;
+
+  /// No description provided for @profileDeleteAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.'**
+  String get profileDeleteAccountMessage;
+
+  /// No description provided for @profileDeleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get profileDeleteAccountConfirm;
+
+  /// No description provided for @profileDeleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion failed'**
+  String get profileDeleteAccountFailed;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

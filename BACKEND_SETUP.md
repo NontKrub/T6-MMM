@@ -59,6 +59,18 @@ the capability. The repository contains the Runner entitlement; Apple
 Developer and Supabase provider configuration are still required for a real
 login.
 
+Account deletion for Apple users requires these Edge Function secrets so the
+short-lived authorization code can be exchanged and revoked server-side:
+
+```sh
+supabase secrets set APPLE_TEAM_ID=YOUR_APPLE_TEAM_ID
+supabase secrets set APPLE_KEY_ID=YOUR_APPLE_KEY_ID
+supabase secrets set APPLE_CLIENT_ID=com.mixmatchmood.mmm
+supabase secrets set APPLE_PRIVATE_KEY="$(cat AuthKey_YOUR_KEY_ID.p8)"
+```
+
+Do not put the private key or any of these server secrets in Flutter config.
+
 ## Supabase Secrets
 
 Set Edge Function secrets:
@@ -98,6 +110,7 @@ supabase functions deploy daily-lucky-colors
 supabase functions deploy repetition-insights
 supabase functions deploy missing-pieces
 supabase functions deploy fashion-chat
+supabase functions deploy delete-account
 ```
 
 ## Local security checks
@@ -133,3 +146,6 @@ secret only. Do not point it at a hosted project.
   recommendation through the existing `dismissed_at` column.
 - `fashion-chat`: stores user/assistant messages and replies with wardrobe-aware
   fashion advice.
+- `delete-account`: authenticates from the caller JWT, removes wardrobe
+  Storage objects, revokes Apple authorization when required, and deletes the
+  Auth user so database rows cascade.
