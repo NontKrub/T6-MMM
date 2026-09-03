@@ -47,6 +47,7 @@ app.*.map.json
 
 # Supabase local CLI state
 /supabase/.temp/
+/supabase/.branches/
 
 # Local environment/config values
 .env

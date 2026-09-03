@@ -90,6 +90,19 @@ supabase functions deploy missing-pieces
 supabase functions deploy fashion-chat
 ```
 
+## Local security checks
+
+With Docker running, exercise the database policies and the Storage API:
+
+```sh
+supabase start
+supabase test db
+scripts/test_supabase_storage_security.sh
+```
+
+The Storage script signs short-lived test JWTs with the local Supabase JWT
+secret only. Do not point it at a hosted project.
+
 ## Backend Surface
 
 - `analyze-clothing-image`: signs a wardrobe image, sends it to the configured
