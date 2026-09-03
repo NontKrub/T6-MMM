@@ -39,7 +39,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authGetStarted => 'เริ่มต้นใช้งาน';
 
   @override
+  String get authContinueWithApple => 'ดำเนินการต่อด้วย Apple';
+
+  @override
   String get authContinueWithGoogle => 'ดำเนินการต่อด้วย Google';
+
+  @override
+  String get authContinueWithFacebook => 'ดำเนินการต่อด้วย Facebook';
 
   @override
   String get authContinueAsGuest => 'ดำเนินการต่อในฐานะผู้เยี่ยมชม';

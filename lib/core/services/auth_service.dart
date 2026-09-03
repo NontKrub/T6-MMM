@@ -1,8 +1,18 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_config.dart';
+import 'profile_repository.dart';
 import 'supabase_service.dart';
 
 class AuthService {
+  final ProfileRepository _profiles;
+
+  AuthService({ProfileRepository? profiles})
+    : _profiles = profiles ?? ProfileRepository();
+
   SupabaseClient? get _client => SupabaseService.client;
 
   Stream<AuthState> get authStateChanges {
@@ -15,6 +25,54 @@ class AuthService {
 
   Future<void> signInWithGoogle() async {
     await _signInWithOAuth(OAuthProvider.google);
+  }
+
+  Future<void> signInWithFacebook() async {
+    if (!AppConfig.enableFacebookAuth) {
+      throw StateError('Facebook sign-in is not enabled.');
+    }
+    await _signInWithOAuth(OAuthProvider.facebook);
+  }
+
+  Future<void> signInWithApple() async {
+    final client = _client;
+    if (client == null) {
+      throw StateError(
+        'Supabase is not configured. Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.',
+      );
+    }
+
+    final rawNonce = client.auth.generateRawNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+    final idToken = credential.identityToken;
+    if (idToken == null) {
+      throw const AuthException(
+        'Could not find an ID token from the Apple credential.',
+      );
+    }
+
+    final response = await client.auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
+    final displayName = appleDisplayName(
+      credential.givenName,
+      credential.familyName,
+    );
+    if (displayName != null && response.user != null) {
+      await client.auth.updateUser(
+        UserAttributes(data: {'name': displayName, 'full_name': displayName}),
+      );
+      await _profiles.updateDisplayNameIfDefault(displayName);
+    }
   }
 
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
@@ -34,4 +92,13 @@ class AuthService {
   Future<void> signOut() async {
     await _client?.auth.signOut();
   }
+}
+
+String? appleDisplayName(String? givenName, String? familyName) {
+  final name = [givenName, familyName]
+      .whereType<String>()
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .join(' ');
+  return name.isEmpty ? null : name;
 }

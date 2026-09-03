@@ -158,11 +158,23 @@ abstract class AppLocalizations {
   /// **'Get started'**
   String get authGetStarted;
 
+  /// No description provided for @authContinueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get authContinueWithApple;
+
   /// No description provided for @authContinueWithGoogle.
   ///
   /// In en, this message translates to:
   /// **'Continue with Google'**
   String get authContinueWithGoogle;
+
+  /// No description provided for @authContinueWithFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook'**
+  String get authContinueWithFacebook;
 
   /// No description provided for @authContinueAsGuest.
   ///

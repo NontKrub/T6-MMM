@@ -81,6 +81,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final l10n = AppLocalizations.of(context);
+    final showApple = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Scaffold(
       body: Stack(
@@ -183,6 +184,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 20),
+                            if (showApple) ...[
+                              _SocialButton(
+                                icon: Icons.apple,
+                                label:
+                                    l10n?.authContinueWithApple ??
+                                    'Continue with Apple',
+                                onTap: () =>
+                                    _handleOAuth(AuthService().signInWithApple),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                             _SocialButton(
                               icon: Icons.g_mobiledata_rounded,
                               label:
@@ -191,6 +203,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               onTap: () =>
                                   _handleOAuth(AuthService().signInWithGoogle),
                             ),
+                            if (AppConfig.enableFacebookAuth) ...[
+                              const SizedBox(height: 16),
+                              _SocialButton(
+                                icon: Icons.facebook,
+                                label:
+                                    l10n?.authContinueWithFacebook ??
+                                    'Continue with Facebook',
+                                onTap: () => _handleOAuth(
+                                  AuthService().signInWithFacebook,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             GestureDetector(
                               onTap: _handleGuestLogin,
@@ -234,28 +258,36 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

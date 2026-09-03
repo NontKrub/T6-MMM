@@ -13,7 +13,9 @@
   "authHeroTitle": "ตู้เสื้อผ้าของคุณ\nถูกสร้างใหม่แล้ว",
   "authHeroSubtitle": "แนะนำชุดด้วย AI\nปรับแต่งเฉพาะสำหรับคุณ",
   "authGetStarted": "เริ่มต้นใช้งาน",
+  "authContinueWithApple": "ดำเนินการต่อด้วย Apple",
   "authContinueWithGoogle": "ดำเนินการต่อด้วย Google",
+  "authContinueWithFacebook": "ดำเนินการต่อด้วย Facebook",
   "authContinueAsGuest": "ดำเนินการต่อในฐานะผู้เยี่ยมชม",
   "authUnavailable": "ไม่สามารถเข้าสู่ระบบได้จนกว่าจะตั้งค่า Supabase",
 

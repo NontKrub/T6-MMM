@@ -40,7 +40,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authGetStarted => 'Get started';
 
   @override
+  String get authContinueWithApple => 'Continue with Apple';
+
+  @override
   String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authContinueWithFacebook => 'Continue with Facebook';
 
   @override
   String get authContinueAsGuest => 'Continue as guest';

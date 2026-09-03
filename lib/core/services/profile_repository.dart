@@ -61,4 +61,25 @@ class ProfileRepository {
       await client.from('style_preferences').insert(preferences);
     }
   }
+
+  Future<void> updateDisplayNameIfDefault(String displayName) async {
+    final client = SupabaseService.client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) return;
+
+    final row = await client
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle();
+    final currentName = row?['display_name'] as String?;
+    if (currentName == null ||
+        currentName.isEmpty ||
+        currentName == 'MMM User') {
+      await client
+          .from('profiles')
+          .update({'display_name': displayName})
+          .eq('id', user.id);
+    }
+  }
 }

@@ -37,6 +37,8 @@ dependencies:
 
   # Auth
   supabase_flutter: ^2.8.4
+  sign_in_with_apple: ^8.1.0
+  crypto: ^3.0.7
 
   # Utils
   geolocator: ^14.0.2

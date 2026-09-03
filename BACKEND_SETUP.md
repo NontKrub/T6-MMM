@@ -2,7 +2,7 @@
 
 ## Required Services
 
-- Supabase project with Google OAuth provider enabled.
+- Supabase project with Google and Apple OAuth providers enabled.
 - Supabase Storage bucket/migrations from `supabase/migrations`.
 - Supabase Edge Functions from `supabase/functions`.
 - OpenRouter API key for image analysis, outfit generation, missing pieces, and
@@ -48,6 +48,16 @@ OAuth callback/redirect URI to:
 ```txt
 https://YOUR_PROJECT.supabase.co/auth/v1/callback
 ```
+
+## Sign in with Apple
+
+The iOS app uses native Sign in with Apple and sends Apple's ID token plus a
+nonce to Supabase. Register the bundle ID `com.mixmatchmood.mmm` as an Apple
+App ID with the Sign in with Apple capability, add that bundle ID under the
+Supabase Apple provider, and refresh the provisioning profile after enabling
+the capability. The repository contains the Runner entitlement; Apple
+Developer and Supabase provider configuration are still required for a real
+login.
 
 ## Supabase Secrets
 

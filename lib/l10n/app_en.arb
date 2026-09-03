@@ -13,7 +13,9 @@
   "authHeroTitle": "Your wardrobe,\nreimagined.",
   "authHeroSubtitle": "AI-powered outfit suggestions,\npersonalized just for you.",
   "authGetStarted": "Get started",
+  "authContinueWithApple": "Continue with Apple",
   "authContinueWithGoogle": "Continue with Google",
+  "authContinueWithFacebook": "Continue with Facebook",
   "authContinueAsGuest": "Continue as guest",
   "authUnavailable": "Sign in is unavailable until Supabase is configured.",
 
