@@ -65,15 +65,31 @@ jobs:
           deno test
           supabase/functions/_shared/ai_consent_test.ts
           supabase/functions/_shared/account_deletion_test.ts
+          supabase/functions/_shared/apple_account_deletion_test.ts
           supabase/functions/_shared/domain_test.ts
           supabase/functions/_shared/openai_test.ts
-      - run: >-
-          deno check
-          supabase/functions/analyze-clothing-image/index.ts
-          supabase/functions/delete-account/index.ts
-          supabase/functions/fashion-chat/index.ts
-          supabase/functions/generate-outfits/index.ts
-          supabase/functions/missing-pieces/index.ts
+      - name: Type-check every Edge Function
+        shell: bash
+        run: |
+          set -euo pipefail
+          functions="$(find supabase/functions -mindepth 2 -maxdepth 2 -name index.ts -print | sort)"
+          test -n "$functions"
+          while IFS= read -r function; do
+            deno check "$function"
+          done <<< "$functions"
+
+  supabase-db-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+      - run: supabase start
+      - run: supabase db reset --local
+      - run: supabase test db --local
+      - run: bash scripts/test_supabase_storage_security.sh
 
   ios-simulator-compile:
     runs-on: macos-latest
