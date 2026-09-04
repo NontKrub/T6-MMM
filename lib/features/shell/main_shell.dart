@@ -9,7 +9,14 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      body: child,
+      body: Builder(
+        builder: (context) => Padding(
+          padding: EdgeInsets.only(
+            bottom: FloatingNavBar.contentInset(context),
+          ),
+          child: child,
+        ),
+      ),
       bottomNavigationBar: const FloatingNavBar(),
     );
   }

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/locale_provider.dart';
@@ -14,11 +12,13 @@ import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/guest_account_migration_service.dart';
 import '../../core/services/ai_consent_repository.dart';
+import '../../core/services/legal_links_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_brand_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/mmm_bottom_sheet.dart';
+import '../../shared/widgets/mmm_dialog.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -318,32 +318,34 @@ class SettingsScreen extends ConsumerWidget {
     BuildContext context,
     AppLocalizations? l10n,
   ) async {
-    final uri = Uri.tryParse(AppConfig.privacyPolicyUrl.trim());
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+    if (LegalLinksService.uri(LegalDocument.privacy) == null) {
       if (!context.mounted) return;
-      await showDialog<void>(
+      await MmmDialog.show<void>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
-          content: Text(
-            l10n?.settingsPrivacyNotConfigured ??
-                'A public HTTPS privacy-policy URL has not been configured yet.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n?.dialogClose ?? 'Close'),
-            ),
-          ],
+        title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
+        content: Text(
+          l10n?.settingsPrivacyNotConfigured ??
+              'A public HTTPS privacy-policy URL has not been configured yet.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n?.dialogClose ?? 'Close'),
+          ),
+        ],
       );
       return;
     }
 
-    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    if (await LegalLinksService.open(LegalDocument.privacy)) return;
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n?.settingsPrivacy ?? 'Privacy Policy')),
+      SnackBar(
+        content: Text(
+          l10n?.legalLinkOpenFailed ??
+              'This link could not be opened. Check your connection and try again.',
+        ),
+      ),
     );
   }
 
@@ -412,25 +414,23 @@ class SettingsScreen extends ConsumerWidget {
     bool value,
   ) async {
     if (value) {
-      final accepted = await showDialog<bool>(
+      final accepted = await MmmDialog.show<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
-          content: Text(
-            l10n?.settingsAIConsentMessage ??
-                'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
-            ),
-          ],
+        title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
+        content: Text(
+          l10n?.settingsAIConsentMessage ??
+              'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
+          ),
+        ],
       );
       if (accepted != true) return;
     }
@@ -445,9 +445,15 @@ class SettingsScreen extends ConsumerWidget {
       ref.invalidate(aiConsentProvider);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      debugPrint('AI consent update failed: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsAIConsentFailed ??
+                'AI permission could not be updated. Please try again.',
+          ),
+        ),
+      );
     }
   }
 

@@ -9,6 +9,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
+import '../../shared/widgets/mmm_dialog.dart';
 import '../../shared/widgets/outfit_card.dart';
 import '../../shared/widgets/wardrobe_image.dart';
 
@@ -92,7 +93,7 @@ class ItemDetailScreen extends ConsumerWidget {
               AppSpacing.lg,
               AppSpacing.lg,
               AppSpacing.lg,
-              112,
+              AppSpacing.xl,
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
@@ -199,32 +200,30 @@ class ItemDetailScreen extends ConsumerWidget {
     ClothingItem item,
     AppLocalizations? l10n,
   ) {
-    showDialog<void>(
+    MmmDialog.show<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n?.itemDeleteTitle ?? 'Remove Item'),
-        content: Text(
-          l10n?.itemDeleteMessage(item.name) ??
-              'Remove "${item.name}" from your wardrobe?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(wardrobeProvider.notifier).removeItem(item.id);
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: MmmBrandTheme.of(context).destructive,
-            ),
-            child: Text(l10n?.itemDeleteConfirm ?? 'Remove'),
-          ),
-        ],
+      title: Text(l10n?.itemDeleteTitle ?? 'Remove Item'),
+      content: Text(
+        l10n?.itemDeleteMessage(item.name) ??
+            'Remove "${item.name}" from your wardrobe?',
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            ref.read(wardrobeProvider.notifier).removeItem(item.id);
+            Navigator.pop(context);
+            Navigator.pop(context);
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: MmmBrandTheme.of(context).destructive,
+          ),
+          child: Text(l10n?.itemDeleteConfirm ?? 'Remove'),
+        ),
+      ],
     );
   }
 }

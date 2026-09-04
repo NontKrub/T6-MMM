@@ -15,13 +15,14 @@ class MmmSecondaryButton extends StatelessWidget {
   final IconData? icon;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 52,
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 52),
     child: OutlinedButton.icon(
       onPressed: onPressed,
       icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 20),
-      label: Text(label),
+      label: Text(label, textAlign: TextAlign.center),
       style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: const RoundedRectangleBorder(
           borderRadius: AppRadii.controlBorder,
         ),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/outfit_provider.dart';
@@ -13,6 +15,7 @@ import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/widgets/outfit_card.dart';
 import '../../shared/widgets/mmm_choice_chip.dart';
+import '../../shared/widgets/mmm_dialog.dart';
 import '../../shared/widgets/mmm_gradient_button.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
@@ -101,25 +104,23 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
           .repeatCountFor(outfit);
       if (!mounted) return;
       if (count > 0) {
-        final action = await showDialog<String>(
+        final action = await MmmDialog.show<String>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text(l10n?.outfitRepeatTitle ?? 'Repeat outfit'),
-            content: Text(
-              l10n?.outfitRepeatMessage(count) ??
-                  "You've worn this combination $count times.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'another'),
-                child: Text(l10n?.outfitGenerateAnother ?? 'Generate another'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, 'wear'),
-                child: Text(l10n?.outfitWearAnyway ?? 'Wear anyway'),
-              ),
-            ],
+          title: Text(l10n?.outfitRepeatTitle ?? 'Repeat outfit'),
+          content: Text(
+            l10n?.outfitRepeatMessage(count) ??
+                "You've worn this combination $count times.",
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'another'),
+              child: Text(l10n?.outfitGenerateAnother ?? 'Generate another'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, 'wear'),
+              child: Text(l10n?.outfitWearAnyway ?? 'Wear anyway'),
+            ),
+          ],
         );
         if (!mounted) return;
         if (action == 'another') {
@@ -182,6 +183,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
     final brand = MmmBrandTheme.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
     final appSettings = ref.watch(appSettingsProvider);
+    final media = MediaQuery.of(context);
     final weatherDisabled = appSettings.weatherLocationMode == 'off';
     final backendAvailable = SupabaseService.isSignedIn;
 
@@ -208,11 +210,14 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.xs,
                 AppSpacing.lg,
-                AppSpacing.xxl,
+                math.max(
+                  AppSpacing.xxl,
+                  media.viewInsets.bottom + AppSpacing.lg,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

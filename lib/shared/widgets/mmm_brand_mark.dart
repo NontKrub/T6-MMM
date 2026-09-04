@@ -20,7 +20,7 @@ class MmmBrandMark extends StatelessWidget {
               ? 'assets/branding/mmm_mark_dark.png'
               : 'assets/branding/mmm_mark.png',
           width: size,
-          height: size * 250 / 530,
+          height: isDark ? size * 160 / 410 : size * 250 / 530,
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         ),

@@ -58,10 +58,13 @@ class MmmGradientButton extends StatelessWidget {
                                 Icon(icon, color: Colors.white, size: 20),
                                 const SizedBox(width: 8),
                               ],
-                              Text(
-                                label,
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(color: Colors.white),
+                              Flexible(
+                                child: Text(
+                                  label,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),

@@ -69,102 +69,115 @@ class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                0,
-              ),
-              child: Text(
-                l10n?.missingTitle ?? 'What’s missing?',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: Text(
-                l10n?.missingSubtitleUnlocked ??
-                    'Pick a base outfit and MMM will find the gap.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _GarmentSelector(
-                    key: const Key('missing-piece-top'),
-                    label: topLabel,
-                    placeholder: l10n?.missingChoose(topLabel) ?? 'Choose Top',
-                    value: selectedTop,
-                    items: tops,
-                    onChanged: (item) => setState(() {
-                      _topId = item?.id;
-                      _selectedResult = null;
-                    }),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _GarmentSelector(
-                    key: const Key('missing-piece-pants'),
-                    label: bottomLabel,
-                    placeholder:
-                        l10n?.missingChoose(bottomLabel) ?? 'Choose Bottom',
-                    value: selectedPants,
-                    items: pants,
-                    onChanged: (item) => setState(() {
-                      _pantsId = item?.id;
-                      _selectedResult = null;
-                    }),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: MmmGradientButton(
-                      key: const Key('missing-piece-analyze'),
-                      label: l10n?.missingAnalyze ?? 'Analyze the gap',
-                      icon: Icons.auto_awesome_rounded,
-                      onPressed: selectedTop == null || selectedPants == null
-                          ? null
-                          : () => _analyze(selectedTop, selectedPants),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.lg,
+                      0,
                     ),
+                    child: Text(
+                      l10n?.missingTitle ?? 'What’s missing?',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.lg,
+                    ),
+                    child: Text(
+                      l10n?.missingSubtitleUnlocked ??
+                          'Pick a base outfit and MMM will find the gap.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    child: Column(
+                      children: [
+                        _GarmentSelector(
+                          key: const Key('missing-piece-top'),
+                          label: topLabel,
+                          placeholder:
+                              l10n?.missingChoose(topLabel) ?? 'Choose Top',
+                          value: selectedTop,
+                          items: tops,
+                          onChanged: (item) => setState(() {
+                            _topId = item?.id;
+                            _selectedResult = null;
+                          }),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        _GarmentSelector(
+                          key: const Key('missing-piece-pants'),
+                          label: bottomLabel,
+                          placeholder:
+                              l10n?.missingChoose(bottomLabel) ??
+                              'Choose Bottom',
+                          value: selectedPants,
+                          items: pants,
+                          onChanged: (item) => setState(() {
+                            _pantsId = item?.id;
+                            _selectedResult = null;
+                          }),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: MmmGradientButton(
+                            key: const Key('missing-piece-analyze'),
+                            label: l10n?.missingAnalyze ?? 'Analyze the gap',
+                            icon: Icons.auto_awesome_rounded,
+                            onPressed:
+                                selectedTop == null || selectedPants == null
+                                ? null
+                                : () => _analyze(selectedTop, selectedPants),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  recommendations.when(
+                    data: (items) => items.isEmpty
+                        ? _EmptyState(l10n: l10n)
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                            ),
+                            itemCount: items.length,
+                            itemBuilder: (_, index) =>
+                                _RecommendationCard(rec: items[index]),
+                          ),
+                    loading: () => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: MmmLoadingIndicator(
+                          label: l10n?.missingLoading ?? 'Finding the gap…',
+                        ),
+                      ),
+                    ),
+                    error: (_, _) => _ErrorState(l10n: l10n),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: recommendations.when(
-                data: (items) => items.isEmpty
-                    ? _EmptyState(l10n: l10n)
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          0,
-                          AppSpacing.lg,
-                          120,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (_, index) =>
-                            _RecommendationCard(rec: items[index]),
-                      ),
-                loading: () => Center(
-                  child: MmmLoadingIndicator(
-                    label: l10n?.missingLoading ?? 'Finding the gap…',
-                  ),
-                ),
-                error: (_, _) => _ErrorState(l10n: l10n),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -50,25 +51,28 @@ class OutfitCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            // Item thumbnails
-            SizedBox(
-              height: 64,
-              width: 160,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact =
+                constraints.maxWidth < 380 || AppBreakpoints.largeText(context);
+            final thumbOffset = compact ? 18.0 : 32.0;
+            final thumbWidth = compact
+                ? 56 + thumbOffset * (items.length.clamp(1, 4) - 1)
+                : 160.0;
+            final thumbnails = SizedBox(
+              height: compact ? 56 : 64,
+              width: thumbWidth.toDouble(),
               child: Stack(
                 children: [
                   for (int i = 0; i < items.length && i < 4; i++)
                     Positioned(
-                      left: i * 32.0,
+                      left: i * thumbOffset,
                       child: _ItemThumb(item: items[i]),
                     ),
                 ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            // Name & style
-            Expanded(
+            );
+            final details = Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -116,25 +120,51 @@ class OutfitCard extends StatelessWidget {
                   ],
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            // Wear button
-            if (onWear != null)
-              FilledButton(
-                onPressed: onWear,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+            );
+            final wearButton = onWear == null
+                ? null
+                : FilledButton(
+                    onPressed: onWear,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      minimumSize: const Size(64, 44),
+                    ),
+                    child: Text(
+                      l10n?.outfitWear ?? 'Wear',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  );
+            if (compact && wearButton != null) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      thumbnails,
+                      const SizedBox(width: AppSpacing.sm),
+                      details,
+                    ],
                   ),
-                  minimumSize: const Size(64, 44),
-                ),
-                child: Text(
-                  l10n?.outfitWear ?? 'Wear',
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-          ],
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(width: double.infinity, child: wearButton),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                thumbnails,
+                const SizedBox(width: AppSpacing.sm),
+                details,
+                if (wearButton != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  wearButton,
+                ],
+              ],
+            );
+          },
         ),
       ),
     );

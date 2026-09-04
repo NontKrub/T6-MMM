@@ -129,15 +129,15 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                       onAdd: _showAddItem,
                     )
                   : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         AppSpacing.lg,
                         0,
                         AppSpacing.lg,
-                        112,
+                        AppSpacing.xl,
                       ),
                       gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 220,
                             crossAxisSpacing: AppSpacing.sm,
                             mainAxisSpacing: AppSpacing.sm,
                             childAspectRatio: .72,
@@ -175,7 +175,7 @@ class _CategoryFilter extends StatelessWidget {
     final categories = <ClothingCategory?>[null, ...ClothingCategory.values];
     final brand = MmmBrandTheme.of(context);
     return SizedBox(
-      height: 44,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: AppSpacing.screen,

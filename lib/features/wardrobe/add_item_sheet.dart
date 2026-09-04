@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -418,6 +419,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final brand = MmmBrandTheme.of(context);
+    final media = MediaQuery.of(context);
 
     return Container(
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 60),
@@ -441,11 +443,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.xs,
                 AppSpacing.lg,
-                AppSpacing.huge,
+                math.max(
+                  AppSpacing.huge,
+                  media.viewInsets.bottom + AppSpacing.lg,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,8 +485,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                 _showSourcePicker(context, l10n);
                               },
                         borderRadius: AppRadii.cardBorder,
-                        child: SizedBox(
-                          height: 160,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 160),
                           child: _saving || _analyzing
                               ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -681,6 +686,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           key: ValueKey(_pattern),
                           child: DropdownButtonFormField<ClothingPattern>(
                             key: const Key('add-item-pattern'),
+                            isExpanded: true,
                             initialValue: _pattern,
                             decoration: InputDecoration(
                               labelText: l10n?.addItemPattern ?? 'Pattern',
@@ -708,6 +714,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                           key: ValueKey(_silhouette),
                           child: DropdownButtonFormField<ClothingSilhouette>(
                             key: const Key('add-item-silhouette'),
+                            isExpanded: true,
                             initialValue: _silhouette,
                             decoration: InputDecoration(
                               labelText:

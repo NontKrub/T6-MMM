@@ -16,6 +16,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/user_profile.dart';
 import '../../shared/widgets/mmm_choice_chip.dart';
+import '../../shared/widgets/mmm_dialog.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -88,10 +89,10 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.xxl),
-          const _SectionTitle('Account'),
+          _SectionTitle(l10n?.profileAccount ?? 'Account'),
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 52,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
             child: OutlinedButton.icon(
               onPressed: () => _signOut(context, ref),
               icon: const Icon(Icons.logout_rounded, size: 20),
@@ -100,10 +101,13 @@ class ProfileScreen extends ConsumerWidget {
           ),
           if (SupabaseService.isSignedIn) ...[
             const SizedBox(height: AppSpacing.xxl),
-            const _SectionTitle('Danger zone', destructive: true),
+            _SectionTitle(
+              l10n?.profileDangerZone ?? 'Danger zone',
+              destructive: true,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 52,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 52),
               child: OutlinedButton.icon(
                 onPressed: () => _deleteAccount(context, ref, l10n),
                 icon: const Icon(Icons.delete_forever_outlined, size: 20),
@@ -172,14 +176,14 @@ class _Stat extends StatelessWidget {
         children: [
           Text(
             value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
             label,
-            maxLines: 1,
+            textAlign: TextAlign.center,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -208,28 +212,26 @@ Future<void> _deleteAccount(
   WidgetRef ref,
   AppLocalizations? l10n,
 ) async {
-  final confirmed = await showDialog<bool>(
+  final confirmed = await MmmDialog.show<bool>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(l10n?.profileDeleteAccountTitle ?? 'Delete your account?'),
-      content: Text(
-        l10n?.profileDeleteAccountMessage ??
-            'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(
-            backgroundColor: MmmBrandTheme.of(context).destructive,
-          ),
-          child: Text(l10n?.profileDeleteAccountConfirm ?? 'Delete Account'),
-        ),
-      ],
+    title: Text(l10n?.profileDeleteAccountTitle ?? 'Delete your account?'),
+    content: Text(
+      l10n?.profileDeleteAccountMessage ??
+          'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.',
     ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, false),
+        child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, true),
+        style: FilledButton.styleFrom(
+          backgroundColor: MmmBrandTheme.of(context).destructive,
+        ),
+        child: Text(l10n?.profileDeleteAccountConfirm ?? 'Delete Account'),
+      ),
+    ],
   );
   if (confirmed != true) return;
 

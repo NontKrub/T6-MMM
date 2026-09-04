@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/locale_provider.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/layout/mmm_entry_layout.dart';
 import '../../shared/widgets/mmm_brand_mark.dart';
 import '../../shared/widgets/mmm_gradient_button.dart';
 
@@ -48,54 +50,56 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: widget.fromSettings ? AppBar(leading: const BackButton()) : null,
-      body: SafeArea(
-        top: !widget.fromSettings,
-        child: Padding(
-          padding: AppSpacing.entryScreen,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              const Center(child: MmmBrandMark(size: 160)),
-              const SizedBox(height: AppSpacing.xxl),
-              Text(
-                l10n?.languageScreenTitle ?? 'Choose your language',
-                style: theme.textTheme.headlineMedium,
-                textAlign: TextAlign.center,
+      body: MmmEntryLayout(
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: MmmBrandMark(size: _markSize(context))),
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              l10n?.languageScreenTitle ?? 'Choose your language',
+              style: theme.textTheme.headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              l10n?.languageScreenSubtitle ?? 'เลือกภาษา',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                l10n?.languageScreenSubtitle ?? 'เลือกภาษา',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.huge),
-              _LanguageOption(
-                asset: 'assets/images/flag_gb.png',
-                label: l10n?.languageEnglish ?? 'English',
-                selected: _selected == 'en',
-                onTap: () => setState(() => _selected = 'en'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _LanguageOption(
-                asset: 'assets/images/flag_th.png',
-                label: l10n?.languageThai ?? 'ภาษาไทย',
-                selected: _selected == 'th',
-                onTap: () => setState(() => _selected = 'th'),
-              ),
-              const Spacer(),
-              MmmGradientButton(
-                label: l10n?.languageContinue ?? 'Continue',
-                onPressed: _selected == null ? null : _continue,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            _LanguageOption(
+              asset: 'assets/images/flag_gb.png',
+              label: l10n?.languageEnglish ?? 'English',
+              selected: _selected == 'en',
+              onTap: () => setState(() => _selected = 'en'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _LanguageOption(
+              asset: 'assets/images/flag_th.png',
+              label: l10n?.languageThai ?? 'ภาษาไทย',
+              selected: _selected == 'th',
+              onTap: () => setState(() => _selected = 'th'),
+            ),
+          ],
+        ),
+        footer: MmmGradientButton(
+          label: l10n?.languageContinue ?? 'Continue',
+          onPressed: _selected == null ? null : _continue,
         ),
       ),
     );
+  }
+
+  double _markSize(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
+    if (AppBreakpoints.veryLargeText(context) || height < 650 || width < 360) {
+      return 112;
+    }
+    return 144;
   }
 }
 

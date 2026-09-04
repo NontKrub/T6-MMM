@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/avatar_customization_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -33,153 +35,177 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                0,
-              ),
-              child: Row(
-                children: [
-                  Semantics(
-                    button: true,
-                    label: l10n?.commonProfile ?? 'Open profile',
-                    child: Material(
-                      color: brand.raisedSurface,
-                      borderRadius: AppRadii.controlBorder,
-                      child: InkWell(
-                        onTap: () => context.push('/profile'),
-                        borderRadius: AppRadii.controlBorder,
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.xs),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor:
-                                    brand.primaryGradient.colors.first,
-                                child: Text(
-                                  profile.name.isNotEmpty
-                                      ? profile.name[0]
-                                      : 'A',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final avatarHeight =
+                AppBreakpoints.largeText(context) || constraints.maxHeight < 700
+                ? 200.0
+                : math
+                      .min(360, math.max(220, constraints.maxHeight * .48))
+                      .toDouble();
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          Semantics(
+                            button: true,
+                            label: l10n?.commonProfile ?? 'Open profile',
+                            child: Material(
+                              color: brand.raisedSurface,
+                              borderRadius: AppRadii.controlBorder,
+                              child: InkWell(
+                                onTap: () => context.push('/profile'),
+                                borderRadius: AppRadii.controlBorder,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.xs),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 16,
+                                        backgroundColor:
+                                            brand.primaryGradient.colors.first,
+                                        child: Text(
+                                          profile.name.isNotEmpty
+                                              ? profile.name[0]
+                                              : 'A',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.xs),
+                                      Flexible(
+                                        child: Text(
+                                          profile.name,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Flexible(
-                                child: Text(
-                                  profile.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelLarge,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: l10n?.commonSettings ?? 'Settings',
+                            onPressed: () => context.push('/settings'),
+                            icon: const Icon(Icons.settings_rounded),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: l10n?.commonSettings ?? 'Settings',
-                    onPressed: () => context.push('/settings'),
-                    icon: const Icon(Icons.settings_rounded),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Padding(
-              padding: AppSpacing.screen,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n?.homeGreeting(profile.name) ??
-                        'Good morning, ${profile.name}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    l10n?.homePrompt ?? 'What are we wearing today?',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxl,
-                    ),
-                    child: AvatarViewer(
-                      avatarType: profile.avatarType,
-                      bodyShape: bodyShape,
-                      skinToneIndex: skinTone,
-                      hairColorIndex: hairColor,
-                      hairStyleIndex: hairStyle,
-                    ),
-                  ),
-                  Positioned(
-                    right: AppSpacing.lg,
-                    top: AppSpacing.xs,
-                    child: Material(
-                      color: brand.raisedSurface,
-                      borderRadius: AppRadii.compactBorder,
-                      child: IconButton(
-                        tooltip: l10n?.homeCustomize ?? 'Customize',
-                        onPressed: () => _showCustomizeSheet(context, ref),
-                        icon: const Icon(Icons.auto_fix_high_rounded),
+                    const SizedBox(height: AppSpacing.sm),
+                    Padding(
+                      padding: AppSpacing.screen,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n?.homeGreeting(profile.name) ??
+                                'Good morning, ${profile.name}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            l10n?.homePrompt ?? 'What are we wearing today?',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                0,
-                AppSpacing.lg,
-                112,
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: MmmGradientButton(
-                      label: l10n?.homeGenerateOutfit ?? 'Generate Outfit',
-                      icon: Icons.auto_awesome_rounded,
-                      onPressed: () => _showOutfitGenerator(context, ref),
+                    SizedBox(
+                      height: avatarHeight,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xxl,
+                            ),
+                            child: AvatarViewer(
+                              avatarType: profile.avatarType,
+                              bodyShape: bodyShape,
+                              skinToneIndex: skinTone,
+                              hairColorIndex: hairColor,
+                              hairStyleIndex: hairStyle,
+                            ),
+                          ),
+                          Positioned(
+                            right: AppSpacing.lg,
+                            top: AppSpacing.xs,
+                            child: Material(
+                              color: brand.raisedSurface,
+                              borderRadius: AppRadii.compactBorder,
+                              child: IconButton(
+                                tooltip: l10n?.homeCustomize ?? 'Customize',
+                                onPressed: () =>
+                                    _showCustomizeSheet(context, ref),
+                                icon: const Icon(Icons.auto_fix_high_rounded),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: MmmSecondaryButton(
-                      label: l10n?.rushTitle ?? 'In a Rush',
-                      icon: Icons.bolt_rounded,
-                      onPressed: () => _showInARush(context, ref),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        AppSpacing.xl,
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: MmmGradientButton(
+                              label:
+                                  l10n?.homeGenerateOutfit ?? 'Generate Outfit',
+                              icon: Icons.auto_awesome_rounded,
+                              onPressed: () =>
+                                  _showOutfitGenerator(context, ref),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: MmmSecondaryButton(
+                              label: l10n?.rushTitle ?? 'In a Rush',
+                              icon: Icons.bolt_rounded,
+                              onPressed: () => _showInARush(context, ref),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          const RepetitionInsightCard(),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  const RepetitionInsightCard(),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -311,6 +337,12 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
     final bodyShape = widgetRef.watch(bodyShapeProvider);
     final hairStyle = widgetRef.watch(hairStyleIndexProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = math.max(
+      36.0,
+      MediaQuery.viewInsetsOf(context).bottom +
+          AppSpacing.lg +
+          MediaQuery.paddingOf(context).bottom,
+    );
 
     final sheetBg = isDark
         ? Colors.black.withValues(alpha: 0.75)
@@ -327,12 +359,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
               maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                0,
-                24,
-                36 + MediaQuery.of(context).padding.bottom,
-              ),
+              padding: EdgeInsets.fromLTRB(24, 0, 24, bottomInset),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +391,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                       final (type, icon, label) = meta;
                       final selected = profile.avatarType == type;
                       return Expanded(
-                        child: GestureDetector(
+                        child: _AvatarChoiceTarget(
+                          label: _localizedAvatarLabel(l10n, label),
+                          selected: selected,
                           onTap: () => widgetRef
                               .read(userProfileProvider.notifier)
                               .updateAvatarType(type),
@@ -453,7 +482,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                         final (shape, icon, label) = meta;
                         final sel = bodyShape == shape;
                         return Expanded(
-                          child: GestureDetector(
+                          child: _AvatarChoiceTarget(
+                            label: _localizedBodyShapeLabel(l10n, label),
+                            selected: sel,
                             onTap: () {
                               widgetRef.read(bodyShapeProvider.notifier).state =
                                   shape;
@@ -540,7 +571,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                       runSpacing: 8,
                       children: List.generate(_hairStyleKeys.length, (i) {
                         final sel = hairStyle == i;
-                        return GestureDetector(
+                        return _AvatarChoiceTarget(
+                          label: _localizedHairStyle(l10n, _hairStyleKeys[i]),
+                          selected: sel,
                           onTap: () {
                             widgetRef
                                     .read(hairStyleIndexProvider.notifier)
@@ -607,7 +640,10 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                       runSpacing: 8,
                       children: List.generate(_skinTones.length, (i) {
                         final sel = skinTone == i;
-                        return GestureDetector(
+                        return _AvatarChoiceTarget(
+                          label:
+                              '${l10n?.avatarSkinTone ?? 'Skin tone'} ${i + 1}',
+                          selected: sel,
                           onTap: () {
                             widgetRef
                                     .read(skinToneIndexProvider.notifier)
@@ -662,11 +698,15 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                     const SizedBox(height: 22),
                     _SectionLabel(label: l10n?.avatarHair ?? 'Hair'),
                     const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
                       children: List.generate(_hairColors.length, (i) {
                         final sel = hairColor == i;
-                        return GestureDetector(
+                        return _AvatarChoiceTarget(
+                          label: _localizedHairColor(l10n, _hairLabels[i]),
+                          selected: sel,
                           onTap: () {
                             widgetRef
                                     .read(hairColorIndexProvider.notifier)
@@ -749,6 +789,39 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _AvatarChoiceTarget extends StatelessWidget {
+  const _AvatarChoiceTarget({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.child,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: label,
+    onTap: onTap,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadii.controlBorder,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: Center(child: ExcludeSemantics(child: child)),
+        ),
+      ),
+    ),
+  );
 }
 
 class _SectionLabel extends StatelessWidget {

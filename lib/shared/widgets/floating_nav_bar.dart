@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -11,6 +12,18 @@ import '../../l10n/app_localizations.dart';
 
 class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({super.key});
+
+  static double heightFor(BuildContext context) {
+    if (AppBreakpoints.veryLargeText(context)) return 104;
+    if (AppBreakpoints.largeText(context)) return 88;
+    return 72;
+  }
+
+  static double contentInset(BuildContext context) {
+    return heightFor(context) +
+        AppSpacing.md +
+        MediaQuery.paddingOf(context).bottom;
+  }
 
   static const _tabPaths = ['/home', '/wardrobe', '/missing', '/chat'];
   static const _tabIcons = [
@@ -54,7 +67,7 @@ class FloatingNavBar extends StatelessWidget {
                 side: BorderSide(color: brand.subtleBorder),
               ),
               child: SizedBox(
-                height: 68,
+                height: heightFor(context),
                 child: Row(
                   children: List.generate(
                     _tabPaths.length,
@@ -125,7 +138,14 @@ class _NavItem extends StatelessWidget {
                 children: [
                   Icon(icon, size: 22, color: color),
                   const SizedBox(height: 2),
-                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: AppBreakpoints.veryLargeText(context) ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ],
               ),
             ),

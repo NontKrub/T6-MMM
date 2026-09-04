@@ -128,6 +128,7 @@ class _AvatarViewerState extends State<AvatarViewer>
           },
           onHorizontalDragEnd: (_) {
             _isDragging = false;
+            if (_reduceMotion) return;
             _resumeAutoSpin();
           },
           child: LayoutBuilder(
