@@ -2,7 +2,10 @@ import {
   batches,
   parseDeleteAccountRequest,
 } from "../_shared/account_deletion.ts";
-import { revokeAppleAuthorizationCode } from "../_shared/apple_account_deletion.ts";
+import {
+  revokeAppleAuthorizationCode,
+  verifyAppleIdentityToken,
+} from "../_shared/apple_account_deletion.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
 
@@ -38,17 +41,34 @@ Deno.serve(async (req) => {
       return jsonResponse({ deleted: true });
     }
 
-    const hasAppleIdentity = (data.user.identities ?? []).some((identity) =>
+    const appleIdentity = (data.user.identities ?? []).find((identity) =>
       identity.provider === "apple"
     );
+    const hasAppleIdentity = appleIdentity != null;
 
     if (hasAppleIdentity && !attempt?.apple_revoked_at) {
-      if (!request.appleAuthorizationCode) {
+      if (
+        !request.appleAuthorizationCode ||
+        !request.appleIdentityToken ||
+        !request.appleNonce
+      ) {
         return jsonResponse({
           error: "Fresh Sign in with Apple authorization is required.",
           code: "apple_reauthentication_required",
         }, 400);
       }
+      const providerId = (appleIdentity as unknown as {
+        provider_id?: unknown;
+      })?.provider_id;
+      const clientId = Deno.env.get("APPLE_CLIENT_ID")?.trim();
+      if (typeof providerId !== "string" || !providerId || !clientId) {
+        throw new Error("Apple account deletion is not configured safely.");
+      }
+      await verifyAppleIdentityToken(
+        request.appleIdentityToken,
+        request.appleNonce,
+        { clientId, subject: providerId },
+      );
       await revokeAppleAuthorizationCode(request.appleAuthorizationCode);
       const { error } = await admin.from("account_deletion_attempts").upsert({
         user_id: userId,

@@ -7,6 +7,24 @@ import '../config/app_config.dart';
 import 'profile_repository.dart';
 import 'supabase_service.dart';
 
+class AppleDeletionCredential {
+  const AppleDeletionCredential({
+    required this.authorizationCode,
+    required this.identityToken,
+    required this.rawNonce,
+  });
+
+  final String authorizationCode;
+  final String identityToken;
+  final String rawNonce;
+
+  Map<String, String> toJson() => {
+    'apple_authorization_code': authorizationCode,
+    'apple_identity_token': identityToken,
+    'apple_nonce': rawNonce,
+  };
+}
+
 class AuthService {
   final ProfileRepository _profiles;
 
@@ -100,17 +118,17 @@ class AuthService {
       throw StateError('No signed-in account is available to delete.');
     }
 
-    String? appleAuthorizationCode;
+    AppleDeletionCredential? appleCredential;
     final hasAppleIdentity =
         user.identities?.any((identity) => identity.provider == 'apple') ??
         false;
     if (hasAppleIdentity) {
-      appleAuthorizationCode = await _reauthenticateWithApple(user.id);
+      appleCredential = await _reauthenticateWithApple();
     }
 
     final response = await client.functions.invoke(
       'delete-account',
-      body: {'apple_authorization_code': appleAuthorizationCode},
+      body: appleCredential?.toJson() ?? const <String, String>{},
     );
     if (response.status < 200 || response.status >= 300) {
       throw StateError('Account deletion failed (${response.status}).');
@@ -118,7 +136,7 @@ class AuthService {
     await client.auth.signOut(scope: SignOutScope.local);
   }
 
-  Future<String> _reauthenticateWithApple(String userId) async {
+  Future<AppleDeletionCredential> _reauthenticateWithApple() async {
     final client = _client!;
     final rawNonce = client.auth.generateRawNonce();
     final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -135,17 +153,11 @@ class AuthService {
         'Fresh Sign in with Apple authorization is required to delete the account.',
       );
     }
-    final response = await client.auth.signInWithIdToken(
-      provider: OAuthProvider.apple,
-      idToken: idToken,
-      nonce: rawNonce,
+    return AppleDeletionCredential(
+      authorizationCode: credential.authorizationCode,
+      identityToken: idToken,
+      rawNonce: rawNonce,
     );
-    if (response.user?.id != userId) {
-      throw const AuthException(
-        'The Apple account does not match the signed-in account.',
-      );
-    }
-    return credential.authorizationCode;
   }
 }
 
