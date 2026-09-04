@@ -22,4 +22,6 @@ the client setting is not the security boundary.
 
 Account deletion derives the user ID from the caller JWT, removes Storage
 objects before deleting the Auth user, and keeps Apple revocation credentials
-inside Edge Function secrets only.
+inside Edge Function secrets only. Apple deletion also verifies the fresh
+identity token signature, nonce, issuer, audience, expiry, and subject against
+the linked provider identity before revocation or destructive cleanup.

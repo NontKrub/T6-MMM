@@ -106,8 +106,11 @@ least five examples of each category (`top`, `pants`, `shoes`, `hat`,
 `integration_test/fixtures/clothing/evaluation_manifest.example.json`; the
 current one-image fixture is not a release evaluation set. Run it with
 `VISION_FIXTURE_DIR` and optionally write JSON with
-`VISION_EVALUATION_OUTPUT`. Guest evaluation never invokes a paid server
-analyzer; server comparison must use an authenticated, consented test account.
+`VISION_EVALUATION_OUTPUT`. The output includes overall/per-category accuracy,
+confusion counts, and manual-review rate. The initial MMM gate is at least 85%
+overall accuracy with no category below 70%; these are project thresholds, not
+platform guarantees. Guest evaluation never invokes a paid server analyzer;
+server comparison must use an authenticated, consented test account.
 
 ## Backend
 

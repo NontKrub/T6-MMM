@@ -26,6 +26,18 @@ void main() {
     expect(restored.itemIdMap, state.itemIdMap);
   });
 
+  test('migration warnings persist across an interrupted retry', () {
+    const state = GuestMigrationState(
+      status: GuestMigrationStatus.failed,
+      targetUserId: 'cloud-user',
+      warnings: ['Skipped wear history because an item was deleted locally.'],
+    );
+
+    final restored = GuestMigrationState.fromJson(state.toJson());
+
+    expect(restored.warnings, state.warnings);
+  });
+
   test('completed state is no longer pending', () async {
     SharedPreferences.setMockInitialValues({});
     final local = LocalAccountRepository();
