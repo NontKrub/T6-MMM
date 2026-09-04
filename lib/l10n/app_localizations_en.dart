@@ -53,8 +53,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomePrivacy => 'Privacy';
 
   @override
-  String get welcomeLegalNotConfigured =>
-      'Legal links will be available before release.';
+  String get legalLinkOpenFailed =>
+      'This link could not be opened. Check your connection and try again.';
+
+  @override
+  String get authSignInTitle => 'Sign in to MMM';
+
+  @override
+  String get authSignInSubtitle =>
+      'Access your wardrobe across supported cloud features.';
+
+  @override
+  String get authUnlockAiTitle => 'Sign in to use Fashion AI';
+
+  @override
+  String get authUnlockAiSubtitle =>
+      'Connect an account to use MMM Stylist with cloud AI features.';
+
+  @override
+  String get authBackToChat => 'Back to Chat';
+
+  @override
+  String get authBackToWelcome => 'Back to welcome';
 
   @override
   String get authBack => 'Back';
@@ -601,6 +621,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAIConsentAccept => 'Allow AI analysis';
+
+  @override
+  String get settingsAIConsentFailed =>
+      'AI permission could not be updated. Please try again.';
 
   @override
   String get settingsAbout => 'About';

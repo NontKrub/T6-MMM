@@ -8,6 +8,9 @@ class AppConfig {
     defaultValue: 'mmm://login-callback',
   );
   static const privacyPolicyUrl = String.fromEnvironment('PRIVACY_POLICY_URL');
+  static const termsOfServiceUrl = String.fromEnvironment(
+    'TERMS_OF_SERVICE_URL',
+  );
   static const enableFacebookAuth = bool.fromEnvironment(
     'ENABLE_FACEBOOK_AUTH',
     defaultValue: false,

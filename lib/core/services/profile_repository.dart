@@ -1,5 +1,9 @@
-import '../../shared/models/user_profile.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../shared/models/user_profile.dart';
 import 'local_account_repository.dart';
 import 'supabase_service.dart';
 
@@ -8,6 +12,7 @@ class ProfileRepository {
 
   final SupabaseClient? _clientOverride;
   final _local = LocalAccountRepository();
+  static const _cachedCloudProfileKey = 'mmm_cached_cloud_profile';
 
   SupabaseClient? get _client => _clientOverride ?? SupabaseService.client;
 
@@ -16,28 +21,74 @@ class ProfileRepository {
     final user = client?.auth.currentUser;
     if (client == null || user == null) return _local.fetchProfile();
 
-    final profileRow = await client
-        .from('profiles')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
-    if (profileRow == null) return null;
+    try {
+      final profileRow = await client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      if (profileRow == null) return null;
 
-    final preferenceRows = await client
-        .from('style_preferences')
-        .select('kind,value')
-        .eq('user_id', user.id);
-    final styles = <String>[];
-    final occasions = <String>[];
-    for (final row in preferenceRows) {
-      if (row['kind'] == 'style') styles.add(row['value'] as String);
-      if (row['kind'] == 'occasion') occasions.add(row['value'] as String);
+      final preferenceRows = await client
+          .from('style_preferences')
+          .select('kind,value')
+          .eq('user_id', user.id);
+      final styles = <String>[];
+      final occasions = <String>[];
+      for (final row in preferenceRows) {
+        if (row['kind'] == 'style') styles.add(row['value'] as String);
+        if (row['kind'] == 'occasion') occasions.add(row['value'] as String);
+      }
+
+      final profile = UserProfile.fromJson(
+        Map<String, dynamic>.from(profileRow),
+        styles: styles,
+        occasions: occasions,
+      );
+      try {
+        await _cacheCloudProfile(profile, userId: user.id);
+      } catch (_) {
+        // Cache writes are best effort; a healthy remote profile must still load.
+      }
+      return profile;
+    } catch (_) {
+      final cached = await fetchCachedCloudProfile(user.id);
+      if (cached != null) return cached;
+      rethrow;
     }
+  }
 
-    return UserProfile.fromJson(
-      Map<String, dynamic>.from(profileRow),
-      styles: styles,
-      occasions: occasions,
+  Future<UserProfile?> fetchCachedCloudProfile(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_cachedCloudProfileKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final json = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      if (json['id'] != userId) return null;
+      return UserProfile.fromJson(
+        json,
+        styles:
+            (json['style_preferences'] as List?)
+                ?.whereType<String>()
+                .toList() ??
+            const [],
+        occasions:
+            (json['occasions'] as List?)?.whereType<String>().toList() ??
+            const [],
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _cacheCloudProfile(UserProfile profile, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cacheProfile = userId == null
+        ? profile
+        : profile.copyWith(id: userId);
+    await prefs.setString(
+      _cachedCloudProfileKey,
+      jsonEncode(cacheProfile.toJson()),
     );
   }
 
@@ -65,6 +116,11 @@ class ProfileRepository {
     ];
     if (preferences.isNotEmpty) {
       await client.from('style_preferences').insert(preferences);
+    }
+    try {
+      await _cacheCloudProfile(profile, userId: user.id);
+    } catch (_) {
+      // Cache writes are best effort; remote persistence remains authoritative.
     }
   }
 
@@ -140,6 +196,11 @@ class ProfileRepository {
             onConflict: 'user_id,kind,value',
             ignoreDuplicates: true,
           );
+    }
+    try {
+      await _cacheCloudProfile(merged, userId: user.id);
+    } catch (_) {
+      // Cache writes are best effort; remote persistence remains authoritative.
     }
   }
 

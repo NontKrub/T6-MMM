@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/language/language_screen.dart';
 import '../../features/auth/auth_screen.dart';
+import '../../features/auth/auth_entry.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/welcome/welcome_screen.dart';
 import '../../features/shell/main_shell.dart';
@@ -32,14 +33,30 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
-    GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
+    GoRoute(
+      path: '/auth',
+      builder: (_, state) => AuthScreen(
+        entry: state.extra is AuthEntry
+            ? state.extra as AuthEntry
+            : const AuthEntry.signIn(),
+      ),
+    ),
     GoRoute(
       path: '/onboarding',
-      builder: (_, state) => OnboardingScreen(
-        isGuest:
-            (state.extra as Map<String, dynamic>?)?['isGuest'] as bool? ??
-            false,
-      ),
+      builder: (_, state) {
+        final extra = state.extra;
+        final map = extra is Map ? extra : const <Object?, Object?>{};
+        final rawReturnLocation = map['returnLocation'];
+        final returnLocation =
+            rawReturnLocation is String &&
+                AuthEntry.allowedReturnLocations.contains(rawReturnLocation)
+            ? rawReturnLocation
+            : null;
+        return OnboardingScreen(
+          isGuest: map['isGuest'] as bool? ?? false,
+          returnLocation: returnLocation,
+        );
+      },
     ),
     GoRoute(
       path: '/profile',

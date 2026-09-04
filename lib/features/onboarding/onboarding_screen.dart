@@ -14,9 +14,14 @@ import '../../shared/widgets/mmm_progress_indicator.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
 class OnboardingScreen extends ConsumerWidget {
-  const OnboardingScreen({super.key, this.isGuest = false});
+  const OnboardingScreen({
+    super.key,
+    this.isGuest = false,
+    this.returnLocation,
+  });
 
   final bool isGuest;
+  final String? returnLocation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,7 +76,7 @@ class OnboardingScreen extends ConsumerWidget {
             : colorSeasonFromString(state.colorSeason!),
       );
       profile.completeOnboarding();
-      context.go('/home');
+      context.go(returnLocation ?? '/home');
     }
 
     return Scaffold(

@@ -6,9 +6,11 @@ import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
+import '../auth/auth_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/chat_message.dart';
 import '../../shared/widgets/mmm_brand_mark.dart';
@@ -75,6 +77,11 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
     final consentLocked = signedIn && !consentGranted;
     final locked = !signedIn || consentLocked;
     final brand = MmmBrandTheme.of(context);
+    final promptHeight = AppBreakpoints.veryLargeText(context)
+        ? 112.0
+        : AppBreakpoints.largeText(context)
+        ? 88.0
+        : 64.0;
 
     return Scaffold(
       body: SafeArea(
@@ -131,14 +138,21 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   actionLabel: consentLocked
                       ? (l10n?.chatReviewConsent ?? 'Review AI permissions')
                       : (l10n?.chatSignIn ?? 'Sign in'),
-                  onAction: () =>
-                      context.go(consentLocked ? '/settings' : '/auth'),
+                  onAction: () => consentLocked
+                      ? context.go('/settings')
+                      : context.push(
+                          '/auth',
+                          extra: const AuthEntry(
+                            intent: AuthIntent.unlockAi,
+                            returnLocation: '/chat',
+                          ),
+                        ),
                 ),
               )
             else ...[
               if (messages.length <= 1)
                 SizedBox(
-                  height: 64,
+                  height: promptHeight,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.fromLTRB(
@@ -190,7 +204,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           child: TextField(
                             controller: _controller,
                             onSubmitted: (_) => _send(),
-                            maxLines: null,
+                            maxLines: 4,
                             textInputAction: TextInputAction.send,
                             decoration: InputDecoration(
                               hintText:
@@ -242,7 +256,7 @@ class _RetryChatTurn extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
           ),
           TextButton(
             onPressed: onRetry,
@@ -266,9 +280,9 @@ class _LockedAiState extends StatelessWidget {
   final String actionLabel;
   final VoidCallback onAction;
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+  Widget build(BuildContext context) => SingleChildScrollView(
+    padding: const EdgeInsets.all(AppSpacing.xl),
+    child: Center(
       child: MmmSurfaceCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,

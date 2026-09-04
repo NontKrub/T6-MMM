@@ -56,7 +56,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(appRouter.routeInformationProvider.value.uri.path, '/auth');
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Sign in to MMM'), findsOneWidget);
   });
 
   testWidgets('guest path reaches wardrobe without online account', (

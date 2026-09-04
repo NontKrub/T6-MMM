@@ -182,11 +182,47 @@ abstract class AppLocalizations {
   /// **'Privacy'**
   String get welcomePrivacy;
 
-  /// No description provided for @welcomeLegalNotConfigured.
+  /// No description provided for @legalLinkOpenFailed.
   ///
   /// In en, this message translates to:
-  /// **'Legal links will be available before release.'**
-  String get welcomeLegalNotConfigured;
+  /// **'This link could not be opened. Check your connection and try again.'**
+  String get legalLinkOpenFailed;
+
+  /// No description provided for @authSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to MMM'**
+  String get authSignInTitle;
+
+  /// No description provided for @authSignInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access your wardrobe across supported cloud features.'**
+  String get authSignInSubtitle;
+
+  /// No description provided for @authUnlockAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use Fashion AI'**
+  String get authUnlockAiTitle;
+
+  /// No description provided for @authUnlockAiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an account to use MMM Stylist with cloud AI features.'**
+  String get authUnlockAiSubtitle;
+
+  /// No description provided for @authBackToChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Chat'**
+  String get authBackToChat;
+
+  /// No description provided for @authBackToWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to welcome'**
+  String get authBackToWelcome;
 
   /// No description provided for @authBack.
   ///
@@ -1219,6 +1255,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow AI analysis'**
   String get settingsAIConsentAccept;
+
+  /// No description provided for @settingsAIConsentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI permission could not be updated. Please try again.'**
+  String get settingsAIConsentFailed;
 
   /// No description provided for @settingsAbout.
   ///

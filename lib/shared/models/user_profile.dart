@@ -155,6 +155,7 @@ class UserProfile {
   }
 
   UserProfile copyWith({
+    String? id,
     String? name,
     String? avatarUrl,
     ColorSeason? colorSeason,
@@ -172,7 +173,7 @@ class UserProfile {
     int? hairStyleIndex,
   }) {
     return UserProfile(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       colorSeason: colorSeason ?? this.colorSeason,
