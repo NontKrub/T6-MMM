@@ -1,6 +1,5 @@
-import 'package:functions_client/functions_client.dart';
-
 import '../../shared/models/chat_message.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 enum ChatFailureKind { consentRequired, notSignedIn, invalidRequest, temporary }

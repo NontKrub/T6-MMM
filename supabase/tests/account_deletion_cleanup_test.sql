@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(7);
+SELECT plan(9);
 
 INSERT INTO auth.users (id, email)
 VALUES
@@ -37,6 +37,11 @@ SELECT is(
   'valid',
   'valid token remains available for retry'
 );
+SELECT is(
+  public.purge_expired_account_deletion_tokens(),
+  0,
+  'purge safely does nothing when no expired token remains'
+);
 
 SET LOCAL ROLE authenticated;
 SELECT throws_ok(
@@ -47,6 +52,11 @@ SET LOCAL ROLE anon;
 SELECT throws_ok(
   $$SELECT public.purge_expired_account_deletion_tokens()$$,
   '42501', null, 'anon cannot execute the purge'
+);
+SET LOCAL ROLE service_role;
+SELECT lives_ok(
+  $$SELECT public.purge_expired_account_deletion_tokens()$$,
+  'service role can execute the purge'
 );
 SET LOCAL ROLE postgres;
 SELECT ok(
