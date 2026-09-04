@@ -174,8 +174,8 @@ jobs:
             'keyAlias=mmm-ci' \
             'keyPassword=changeit' > android/key.properties
           flutter build appbundle --release
-          test -s build/app/outputs/bundle/release/app.aab
-          jarsigner -verify -certs build/app/outputs/bundle/release/app.aab
+          test -s build/app/outputs/bundle/release/app-release.aab
+          jarsigner -verify -certs build/app/outputs/bundle/release/app-release.aab
       - name: Remove ephemeral signing material
         if: always()
         run: rm -f "$RUNNER_TEMP/mmm-ci-release.jks" android/key.properties
