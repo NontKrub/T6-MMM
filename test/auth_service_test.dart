@@ -12,6 +12,18 @@ void main() {
     expect(appleDisplayName(null, null), isNull);
   });
 
+  test('Apple deletion payload contains no client identity token', () {
+    const credential = AppleDeletionCredential(
+      authorizationCode: 'authorization-code',
+      rawNonce: 'raw-nonce',
+    );
+
+    expect(credential.toJson(), {
+      'apple_authorization_code': 'authorization-code',
+      'apple_nonce': 'raw-nonce',
+    });
+  });
+
   testWidgets('iOS shows Apple and Google while keeping Guest visible', (
     tester,
   ) async {

@@ -9,7 +9,6 @@ Deno.test("delete requests ignore caller-supplied user ids", () => {
     parseDeleteAccountRequest({ user_id: "another-user" }),
     {
       appleAuthorizationCode: null,
-      appleIdentityToken: null,
       appleNonce: null,
     },
   );
@@ -20,7 +19,6 @@ Deno.test("delete requests trim and bound Apple authorization codes", () => {
     parseDeleteAccountRequest({ apple_authorization_code: "  code  " }),
     {
       appleAuthorizationCode: "code",
-      appleIdentityToken: null,
       appleNonce: null,
     },
   );
@@ -29,16 +27,14 @@ Deno.test("delete requests trim and bound Apple authorization codes", () => {
   );
 });
 
-Deno.test("delete requests preserve all fresh Apple credentials", () => {
+Deno.test("delete requests accept only the authorization code and nonce", () => {
   assertEquals(
     parseDeleteAccountRequest({
       apple_authorization_code: " code ",
-      apple_identity_token: " token ",
       apple_nonce: " nonce ",
     }),
     {
       appleAuthorizationCode: "code",
-      appleIdentityToken: "token",
       appleNonce: "nonce",
     },
   );

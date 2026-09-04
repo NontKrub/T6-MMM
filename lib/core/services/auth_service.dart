@@ -10,17 +10,14 @@ import 'supabase_service.dart';
 class AppleDeletionCredential {
   const AppleDeletionCredential({
     required this.authorizationCode,
-    required this.identityToken,
     required this.rawNonce,
   });
 
   final String authorizationCode;
-  final String identityToken;
   final String rawNonce;
 
   Map<String, String> toJson() => {
     'apple_authorization_code': authorizationCode,
-    'apple_identity_token': identityToken,
     'apple_nonce': rawNonce,
   };
 }
@@ -147,15 +144,13 @@ class AuthService {
       ],
       nonce: hashedNonce,
     );
-    final idToken = credential.identityToken;
-    if (idToken == null || credential.authorizationCode.isEmpty) {
+    if (credential.authorizationCode.isEmpty) {
       throw const AuthException(
         'Fresh Sign in with Apple authorization is required to delete the account.',
       );
     }
     return AppleDeletionCredential(
       authorizationCode: credential.authorizationCode,
-      identityToken: idToken,
       rawNonce: rawNonce,
     );
   }

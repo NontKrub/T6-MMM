@@ -3,8 +3,8 @@ import {
   parseDeleteAccountRequest,
 } from "../_shared/account_deletion.ts";
 import {
-  revokeAppleAuthorizationCode,
-  verifyAppleIdentityToken,
+  AppleDeletionError,
+  revokeVerifiedAppleAuthorizationCode,
 } from "../_shared/apple_account_deletion.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
@@ -49,7 +49,6 @@ Deno.serve(async (req) => {
     if (hasAppleIdentity && !attempt?.apple_revoked_at) {
       if (
         !request.appleAuthorizationCode ||
-        !request.appleIdentityToken ||
         !request.appleNonce
       ) {
         return jsonResponse({
@@ -64,12 +63,12 @@ Deno.serve(async (req) => {
       if (typeof providerId !== "string" || !providerId || !clientId) {
         throw new Error("Apple account deletion is not configured safely.");
       }
-      await verifyAppleIdentityToken(
-        request.appleIdentityToken,
-        request.appleNonce,
-        { clientId, subject: providerId },
-      );
-      await revokeAppleAuthorizationCode(request.appleAuthorizationCode);
+      await revokeVerifiedAppleAuthorizationCode({
+        authorizationCode: request.appleAuthorizationCode,
+        rawNonce: request.appleNonce,
+        clientId,
+        expectedSubject: providerId,
+      });
       const { error } = await admin.from("account_deletion_attempts").upsert({
         user_id: userId,
         apple_revoked_at: new Date().toISOString(),
@@ -85,14 +84,15 @@ Deno.serve(async (req) => {
     }
     return jsonResponse({ deleted: true });
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Account deletion failed.",
-    );
+    const appleError = error instanceof AppleDeletionError ? error : null;
+    const code = appleError?.code ?? "account_deletion_failed";
+    const status = appleError?.status ?? 500;
+    const message = appleError?.message ?? "Account deletion failed.";
+    console.error(error instanceof Error ? error.message : message);
     return jsonResponse({
-      error: error instanceof Error
-        ? error.message
-        : "Account deletion failed.",
-    }, 500);
+      error: message,
+      code,
+    }, status);
   }
 });
 

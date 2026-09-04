@@ -6,10 +6,13 @@ export type AppleJwkSet = {
   keys: AppleJsonWebKey[];
 };
 
-type AppleJsonWebKey = JsonWebKey & {
+export type AppleJsonWebKey = JsonWebKey & {
   kid?: string;
   alg?: string;
   use?: string;
+  kty?: string;
+  n?: string;
+  e?: string;
 };
 
 export type AppleIdentityTokenClaims = {
@@ -20,89 +23,312 @@ export type AppleIdentityTokenClaims = {
   sub: string;
 };
 
+export type AppleDeletionErrorCode =
+  | "apple_reauthentication_required"
+  | "apple_identity_invalid"
+  | "apple_revocation_failed"
+  | "account_deletion_failed";
+
+export class AppleDeletionError extends Error {
+  constructor(
+    public readonly code: AppleDeletionErrorCode,
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "AppleDeletionError";
+  }
+}
+
+type AppleFetch = (
+  input: string,
+  init?: RequestInit,
+) => Promise<Response>;
+
+type AppleVerificationOptions = {
+  clientId: string;
+  expectedSubject: string;
+  now?: number;
+  jwks?: AppleJwkSet;
+  fetchJwks?: () => Promise<AppleJwkSet>;
+};
+
+export type RevokeVerifiedAppleAuthorizationCodeParams = {
+  authorizationCode: string;
+  rawNonce: string;
+  clientId: string;
+  expectedSubject: string;
+};
+
+type AppleExchangeOptions = {
+  clientSecret?: string;
+  jwks?: AppleJwkSet;
+  fetchJwks?: () => Promise<AppleJwkSet>;
+  fetchToken?: AppleFetch;
+  fetchRevoke?: AppleFetch;
+  now?: number;
+};
+
 export async function verifyAppleIdentityToken(
   identityToken: string,
   rawNonce: string,
-  options: {
-    clientId: string;
-    subject: string;
-    now?: number;
-    jwks?: AppleJwkSet;
-    fetchJwks?: () => Promise<AppleJwkSet>;
-  },
+  options: AppleVerificationOptions,
 ): Promise<AppleIdentityTokenClaims> {
   if (!identityToken || !rawNonce) {
-    throw new Error("A fresh Apple identity token and nonce are required.");
+    throw invalidAppleCredential(
+      "A fresh Apple identity token and nonce are required.",
+    );
   }
-  const parts = identityToken.split(".");
-  if (parts.length !== 3) throw new Error("The Apple identity token is invalid.");
 
-  const header = decodeJson(parts[0]);
-  const claims = decodeJson(parts[1]) as Partial<AppleIdentityTokenClaims>;
-  if (header.alg !== "ES256" || typeof header.kid !== "string") {
-    throw new Error("The Apple identity token uses an unsupported key.");
+  const parts = identityToken.split(".");
+  if (parts.length !== 3 || parts.some((part) => part.length === 0)) {
+    throw invalidAppleCredential("The Apple identity token is invalid.");
   }
+
+  let header: Record<string, unknown>;
+  let claims: Partial<AppleIdentityTokenClaims>;
+  let signature: Uint8Array;
+  try {
+    header = decodeJson(parts[0]);
+    claims = decodeJson(parts[1]) as Partial<AppleIdentityTokenClaims>;
+    signature = base64UrlBytes(parts[2]);
+  } catch (_) {
+    throw invalidAppleCredential("The Apple identity token is invalid.");
+  }
+
+  if (
+    header.alg !== "RS256" || typeof header.kid !== "string" || !header.kid
+  ) {
+    throw invalidAppleCredential(
+      "The Apple identity token uses an unsupported key.",
+    );
+  }
+
+  const jwks = options.jwks ?? await loadAppleJwks(options.fetchJwks);
+  const jwk = jwks.keys.find((key) => key.kid === header.kid);
+  if (!jwk || !isSupportedAppleJwk(jwk)) {
+    throw invalidAppleCredential("The Apple signing key is unavailable.");
+  }
+
+  let key: CryptoKey;
+  try {
+    key = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+  } catch (_) {
+    throw invalidAppleCredential("The Apple signing key is invalid.");
+  }
+
+  let valid = false;
+  try {
+    valid = await crypto.subtle.verify(
+      { name: "RSASSA-PKCS1-v1_5" },
+      key,
+      signature as BufferSource,
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
+    );
+  } catch (_) {
+    throw invalidAppleCredential(
+      "The Apple identity token signature is invalid.",
+    );
+  }
+  if (!valid) {
+    throw invalidAppleCredential(
+      "The Apple identity token signature is invalid.",
+    );
+  }
+
   if (
     typeof claims.iss !== "string" ||
     (typeof claims.aud !== "string" && !Array.isArray(claims.aud)) ||
-    typeof claims.exp !== "number" ||
+    typeof claims.exp !== "number" || !Number.isFinite(claims.exp) ||
     typeof claims.nonce !== "string" ||
     typeof claims.sub !== "string"
   ) {
-    throw new Error("The Apple identity token is missing required claims.");
+    throw invalidAppleCredential(
+      "The Apple identity token is missing required claims.",
+    );
   }
   if (claims.iss !== "https://appleid.apple.com") {
-    throw new Error("The Apple identity token issuer is invalid.");
+    throw invalidAppleCredential("The Apple identity token issuer is invalid.");
   }
   const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   if (!audiences.includes(options.clientId)) {
-    throw new Error("The Apple identity token audience is invalid.");
+    throw invalidAppleCredential(
+      "The Apple identity token audience is invalid.",
+    );
   }
   const now = options.now ?? Math.floor(Date.now() / 1000);
-  if (claims.exp <= now) throw new Error("The Apple identity token has expired.");
-  if (claims.sub !== options.subject) {
-    throw new Error("The Apple identity does not match the signed-in account.");
+  if (claims.exp <= now) {
+    throw invalidAppleCredential("The Apple identity token has expired.");
+  }
+  if (claims.sub !== options.expectedSubject) {
+    throw invalidAppleCredential(
+      "The Apple identity does not match the signed-in account.",
+    );
   }
   if (claims.nonce !== await nonceHash(rawNonce)) {
-    throw new Error("The Apple identity token nonce is invalid.");
+    throw invalidAppleCredential("The Apple identity token nonce is invalid.");
   }
 
-  const jwks = options.jwks ?? await (options.fetchJwks ?? fetchAppleJwks)();
-  const jwk = jwks.keys.find((key) => key.kid === header.kid);
-  if (!jwk) throw new Error("The Apple signing key is unavailable.");
-  const key = await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["verify"],
-  );
-  const valid = await crypto.subtle.verify(
-    { name: "ECDSA", hash: "SHA-256" },
-    key,
-    base64UrlBytes(parts[2]) as BufferSource,
-    new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
-  );
-  if (!valid) throw new Error("The Apple identity token signature is invalid.");
   return claims as AppleIdentityTokenClaims;
 }
 
-async function fetchAppleJwks(): Promise<AppleJwkSet> {
-  const response = await fetch(appleJwksEndpoint);
-  if (!response.ok) {
-    throw new Error(`Apple signing keys could not be loaded (${response.status}).`);
+export async function revokeVerifiedAppleAuthorizationCode(
+  params: RevokeVerifiedAppleAuthorizationCodeParams,
+  options: AppleExchangeOptions = {},
+): Promise<AppleIdentityTokenClaims> {
+  if (!params.authorizationCode.trim() || !params.rawNonce.trim()) {
+    throw new AppleDeletionError(
+      "apple_reauthentication_required",
+      400,
+      "Fresh Sign in with Apple authorization is required.",
+    );
   }
-  const payload = await response.json() as { keys?: unknown };
-  if (!Array.isArray(payload.keys)) throw new Error("Apple signing keys are invalid.");
-  return { keys: payload.keys as AppleJsonWebKey[] };
+
+  let clientSecret: string;
+  try {
+    clientSecret = options.clientSecret ?? await createConfiguredClientSecret();
+  } catch (_) {
+    throw new AppleDeletionError(
+      "account_deletion_failed",
+      500,
+      "Apple account deletion is not configured safely.",
+    );
+  }
+
+  const fetchToken = options.fetchToken ?? (fetch as AppleFetch);
+  let tokenResponse: Response;
+  try {
+    tokenResponse = await fetchToken(appleTokenEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: params.clientId,
+        client_secret: clientSecret,
+        code: params.authorizationCode,
+        grant_type: "authorization_code",
+      }),
+    });
+  } catch (_) {
+    throw new AppleDeletionError(
+      "apple_revocation_failed",
+      502,
+      "Apple authorization could not be verified.",
+    );
+  }
+  if (!tokenResponse.ok) {
+    throw new AppleDeletionError(
+      tokenResponse.status >= 500
+        ? "apple_revocation_failed"
+        : "apple_identity_invalid",
+      tokenResponse.status >= 500 ? 502 : 401,
+      tokenResponse.status >= 500
+        ? "Apple authorization could not be verified."
+        : "The Apple authorization is invalid.",
+    );
+  }
+
+  let tokenPayload: {
+    refresh_token?: unknown;
+    id_token?: unknown;
+  };
+  try {
+    tokenPayload = await tokenResponse.json() as typeof tokenPayload;
+  } catch (_) {
+    throw invalidAppleCredential(
+      "Apple returned an invalid authorization response.",
+    );
+  }
+  if (
+    typeof tokenPayload.refresh_token !== "string" ||
+    !tokenPayload.refresh_token ||
+    typeof tokenPayload.id_token !== "string" ||
+    !tokenPayload.id_token
+  ) {
+    throw invalidAppleCredential(
+      "Apple did not return the credentials required for revocation.",
+    );
+  }
+
+  const claims = await verifyAppleIdentityToken(
+    tokenPayload.id_token,
+    params.rawNonce,
+    {
+      clientId: params.clientId,
+      expectedSubject: params.expectedSubject,
+      jwks: options.jwks,
+      fetchJwks: options.fetchJwks,
+      now: options.now,
+    },
+  );
+
+  let revokeResponse: Response;
+  try {
+    const fetchRevoke = options.fetchRevoke ?? (fetch as AppleFetch);
+    revokeResponse = await fetchRevoke(appleRevokeEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: params.clientId,
+        client_secret: clientSecret,
+        token: tokenPayload.refresh_token,
+        token_type_hint: "refresh_token",
+      }),
+    });
+  } catch (_) {
+    throw new AppleDeletionError(
+      "apple_revocation_failed",
+      502,
+      "Apple authorization could not be revoked.",
+    );
+  }
+  if (!revokeResponse.ok) {
+    throw new AppleDeletionError(
+      "apple_revocation_failed",
+      revokeResponse.status >= 500 ? 502 : 500,
+      "Apple authorization could not be revoked.",
+    );
+  }
+  return claims;
 }
 
-function decodeJson(value: string): Record<string, unknown> {
+async function loadAppleJwks(
+  injected?: () => Promise<AppleJwkSet>,
+): Promise<AppleJwkSet> {
   try {
-    return JSON.parse(new TextDecoder().decode(base64UrlBytes(value)));
+    if (injected) return await injected();
+    const response = await fetch(appleJwksEndpoint);
+    if (!response.ok) {
+      throw new Error("Apple signing keys could not be loaded.");
+    }
+    const payload = await response.json() as { keys?: unknown };
+    if (!Array.isArray(payload.keys)) {
+      throw new Error("Apple signing keys are invalid.");
+    }
+    return { keys: payload.keys as AppleJsonWebKey[] };
   } catch (_) {
-    throw new Error("The Apple identity token is invalid.");
+    throw new AppleDeletionError(
+      "apple_identity_invalid",
+      502,
+      "Apple signing keys could not be loaded.",
+    );
   }
+}
+
+function isSupportedAppleJwk(jwk: AppleJsonWebKey): boolean {
+  return jwk.kty === "RSA" && jwk.alg === "RS256" &&
+    (!jwk.use || jwk.use === "sig") &&
+    typeof jwk.n === "string" && jwk.n.length > 0 &&
+    typeof jwk.e === "string" && jwk.e.length > 0;
+}
+
+function invalidAppleCredential(message: string): AppleDeletionError {
+  return new AppleDeletionError("apple_identity_invalid", 401, message);
 }
 
 async function nonceHash(value: string): Promise<string> {
@@ -110,65 +336,18 @@ async function nonceHash(value: string): Promise<string> {
     "SHA-256",
     new TextEncoder().encode(value),
   );
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0")
+  return Array.from(
+    new Uint8Array(digest),
+    (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
 }
 
-export async function revokeAppleAuthorizationCode(
-  authorizationCode: string,
-): Promise<void> {
+async function createConfiguredClientSecret(): Promise<string> {
   const teamId = required("APPLE_TEAM_ID");
   const keyId = required("APPLE_KEY_ID");
   const clientId = required("APPLE_CLIENT_ID");
   const privateKey = required("APPLE_PRIVATE_KEY");
-  const clientSecret = await createClientSecret({
-    teamId,
-    keyId,
-    clientId,
-    privateKey,
-  });
-
-  const tokenResponse = await fetch(appleTokenEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code: authorizationCode,
-      grant_type: "authorization_code",
-    }),
-  });
-  if (!tokenResponse.ok) {
-    throw new Error(
-      `Apple authorization exchange failed (${tokenResponse.status}).`,
-    );
-  }
-  const tokenPayload = await tokenResponse.json() as {
-    refresh_token?: unknown;
-  };
-  if (
-    typeof tokenPayload.refresh_token !== "string" ||
-    !tokenPayload.refresh_token
-  ) {
-    throw new Error("Apple did not return a refresh token for revocation.");
-  }
-
-  const revokeResponse = await fetch(appleRevokeEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      token: tokenPayload.refresh_token,
-      token_type_hint: "refresh_token",
-    }),
-  });
-  if (!revokeResponse.ok) {
-    throw new Error(
-      `Apple token revocation failed (${revokeResponse.status}).`,
-    );
-  }
+  return createClientSecret({ teamId, keyId, clientId, privateKey });
 }
 
 async function createClientSecret(params: {
@@ -206,6 +385,14 @@ function required(name: string): string {
   const value = Deno.env.get(name)?.trim();
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
+}
+
+function decodeJson(value: string): Record<string, unknown> {
+  const parsed = JSON.parse(new TextDecoder().decode(base64UrlBytes(value)));
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("The Apple identity token is invalid.");
+  }
+  return parsed as Record<string, unknown>;
 }
 
 function encodeJson(value: unknown): string {

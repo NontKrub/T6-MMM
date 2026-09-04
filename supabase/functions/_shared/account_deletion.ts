@@ -1,6 +1,5 @@
 export type DeleteAccountRequest = {
   appleAuthorizationCode: string | null;
-  appleIdentityToken: string | null;
   appleNonce: string | null;
 };
 
@@ -16,15 +15,9 @@ export function parseDeleteAccountRequest(
     4096,
     "authorization code",
   );
-  const identityToken = boundedString(
-    bodyRecord.apple_identity_token,
-    16_384,
-    "identity token",
-  );
   const nonce = boundedString(bodyRecord.apple_nonce, 256, "nonce");
   return {
     appleAuthorizationCode: code,
-    appleIdentityToken: identityToken,
     appleNonce: nonce,
   };
 }
