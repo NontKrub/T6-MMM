@@ -8,12 +8,14 @@ visual, network, or physical-device evidence.
 
 - [PASS] `dart format --output=none --set-exit-if-changed lib test integration_test`
 - [PASS] `flutter analyze`
-- [PASS] `flutter test` (130 tests at the last full local run)
-- [PASS] Deno shared-function tests and function type checks locally
+- [PASS] `flutter test` (134 tests)
+- [PASS] Deno shared-function tests and function type checks locally and in
+  GitHub Actions run `33830101737`
 - [PASS] `flutter build ios --simulator`
 - [PASS] `flutter build apk --debug` with JDK 17
-- [NOT RUN] GitHub Actions workflow pass and protected required checks on the
-  production branch
+- [PASS] GitHub Actions workflow run `33830101737` (format, analyze,
+  Flutter tests, Deno tests/checks, Supabase DB/Storage security, iOS
+  simulator compile, and Android debug compile)
 
 ## Backend and security
 
@@ -59,9 +61,9 @@ visual, network, or physical-device evidence.
 ## Current local evidence
 
 The current local evidence is passing Flutter and Deno checks, iOS simulator
-compile, and Android debug compile when run with the installed JDK 17. The
-default machine JDK is 26 and still fails Android's JDK-image transform, so the
-toolchain command must be explicit until CI proves the runner configuration.
+compile, and Android debug compile when run with the installed JDK 17. CI now
+pins the Android job to JDK 17. The default machine JDK is 26 and still fails
+Android's JDK-image transform, so local Android builds must use JDK 17.
 Local pgTAP/Storage execution is **BLOCKED** because Docker is unavailable.
 Computer Use is available, but Device Hub/Xcode accessibility attachment timed
 out before an interactive pass; GUI acceptance is **BLOCKED** and no visual
