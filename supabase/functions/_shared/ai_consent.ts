@@ -16,7 +16,7 @@ export async function hasAiConsent(
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from("user_consents")
-    .select("user_id")
+    .select("user_id,consent_type,policy_version,revoked_at")
     .eq("user_id", userId)
     .eq("consent_type", aiConsentType)
     .eq("policy_version", aiConsentPolicyVersion)
