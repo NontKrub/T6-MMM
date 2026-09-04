@@ -10,11 +10,11 @@ visual, network, or physical-device evidence.
 - [PASS] `flutter analyze`
 - [PASS] `flutter test` (138 tests)
 - [PASS] Deno shared-function, Apple deletion handler, and function type checks
-  locally (49 tests) and in GitHub Actions run `33842497446`
+  locally (50 tests) and in GitHub Actions run `33844000077`
 - [PASS] `flutter build ios --simulator`
 - [PASS] `flutter build apk --debug` with JDK 17
-- [PASS] GitHub Actions workflow run `33842497446` at validated code SHA
-  `20f50c2403170e883b684bd7b092d4b101ef5445` (format, analyze,
+- [PASS] GitHub Actions workflow run `33844000077` at validated code SHA
+  `3366cb6cbe304b41ea45c316f5c10f7f95fb65ce` (format, analyze,
   Flutter tests, Deno tests/checks, Supabase DB/Storage security, iOS
   simulator compile, and Android debug compile)
 
@@ -61,11 +61,11 @@ visual, network, or physical-device evidence.
 
 ## Current local evidence
 
-The current local evidence is passing 138 Flutter tests, 49 Deno tests,
+The current local evidence is passing 138 Flutter tests, 50 Deno tests,
 dynamic type checks for all nine Edge Function entrypoints, iOS simulator
 compile, and Android debug compile with JDK 17. GitHub Actions run
-`33842497446` passed all seven required jobs at code SHA
-`20f50c2403170e883b684bd7b092d4b101ef5445`. CI pins the Android job to JDK 17;
+`33844000077` passed all seven required jobs at code SHA
+`3366cb6cbe304b41ea45c316f5c10f7f95fb65ce`. CI pins the Android job to JDK 17;
 the default machine JDK is 26 and still fails Android's JDK-image transform.
 Local pgTAP/Storage execution is **BLOCKED** because Docker is unavailable.
 Computer Use is available, but Device Hub/Xcode accessibility attachment timed
