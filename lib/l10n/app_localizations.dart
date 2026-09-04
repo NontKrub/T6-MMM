@@ -683,7 +683,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatConsentMessage.
   ///
   /// In en, this message translates to:
-  /// **'Allow MMM to send wardrobe images, wardrobe metadata, and fashion questions to its configured AI provider. You can revoke this permission in Settings.'**
+  /// **'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.'**
   String get chatConsentMessage;
 
   /// No description provided for @chatPrompt1.
@@ -947,7 +947,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAIConsentMessage.
   ///
   /// In en, this message translates to:
-  /// **'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.'**
+  /// **'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.'**
   String get settingsAIConsentMessage;
 
   /// No description provided for @settingsAIConsentAccept.

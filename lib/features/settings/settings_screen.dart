@@ -433,7 +433,7 @@ class SettingsScreen extends ConsumerWidget {
           title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
           content: Text(
             l10n?.settingsAIConsentMessage ??
-                'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
+                'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
           ),
           actions: [
             TextButton(

@@ -317,7 +317,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatConsentMessage =>
-      'Allow MMM to send wardrobe images, wardrobe metadata, and fashion questions to its configured AI provider. You can revoke this permission in Settings.';
+      'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.';
 
   @override
   String get chatPrompt1 => 'What\'s my color season?';
@@ -456,7 +456,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAIConsentMessage =>
-      'MMM may send wardrobe images, wardrobe metadata, and fashion questions to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.';
+      'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.';
 
   @override
   String get settingsAIConsentAccept => 'Allow AI analysis';
