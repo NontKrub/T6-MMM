@@ -5,13 +5,43 @@ import {
 import {
   AppleDeletionError,
   revokeVerifiedAppleAuthorizationCode,
+  type RevokeVerifiedAppleAuthorizationCodeParams,
 } from "../_shared/apple_account_deletion.ts";
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
 
 const bucket = "wardrobe-images";
 
-Deno.serve(async (req) => {
+type AppleRevoker = (
+  params: RevokeVerifiedAppleAuthorizationCodeParams,
+) => Promise<unknown>;
+
+export type DeleteAccountDependencies = {
+  requireUser: typeof requireUser;
+  serviceClient: typeof serviceClient;
+  revokeAppleAuthorization: AppleRevoker;
+  appleClientId: () => string | undefined;
+};
+
+const defaultDependencies: DeleteAccountDependencies = {
+  requireUser,
+  serviceClient,
+  revokeAppleAuthorization: revokeVerifiedAppleAuthorizationCode,
+  appleClientId: () => Deno.env.get("APPLE_CLIENT_ID")?.trim(),
+};
+
+if (import.meta.main) {
+  Deno.serve((req) => handleDeleteAccount(req));
+}
+
+export async function handleDeleteAccount(
+  req: Request,
+  overrides: Partial<DeleteAccountDependencies> = {},
+): Promise<Response> {
+  const dependencies: DeleteAccountDependencies = {
+    ...defaultDependencies,
+    ...overrides,
+  };
   const options = handleOptions(req);
   if (options) return options;
   if (req.method !== "POST") {
@@ -19,9 +49,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userId } = await requireUser(req);
+    const { userId } = await dependencies.requireUser(req);
     const request = parseDeleteAccountRequest(await readJson<unknown>(req));
-    const admin = serviceClient();
+    const admin = dependencies.serviceClient();
     const { data, error: userError } = await admin.auth.admin.getUserById(
       userId,
     );
@@ -59,11 +89,11 @@ Deno.serve(async (req) => {
       const providerId = (appleIdentity as unknown as {
         provider_id?: unknown;
       })?.provider_id;
-      const clientId = Deno.env.get("APPLE_CLIENT_ID")?.trim();
+      const clientId = dependencies.appleClientId();
       if (typeof providerId !== "string" || !providerId || !clientId) {
         throw new Error("Apple account deletion is not configured safely.");
       }
-      await revokeVerifiedAppleAuthorizationCode({
+      await dependencies.revokeAppleAuthorization({
         authorizationCode: request.appleAuthorizationCode,
         rawNonce: request.appleNonce,
         clientId,
@@ -94,7 +124,7 @@ Deno.serve(async (req) => {
       code,
     }, status);
   }
-});
+}
 
 async function removeUserStorage(
   admin: ReturnType<typeof serviceClient>,

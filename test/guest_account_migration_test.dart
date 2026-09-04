@@ -39,6 +39,26 @@ void main() {
     expect(restored.warnings, state.warnings);
   });
 
+  test('retrying a failed migration preserves its existing warnings', () {
+    const state = GuestMigrationState(
+      status: GuestMigrationStatus.failed,
+      targetUserId: 'cloud-user',
+      warnings: [
+        'Skipped recommendation history because its event type is no longer recognized.',
+      ],
+      error: 'network failed',
+    );
+
+    final retry = state.copyWith(
+      status: GuestMigrationStatus.running,
+      phase: GuestMigrationPhase.profile,
+      clearError: true,
+    );
+
+    expect(retry.warnings, state.warnings);
+    expect(retry.error, isNull);
+  });
+
   test('completed state is no longer pending', () async {
     SharedPreferences.setMockInitialValues({});
     final local = LocalAccountRepository();

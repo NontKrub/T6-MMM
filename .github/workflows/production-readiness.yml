@@ -69,6 +69,7 @@ jobs:
           supabase/functions/_shared/domain_test.ts
           supabase/functions/_shared/fashion_chat_test.ts
           supabase/functions/_shared/openai_test.ts
+          supabase/functions/delete-account/delete_account_test.ts
       - name: Type-check every Edge Function
         shell: bash
         run: |

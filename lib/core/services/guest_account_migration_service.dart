@@ -223,7 +223,6 @@ class GuestAccountMigrationService {
         state.copyWith(
           status: GuestMigrationStatus.running,
           phase: GuestMigrationPhase.profile,
-          clearWarnings: true,
           clearError: true,
         ),
       );
@@ -384,13 +383,13 @@ class GuestAccountMigrationService {
     final wearIds = <String>[];
     final preferenceIds = <String>[];
     final recommendationIds = <String>[];
-    final warnings = <String>[];
+    final warnings = [...state.warnings];
     var skippedWearEvents = 0;
     var skippedPreferenceEvents = 0;
     var skippedRecommendationEvents = 0;
 
     Future<void> addWarning(String warning) async {
-      warnings.add(warning);
+      if (!warnings.contains(warning)) warnings.add(warning);
       await onWarnings(List.unmodifiable(warnings));
     }
 

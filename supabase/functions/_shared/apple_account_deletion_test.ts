@@ -233,6 +233,11 @@ Deno.test("Apple exchange fails closed for incomplete or failed responses", asyn
       tokenResponse: jsonResponse({ refresh_token: "refresh" }),
       expectedCode: "apple_identity_invalid",
     },
+    {
+      name: "null token response",
+      tokenResponse: jsonResponse(null),
+      expectedCode: "apple_identity_invalid",
+    },
   ];
 
   for (const testCase of cases) {

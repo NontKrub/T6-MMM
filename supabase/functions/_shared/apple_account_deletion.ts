@@ -45,7 +45,7 @@ type AppleFetch = (
   init?: RequestInit,
 ) => Promise<Response>;
 
-type AppleVerificationOptions = {
+export type AppleVerificationOptions = {
   clientId: string;
   expectedSubject: string;
   now?: number;
@@ -60,7 +60,7 @@ export type RevokeVerifiedAppleAuthorizationCodeParams = {
   expectedSubject: string;
 };
 
-type AppleExchangeOptions = {
+export type AppleExchangeOptions = {
   clientSecret?: string;
   jwks?: AppleJwkSet;
   fetchJwks?: () => Promise<AppleJwkSet>;
@@ -105,6 +105,9 @@ export async function verifyAppleIdentityToken(
   }
 
   const jwks = options.jwks ?? await loadAppleJwks(options.fetchJwks);
+  if (!isAppleJwkSet(jwks)) {
+    throw invalidAppleCredential("Apple signing keys are invalid.");
+  }
   const jwk = jwks.keys.find((key) => key.kid === header.kid);
   if (!jwk || !isSupportedAppleJwk(jwk)) {
     throw invalidAppleCredential("The Apple signing key is unavailable.");
@@ -233,12 +236,13 @@ export async function revokeVerifiedAppleAuthorizationCode(
     );
   }
 
-  let tokenPayload: {
-    refresh_token?: unknown;
-    id_token?: unknown;
-  };
+  let tokenPayload: Record<string, unknown>;
   try {
-    tokenPayload = await tokenResponse.json() as typeof tokenPayload;
+    const payload = await tokenResponse.json() as unknown;
+    if (!isRecord(payload)) {
+      throw new Error("Apple returned an invalid authorization response.");
+    }
+    tokenPayload = payload;
   } catch (_) {
     throw invalidAppleCredential(
       "Apple returned an invalid authorization response.",
@@ -246,9 +250,9 @@ export async function revokeVerifiedAppleAuthorizationCode(
   }
   if (
     typeof tokenPayload.refresh_token !== "string" ||
-    !tokenPayload.refresh_token ||
+    !tokenPayload.refresh_token.trim() ||
     typeof tokenPayload.id_token !== "string" ||
-    !tokenPayload.id_token
+    !tokenPayload.id_token.trim()
   ) {
     throw invalidAppleCredential(
       "Apple did not return the credentials required for revocation.",
@@ -306,11 +310,11 @@ async function loadAppleJwks(
     if (!response.ok) {
       throw new Error("Apple signing keys could not be loaded.");
     }
-    const payload = await response.json() as { keys?: unknown };
-    if (!Array.isArray(payload.keys)) {
+    const payload = await response.json() as unknown;
+    if (!isAppleJwkSet(payload)) {
       throw new Error("Apple signing keys are invalid.");
     }
-    return { keys: payload.keys as AppleJsonWebKey[] };
+    return payload;
   } catch (_) {
     throw new AppleDeletionError(
       "apple_identity_invalid",
@@ -325,6 +329,15 @@ function isSupportedAppleJwk(jwk: AppleJsonWebKey): boolean {
     (!jwk.use || jwk.use === "sig") &&
     typeof jwk.n === "string" && jwk.n.length > 0 &&
     typeof jwk.e === "string" && jwk.e.length > 0;
+}
+
+function isAppleJwkSet(value: unknown): value is AppleJwkSet {
+  return isRecord(value) && Array.isArray(value.keys) &&
+    value.keys.every((key) => isRecord(key));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function invalidAppleCredential(message: string): AppleDeletionError {
