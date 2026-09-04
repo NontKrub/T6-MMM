@@ -57,45 +57,51 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       child: Row(
                         children: [
-                          Semantics(
-                            button: true,
-                            label: l10n?.commonProfile ?? 'Open profile',
-                            child: Material(
-                              color: brand.raisedSurface,
-                              borderRadius: AppRadii.controlBorder,
-                              child: InkWell(
-                                onTap: () => context.push('/profile'),
+                          Flexible(
+                            child: Semantics(
+                              button: true,
+                              label: l10n?.commonProfile ?? 'Open profile',
+                              child: Material(
+                                color: brand.raisedSurface,
                                 borderRadius: AppRadii.controlBorder,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(AppSpacing.xs),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor:
-                                            brand.primaryGradient.colors.first,
-                                        child: Text(
-                                          profile.name.isNotEmpty
-                                              ? profile.name[0]
-                                              : 'A',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
+                                child: InkWell(
+                                  onTap: () => context.push('/profile'),
+                                  borderRadius: AppRadii.controlBorder,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      AppSpacing.xs,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: brand
+                                              .primaryGradient
+                                              .colors
+                                              .first,
+                                          child: Text(
+                                            profile.name.isNotEmpty
+                                                ? profile.name[0]
+                                                : 'A',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.xs),
-                                      Flexible(
-                                        child: Text(
-                                          profile.name,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge,
+                                        const SizedBox(width: AppSpacing.xs),
+                                        Flexible(
+                                          child: Text(
+                                            profile.name,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelLarge,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

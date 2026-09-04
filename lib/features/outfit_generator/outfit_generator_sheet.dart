@@ -216,7 +216,9 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                 AppSpacing.lg,
                 math.max(
                   AppSpacing.xxl,
-                  media.viewInsets.bottom + AppSpacing.lg,
+                  media.viewInsets.bottom +
+                      media.padding.bottom +
+                      AppSpacing.lg,
                 ),
               ),
               child: Column(

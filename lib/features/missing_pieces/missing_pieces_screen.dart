@@ -202,32 +202,35 @@ class _GarmentSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedLabel = value?.name ?? placeholder ?? 'Choose $label';
-    return MmmSurfaceCard(
-      onTap: items.isEmpty ? null : () => _showPicker(context),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Row(
-        children: [
-          if (value != null)
-            ClipRRect(
-              borderRadius: AppRadii.compactBorder,
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: WardrobeImage(item: value!),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: MmmSurfaceCard(
+        onTap: items.isEmpty ? null : () => _showPicker(context),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: Row(
+          children: [
+            if (value != null)
+              ClipRRect(
+                borderRadius: AppRadii.compactBorder,
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: WardrobeImage(item: value!),
+                ),
+              )
+            else
+              const SizedBox(width: 40, height: 40),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                selectedLabel,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
-            )
-          else
-            const SizedBox(width: 40, height: 40),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              selectedLabel,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyLarge,
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded),
-        ],
+            const Icon(Icons.chevron_right_rounded),
+          ],
+        ),
       ),
     );
   }

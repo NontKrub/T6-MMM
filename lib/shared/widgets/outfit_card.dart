@@ -130,7 +130,7 @@ class OutfitCard extends StatelessWidget {
                         horizontal: 14,
                         vertical: 8,
                       ),
-                      minimumSize: const Size(64, 44),
+                      minimumSize: const Size(64, 48),
                     ),
                     child: Text(
                       l10n?.outfitWear ?? 'Wear',
