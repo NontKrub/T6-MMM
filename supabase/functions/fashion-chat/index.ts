@@ -3,6 +3,7 @@ import { hasAiConsent } from "../_shared/ai_consent.ts";
 import {
   assertChatThreadOwner,
   insertChatMessage,
+  updateChatThreadTitleBestEffort,
 } from "../_shared/fashion_chat.ts";
 import { chatSchema, openAiJson } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
@@ -53,8 +54,8 @@ Deno.serve(async (req) => {
       content: body.message,
     });
 
-    const [profileResult, wardrobeResult, recentMessagesResult] =
-      await Promise.all([
+    const [profileResult, wardrobeResult, recentMessagesResult] = await Promise
+      .all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("clothing_items")
           .select("name,brand,category,tags,dominant_colors,primary_color")
@@ -100,10 +101,12 @@ Deno.serve(async (req) => {
       content: result.reply,
     });
 
-    const { error: titleError } = await supabase.from("chat_threads")
-      .update({ title: result.title, updated_at: new Date().toISOString() })
-      .eq("id", threadId);
-    if (titleError) throw titleError;
+    await updateChatThreadTitleBestEffort(
+      supabase,
+      threadId,
+      userId,
+      result.title,
+    );
 
     return jsonResponse({ thread_id: threadId, message: assistantMessage });
   } catch (error) {
