@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/models/clothing_item.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
 import 'wardrobe_image.dart';
 
 class ClothingItemCard extends StatelessWidget {
@@ -17,24 +18,26 @@ class ClothingItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppColors.seedColor : Colors.transparent,
-            width: 2,
-          ),
+    final brand = MmmBrandTheme.of(context);
+    return Material(
+      color: brand.raisedSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadii.cardBorder,
+        side: BorderSide(
+          color: selected
+              ? brand.primaryGradient.colors.first
+              : brand.subtleBorder,
+          width: selected ? 2 : 1,
         ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadii.cardBorder,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: AppRadii.cardBorder,
           child: Stack(
             children: [
-              // Item image
               Positioned.fill(child: WardrobeImage(item: item)),
-              // Bottom info overlay
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -74,7 +77,6 @@ class ClothingItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Category dot
               Positioned(
                 top: 8,
                 right: 8,

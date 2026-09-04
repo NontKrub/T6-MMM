@@ -1,13 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/avatar_customization_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/widgets/mmm_gradient_button.dart';
+import '../../shared/widgets/mmm_secondary_button.dart';
 import '../../shared/models/user_profile.dart';
 import 'widgets/avatar_viewer.dart';
 import 'widgets/repetition_insight_card.dart';
@@ -25,227 +28,159 @@ class HomeScreen extends ConsumerWidget {
     final hairColor = ref.watch(hairColorIndexProvider);
     final bodyShape = ref.watch(bodyShapeProvider);
     final hairStyle = ref.watch(hairStyleIndexProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [const Color(0xFF0F0E1A), const Color(0xFF1A1628)]
-                    : [const Color(0xFFF0EEFF), const Color(0xFFF8F7FF)],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                0,
               ),
-            ),
-          ),
-          // Ambient glow
-          Positioned(
-            top: -100,
-            left: -80,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.seedColor.withValues(alpha: 0.15),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // App bar
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: Row(
-                    children: [
-                      GestureDetector(
+              child: Row(
+                children: [
+                  Semantics(
+                    button: true,
+                    label: l10n?.commonProfile ?? 'Open profile',
+                    child: Material(
+                      color: brand.raisedSurface,
+                      borderRadius: AppRadii.controlBorder,
+                      child: InkWell(
                         onTap: () => context.push('/profile'),
-                        child: GlassContainer(
-                          padding: const EdgeInsets.all(10),
-                          borderRadius: 14,
+                        borderRadius: AppRadii.controlBorder,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.xs),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppColors.seedColor,
+                                radius: 16,
+                                backgroundColor:
+                                    brand.primaryGradient.colors.first,
                                 child: Text(
                                   profile.name.isNotEmpty
                                       ? profile.name[0]
                                       : 'A',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                profile.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                              const SizedBox(width: AppSpacing.xs),
+                              Flexible(
+                                child: Text(
+                                  profile.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelLarge,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => context.push('/settings'),
-                        child: GlassContainer(
-                          padding: const EdgeInsets.all(10),
-                          borderRadius: 14,
-                          child: const Icon(Icons.settings_rounded, size: 20),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ).animate().fadeIn(duration: 400.ms),
-                const SizedBox(height: 10),
-                // Avatar area with customize overlay
-                Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 36),
-                        child: AvatarViewer(
-                          avatarType: profile.avatarType,
-                          bodyShape: bodyShape,
-                          skinToneIndex: skinTone,
-                          hairColorIndex: hairColor,
-                          hairStyleIndex: hairStyle,
-                        ),
-                      ),
-                      // Customize button — top-right corner of avatar area
-                      Positioned(
-                        top: 0,
-                        right: 24,
-                        child: GestureDetector(
-                          onTap: () => _showCustomizeSheet(context, ref),
-                          child: GlassContainer(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            borderRadius: 20,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.auto_fix_high_rounded,
-                                  size: 14,
-                                  color: AppColors.seedColor,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  l10n?.homeCustomize ?? 'Customize',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.seedColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
-                      ),
-                    ],
+                  const Spacer(),
+                  IconButton(
+                    tooltip: l10n?.commonSettings ?? 'Settings',
+                    onPressed: () => context.push('/settings'),
+                    icon: const Icon(Icons.settings_rounded),
                   ),
-                ),
-                // Bottom section
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  child: Column(
-                    children: [
-                      // Express (In a Rush) button — above Generate Outfit
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child:
-                            GestureDetector(
-                                  onTap: () => _showInARush(context, ref),
-                                  child: Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          AppColors.accentGold,
-                                          Color(0xFFFF6B35),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.accentGold
-                                              .withValues(alpha: 0.4),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.bolt_rounded,
-                                      color: Colors.white,
-                                      size: 26,
-                                    ),
-                                  ),
-                                )
-                                .animate(delay: 400.ms)
-                                .scale(
-                                  duration: 400.ms,
-                                  curve: Curves.elasticOut,
-                                ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: () =>
-                                  _showOutfitGenerator(context, ref),
-                              icon: const Icon(
-                                Icons.auto_awesome_rounded,
-                                size: 18,
-                              ),
-                              label: Text(
-                                l10n?.homeGenerateOutfit ?? 'Generate Outfit',
-                              ),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.seedColor,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                              ),
-                            ),
-                          )
-                          .animate(delay: 200.ms)
-                          .fadeIn(duration: 400.ms)
-                          .slideY(begin: 0.3, end: 0),
-                      const SizedBox(height: 12),
-                      const RepetitionInsightCard(),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            Padding(
+              padding: AppSpacing.screen,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n?.homeGreeting(profile.name) ??
+                        'Good morning, ${profile.name}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    l10n?.homePrompt ?? 'What are we wearing today?',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxl,
+                    ),
+                    child: AvatarViewer(
+                      avatarType: profile.avatarType,
+                      bodyShape: bodyShape,
+                      skinToneIndex: skinTone,
+                      hairColorIndex: hairColor,
+                      hairStyleIndex: hairStyle,
+                    ),
+                  ),
+                  Positioned(
+                    right: AppSpacing.lg,
+                    top: AppSpacing.xs,
+                    child: Material(
+                      color: brand.raisedSurface,
+                      borderRadius: AppRadii.compactBorder,
+                      child: IconButton(
+                        tooltip: l10n?.homeCustomize ?? 'Customize',
+                        onPressed: () => _showCustomizeSheet(context, ref),
+                        icon: const Icon(Icons.auto_fix_high_rounded),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                112,
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: MmmGradientButton(
+                      label: l10n?.homeGenerateOutfit ?? 'Generate Outfit',
+                      icon: Icons.auto_awesome_rounded,
+                      onPressed: () => _showOutfitGenerator(context, ref),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: MmmSecondaryButton(
+                      label: l10n?.rushTitle ?? 'In a Rush',
+                      icon: Icons.bolt_rounded,
+                      onPressed: () => _showInARush(context, ref),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const RepetitionInsightCard(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -369,6 +304,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
     final l10n = AppLocalizations.of(context);
+    final brand = MmmBrandTheme.of(context);
     final profile = widgetRef.watch(userProfileProvider);
     final skinTone = widgetRef.watch(skinToneIndexProvider);
     final hairColor = widgetRef.watch(hairColorIndexProvider);
@@ -433,38 +369,30 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               .read(userProfileProvider.notifier)
                               .updateAvatarType(type),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
+                            duration: AppMotion.duration(
+                              context,
+                              const Duration(milliseconds: 220),
+                            ),
                             curve: Curves.easeOut,
                             margin: const EdgeInsets.only(right: 8),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              gradient: selected
-                                  ? const LinearGradient(
-                                      colors: [
-                                        AppColors.gradientStart,
-                                        AppColors.gradientEnd,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
+                              gradient: selected ? brand.primaryGradient : null,
                               color: selected
                                   ? null
-                                  : AppColors.seedColor.withValues(alpha: 0.08),
+                                  : brand.subtleAccentSurface,
                               borderRadius: BorderRadius.circular(16),
                               border: selected
                                   ? null
-                                  : Border.all(
-                                      color: Colors.grey.withValues(
-                                        alpha: 0.18,
-                                      ),
-                                    ),
+                                  : Border.all(color: brand.subtleBorder),
                               boxShadow: selected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.seedColor.withValues(
-                                          alpha: 0.35,
-                                        ),
+                                        color: brand
+                                            .primaryGradient
+                                            .colors
+                                            .first
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
@@ -478,9 +406,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                   size: 26,
                                   color: selected
                                       ? Colors.white
-                                      : AppColors.seedColor.withValues(
-                                          alpha: 0.70,
-                                        ),
+                                      : brand.primaryGradient.colors.first
+                                            .withValues(alpha: 0.70),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
@@ -490,7 +417,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                     fontWeight: FontWeight.w600,
                                     color: selected
                                         ? Colors.white
-                                        : Colors.grey,
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 if (selected) ...[
@@ -533,39 +462,27 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                   .updateBodyShape(shape);
                             },
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
+                              duration: AppMotion.duration(
+                                context,
+                                const Duration(milliseconds: 220),
+                              ),
                               margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                gradient: sel
-                                    ? const LinearGradient(
-                                        colors: [
-                                          AppColors.gradientStart,
-                                          AppColors.gradientEnd,
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
-                                    : null,
-                                color: sel
-                                    ? null
-                                    : AppColors.seedColor.withValues(
-                                        alpha: 0.08,
-                                      ),
+                                gradient: sel ? brand.primaryGradient : null,
+                                color: sel ? null : brand.subtleAccentSurface,
                                 borderRadius: BorderRadius.circular(16),
                                 border: sel
                                     ? null
-                                    : Border.all(
-                                        color: Colors.grey.withValues(
-                                          alpha: 0.18,
-                                        ),
-                                      ),
+                                    : Border.all(color: brand.subtleBorder),
                                 boxShadow: sel
                                     ? [
                                         BoxShadow(
-                                          color: AppColors.seedColor.withValues(
-                                            alpha: 0.35,
-                                          ),
+                                          color: brand
+                                              .primaryGradient
+                                              .colors
+                                              .first
+                                              .withValues(alpha: 0.25),
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -579,9 +496,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                     size: 26,
                                     color: sel
                                         ? Colors.white
-                                        : AppColors.seedColor.withValues(
-                                            alpha: 0.70,
-                                          ),
+                                        : brand.primaryGradient.colors.first
+                                              .withValues(alpha: 0.70),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
@@ -589,7 +505,11 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: sel ? Colors.white : Colors.grey,
+                                      color: sel
+                                          ? Colors.white
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   if (sel) ...[
@@ -631,39 +551,29 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                 .updateHairStyleIndex(i);
                           },
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: AppMotion.duration(
+                              context,
+                              const Duration(milliseconds: 200),
+                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              gradient: sel
-                                  ? const LinearGradient(
-                                      colors: [
-                                        AppColors.gradientStart,
-                                        AppColors.gradientEnd,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: sel
-                                  ? null
-                                  : AppColors.seedColor.withValues(alpha: 0.08),
+                              gradient: sel ? brand.primaryGradient : null,
+                              color: sel ? null : brand.subtleAccentSurface,
                               borderRadius: BorderRadius.circular(20),
                               border: sel
                                   ? null
-                                  : Border.all(
-                                      color: Colors.grey.withValues(
-                                        alpha: 0.18,
-                                      ),
-                                    ),
+                                  : Border.all(color: brand.subtleBorder),
                               boxShadow: sel
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.seedColor.withValues(
-                                          alpha: 0.30,
-                                        ),
+                                        color: brand
+                                            .primaryGradient
+                                            .colors
+                                            .first
+                                            .withValues(alpha: 0.20),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -677,7 +587,11 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                 fontWeight: sel
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                color: sel ? Colors.white : Colors.grey,
+                                color: sel
+                                    ? Colors.white
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -704,7 +618,10 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                 .updateSkinToneIndex(i);
                           },
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: AppMotion.duration(
+                              context,
+                              const Duration(milliseconds: 200),
+                            ),
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
@@ -712,13 +629,11 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               color: _skinTones[i],
                               border: sel
                                   ? Border.all(
-                                      color: AppColors.seedColor,
+                                      color: brand.primaryGradient.colors.first,
                                       width: 3,
                                     )
                                   : Border.all(
-                                      color: Colors.grey.withValues(
-                                        alpha: 0.20,
-                                      ),
+                                      color: brand.subtleBorder,
                                       width: 1.5,
                                     ),
                               boxShadow: sel
@@ -764,7 +679,10 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                           child: Column(
                             children: [
                               AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
+                                duration: AppMotion.duration(
+                                  context,
+                                  const Duration(milliseconds: 200),
+                                ),
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
@@ -772,13 +690,14 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                   color: _hairColors[i],
                                   border: sel
                                       ? Border.all(
-                                          color: AppColors.seedColor,
+                                          color: brand
+                                              .primaryGradient
+                                              .colors
+                                              .first,
                                           width: 3,
                                         )
                                       : Border.all(
-                                          color: Colors.grey.withValues(
-                                            alpha: 0.20,
-                                          ),
+                                          color: brand.subtleBorder,
                                           width: 1.5,
                                         ),
                                   boxShadow: sel
@@ -799,8 +718,10 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: sel
-                                      ? AppColors.seedColor
-                                      : Colors.grey.withValues(alpha: 0.55),
+                                      ? brand.primaryGradient.colors.first
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                   fontWeight: sel
                                       ? FontWeight.w700
                                       : FontWeight.w400,
@@ -815,19 +736,9 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton(
+                    child: MmmGradientButton(
+                      label: l10n?.avatarDone ?? 'Done',
                       onPressed: () => Navigator.pop(context),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.seedColor,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        l10n?.avatarDone ?? 'Done',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
                     ),
                   ),
                 ],

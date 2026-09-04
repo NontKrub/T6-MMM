@@ -110,6 +110,114 @@ abstract class AppLocalizations {
   /// **'match your wardrobe to your mood'**
   String get appTagline;
 
+  /// No description provided for @welcomeLanguageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose language'**
+  String get welcomeLanguageTooltip;
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mix Match Mood'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe, mixed around your mood.'**
+  String get welcomeSubtitle;
+
+  /// No description provided for @welcomeValueProp.
+  ///
+  /// In en, this message translates to:
+  /// **'Build outfits from the clothes you already own.'**
+  String get welcomeValueProp;
+
+  /// No description provided for @welcomeCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create my wardrobe'**
+  String get welcomeCreate;
+
+  /// No description provided for @welcomeSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get welcomeSignIn;
+
+  /// No description provided for @welcomeLocalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your local wardrobe stays on this device until you choose to sign in.'**
+  String get welcomeLocalNote;
+
+  /// No description provided for @welcomeAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get welcomeAuthTitle;
+
+  /// No description provided for @welcomeAuthSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe is waiting.'**
+  String get welcomeAuthSubtitle;
+
+  /// No description provided for @welcomeNewToMmm.
+  ///
+  /// In en, this message translates to:
+  /// **'New to MMM? Create a wardrobe'**
+  String get welcomeNewToMmm;
+
+  /// No description provided for @welcomeTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms'**
+  String get welcomeTerms;
+
+  /// No description provided for @welcomePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get welcomePrivacy;
+
+  /// No description provided for @welcomeLegalNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal links will be available before release.'**
+  String get welcomeLegalNotConfigured;
+
+  /// No description provided for @authBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get authBack;
+
+  /// No description provided for @authImportWarningsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe imported with warnings'**
+  String get authImportWarningsTitle;
+
+  /// No description provided for @authImportingGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing local wardrobe…'**
+  String get authImportingGuest;
+
+  /// No description provided for @authRetryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in could not be completed. Please try again.'**
+  String get authRetryMessage;
+
+  /// No description provided for @splashLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Mix Match Mood'**
+  String get splashLoading;
+
   /// No description provided for @languageScreenTitle.
   ///
   /// In en, this message translates to:
@@ -139,6 +247,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ภาษาไทย'**
   String get languageThai;
+
+  /// No description provided for @commonBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get commonBack;
+
+  /// No description provided for @commonSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get commonSettings;
+
+  /// No description provided for @commonProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open profile'**
+  String get commonProfile;
+
+  /// No description provided for @commonAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get commonAddItem;
+
+  /// No description provided for @commonClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get commonClearSearch;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
 
   /// No description provided for @authHeroTitle.
   ///
@@ -530,6 +686,18 @@ abstract class AppLocalizations {
   /// **'Generate Outfit'**
   String get homeGenerateOutfit;
 
+  /// No description provided for @homeGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}'**
+  String homeGreeting(String name);
+
+  /// No description provided for @homePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'What are we wearing today?'**
+  String get homePrompt;
+
   /// No description provided for @wardrobeTitle.
   ///
   /// In en, this message translates to:
@@ -565,6 +733,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No items found'**
   String get wardrobeNoResults;
+
+  /// No description provided for @wardrobeNoResultsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different name, brand, or tag.'**
+  String get wardrobeNoResultsHint;
+
+  /// No description provided for @wardrobeEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe is ready for its first piece.'**
+  String get wardrobeEmptyMessage;
+
+  /// No description provided for @wardrobeEmptyAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an item'**
+  String get wardrobeEmptyAdd;
+
+  /// No description provided for @wardrobeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get wardrobeAll;
 
   /// No description provided for @missingTitle.
   ///
@@ -626,6 +818,42 @@ abstract class AppLocalizations {
   /// **'Hide reason'**
   String get missingWhyCollapse;
 
+  /// No description provided for @missingTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get missingTop;
+
+  /// No description provided for @missingBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get missingBottom;
+
+  /// No description provided for @missingChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose {label}'**
+  String missingChoose(String label);
+
+  /// No description provided for @missingAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze the gap'**
+  String get missingAnalyze;
+
+  /// No description provided for @missingLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding the gap…'**
+  String get missingLoading;
+
+  /// No description provided for @missingTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again in a moment.'**
+  String get missingTryAgain;
+
   /// No description provided for @chatTitle.
   ///
   /// In en, this message translates to:
@@ -668,12 +896,6 @@ abstract class AppLocalizations {
   /// **'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.'**
   String get chatLockedMessage;
 
-  /// No description provided for @authImportingGuest.
-  ///
-  /// In en, this message translates to:
-  /// **'Importing local wardrobe…'**
-  String get authImportingGuest;
-
   /// No description provided for @chatConsentTitle.
   ///
   /// In en, this message translates to:
@@ -715,6 +937,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quiet luxury look'**
   String get chatPrompt5;
+
+  /// No description provided for @chatSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get chatSend;
+
+  /// No description provided for @chatRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get chatRetry;
+
+  /// No description provided for @chatThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM is thinking…'**
+  String get chatThinking;
+
+  /// No description provided for @chatSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get chatSignIn;
+
+  /// No description provided for @chatReviewConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Review AI permissions'**
+  String get chatReviewConsent;
 
   /// No description provided for @profileTitle.
   ///
@@ -787,6 +1039,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account deletion failed'**
   String get profileDeleteAccountFailed;
+
+  /// No description provided for @profileAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileAccount;
+
+  /// No description provided for @profileDangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger zone'**
+  String get profileDangerZone;
 
   /// No description provided for @settingsTitle.
   ///
@@ -1292,6 +1556,54 @@ abstract class AppLocalizations {
   /// **'Date'**
   String get outfitStyleDate;
 
+  /// No description provided for @outfitRepeatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat outfit'**
+  String get outfitRepeatTitle;
+
+  /// No description provided for @outfitRepeatMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve worn this combination {count} times.'**
+  String outfitRepeatMessage(int count);
+
+  /// No description provided for @outfitGenerateAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate another'**
+  String get outfitGenerateAnother;
+
+  /// No description provided for @outfitWearAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear anyway'**
+  String get outfitWearAnyway;
+
+  /// No description provided for @outfitWear.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear'**
+  String get outfitWear;
+
+  /// No description provided for @outfitTargetColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional outfit color (HEX)'**
+  String get outfitTargetColorLabel;
+
+  /// No description provided for @outfitTargetColorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HEX color such as #3366FF.'**
+  String get outfitTargetColorInvalid;
+
+  /// No description provided for @outfitSignInColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use profile color season'**
+  String get outfitSignInColor;
+
   /// No description provided for @rushTitle.
   ///
   /// In en, this message translates to:
@@ -1448,6 +1760,180 @@ abstract class AppLocalizations {
   /// **'Category: {category}'**
   String addItemCategoryLabel(String category);
 
+  /// No description provided for @addItemAnalysisReading.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM is reading this piece…'**
+  String get addItemAnalysisReading;
+
+  /// No description provided for @addItemAnalysisFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image analysis failed. You can still tag this item manually.'**
+  String get addItemAnalysisFailed;
+
+  /// No description provided for @addItemPhotoRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a photo before saving.'**
+  String get addItemPhotoRequired;
+
+  /// No description provided for @addItemCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category before saving.'**
+  String get addItemCategoryRequired;
+
+  /// No description provided for @addItemDetectedColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected colors'**
+  String get addItemDetectedColors;
+
+  /// No description provided for @addItemNoColors.
+  ///
+  /// In en, this message translates to:
+  /// **'No colors selected'**
+  String get addItemNoColors;
+
+  /// No description provided for @addItemAddHex.
+  ///
+  /// In en, this message translates to:
+  /// **'Add custom HEX'**
+  String get addItemAddHex;
+
+  /// No description provided for @addItemPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get addItemPattern;
+
+  /// No description provided for @addItemSilhouette.
+  ///
+  /// In en, this message translates to:
+  /// **'Silhouette'**
+  String get addItemSilhouette;
+
+  /// No description provided for @addItemSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save item. Try again.'**
+  String get addItemSaveFailed;
+
+  /// No description provided for @addItemInvalidHex.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HEX color such as #3366FF.'**
+  String get addItemInvalidHex;
+
+  /// No description provided for @addItemRecoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t recover the last photo. Please choose it again.'**
+  String get addItemRecoveryFailed;
+
+  /// No description provided for @addItemCameraOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the camera. Try again or choose a photo.'**
+  String get addItemCameraOpenFailed;
+
+  /// No description provided for @addItemPhotoLibraryOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your photo library. Try again.'**
+  String get addItemPhotoLibraryOpenFailed;
+
+  /// No description provided for @addItemImagePathUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This image isn\'t available. Please try again.'**
+  String get addItemImagePathUnavailable;
+
+  /// No description provided for @addItemPhotoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'That photo is no longer available. Please choose another.'**
+  String get addItemPhotoUnavailable;
+
+  /// No description provided for @addItemCameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off. Enable it in Settings or choose a photo instead.'**
+  String get addItemCameraPermissionDenied;
+
+  /// No description provided for @addItemPhotoPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo access is off. Enable it in Settings or choose another photo.'**
+  String get addItemPhotoPermissionDenied;
+
+  /// No description provided for @addItemCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t capture a photo. Please try again.'**
+  String get addItemCaptureFailed;
+
+  /// No description provided for @addItemSelectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t select that photo. Please try again.'**
+  String get addItemSelectionFailed;
+
+  /// No description provided for @clothingCategoryHat.
+  ///
+  /// In en, this message translates to:
+  /// **'Hat'**
+  String get clothingCategoryHat;
+
+  /// No description provided for @clothingCategoryTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get clothingCategoryTop;
+
+  /// No description provided for @clothingCategoryPants.
+  ///
+  /// In en, this message translates to:
+  /// **'Pants'**
+  String get clothingCategoryPants;
+
+  /// No description provided for @clothingCategoryShoes.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoes'**
+  String get clothingCategoryShoes;
+
+  /// No description provided for @clothingCategoryOuterwear.
+  ///
+  /// In en, this message translates to:
+  /// **'Outerwear'**
+  String get clothingCategoryOuterwear;
+
+  /// No description provided for @clothingCategoryDress.
+  ///
+  /// In en, this message translates to:
+  /// **'Dress'**
+  String get clothingCategoryDress;
+
+  /// No description provided for @clothingCategoryBag.
+  ///
+  /// In en, this message translates to:
+  /// **'Bag'**
+  String get clothingCategoryBag;
+
+  /// No description provided for @clothingCategoryAccessory.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessory'**
+  String get clothingCategoryAccessory;
+
+  /// No description provided for @clothingCategoryUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get clothingCategoryUnknown;
+
   /// No description provided for @tagCasual.
   ///
   /// In en, this message translates to:
@@ -1585,6 +2071,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove'**
   String get itemDeleteConfirm;
+
+  /// No description provided for @itemMoreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get itemMoreActions;
+
+  /// No description provided for @itemRetryAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry analysis'**
+  String get itemRetryAnalysis;
+
+  /// No description provided for @itemAnalysisUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis updated.'**
+  String get itemAnalysisUpdated;
+
+  /// No description provided for @itemAnalysisRetryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not retry analysis. Try again.'**
+  String get itemAnalysisRetryFailed;
+
+  /// No description provided for @itemDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get itemDetails;
+
+  /// No description provided for @itemColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Colors'**
+  String get itemColors;
+
+  /// No description provided for @itemPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get itemPattern;
+
+  /// No description provided for @itemSilhouette.
+  ///
+  /// In en, this message translates to:
+  /// **'Silhouette'**
+  String get itemSilhouette;
+
+  /// No description provided for @itemAnalysisFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis failed. Your item is still saved.'**
+  String get itemAnalysisFailed;
+
+  /// No description provided for @itemAnalysisPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some details may be incomplete.'**
+  String get itemAnalysisPartial;
+
+  /// No description provided for @onboardingBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get onboardingBack;
+
+  /// No description provided for @onboardingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Onboarding progress'**
+  String get onboardingProgress;
 
   /// No description provided for @settingsLuckyColorBirthProfile.
   ///

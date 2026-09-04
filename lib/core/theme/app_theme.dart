@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'app_brand_theme.dart';
 import 'app_colors.dart';
+import 'app_radii.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seedColor,
+      seedColor: AppColors.brandIndigo,
       brightness: Brightness.light,
-      surface: AppColors.surfaceLight,
+      surface: AppColors.surfaceRaisedLight,
     );
     return _build(scheme, Brightness.light);
   }
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seedColor,
+      seedColor: AppColors.brandIndigo,
       brightness: Brightness.dark,
-      surface: AppColors.surfaceDark,
+      surface: AppColors.surfaceRaisedDark,
     );
     return _build(scheme, Brightness.dark);
   }
@@ -33,33 +35,29 @@ class AppTheme {
       scaffoldBackgroundColor: isLight
           ? AppColors.surfaceLight
           : AppColors.surfaceDark,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme().apply(
-        bodyColor: textColor,
-        displayColor: textColor,
-      ),
+      textTheme: AppTypography.textTheme(textColor),
+      extensions: [isLight ? MmmBrandTheme.light() : MmmBrandTheme.dark()],
       cardTheme: const CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadii.cardBorder),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: textColor),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
+        titleTextStyle: AppTypography.textTheme(textColor).titleMedium,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isLight ? AppColors.glassLight : AppColors.glassDark,
+        fillColor: isLight
+            ? AppColors.surfaceSecondaryLight
+            : AppColors.surfaceSecondaryDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderRadius: AppRadii.controlBorder,
+          borderSide: BorderSide(
+            color: isLight ? AppColors.borderLight : AppColors.borderDark,
+          ),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -68,16 +66,11 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.seedColor,
+          backgroundColor: AppColors.brandIndigo,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.controlBorder),
+          textStyle: AppTypography.textTheme(textColor).labelLarge,
         ),
       ),
       chipTheme: ChipThemeData(

@@ -48,7 +48,7 @@ lib/
 - **Mock/guest mode**: `AppConfig.isSupabaseConfigured` is false when `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` are missing. Every provider catches repository errors and silently keeps mock data. Supabase is **never** initialized unless configured.
 - **Provider → Repository**: providers (e.g. `wardrobeProvider`) hold state and call repositories (e.g. `WardrobeRepository`) for all persistence. Repositories talk to Supabase directly via `SupabaseService.client`.
 - **Hive local storage**: manual adapters only — no code generation (`hive_generator` is not a dependency).
-- **Glass UI**: use `GlassContainer` (`lib/core/theme/glass_container.dart`) for all frosted-glass surfaces. It auto-adapts tint and border to dark/light mode using `AppColors` constants.
+- **Glass UI**: use `GlassContainer` (`lib/core/theme/glass_container.dart`) only for overlays above imagery, bottom navigation, and modal context. Ordinary forms, settings, cards, and rows use neutral surfaces.
 - **Models**: `ClothingItem.fromJson` maps Supabase column names; `toInsertJson` maps back for inserts. Other models follow the same pattern.
 
 ### Navigation
@@ -63,4 +63,9 @@ All routes are in `lib/core/navigation/router.dart`. The bottom-nav shell (`Main
 
 ### Theme
 
-Brand identity: purple seed (`#8B5CF6`) + gold accent (`#F59E0B`). All colors are in `AppColors`. `AppTheme.light()` / `AppTheme.dark()` build `ThemeData` from those constants. Do not hardcode colors outside `AppColors`.
+MMM Design System v1 uses neutral canvas with a blue (`#317DFD`) to violet
+(`#A06BEF`) to pink (`#F97CB0`) brand gradient. Brand values, specialized
+surfaces, spacing, radii, motion, and typography are centralized in
+`lib/core/theme/`; screens use theme/component tokens instead of feature-level
+brand literals. Amber, green, and red are semantic-only. See
+`docs/design/MMM_DESIGN_SYSTEM_V1.md`.

@@ -145,7 +145,7 @@ void main() {
     },
   );
 
-  testWidgets('iOS shows Apple and Google while keeping Guest visible', (
+  testWidgets('iOS shows Apple and Google with a create-wardrobe path', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -162,27 +162,28 @@ void main() {
 
     expect(find.text('Continue with Apple'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue as guest'), findsOneWidget);
+    expect(find.text('New to MMM? Create a wardrobe'), findsOneWidget);
     expect(find.text('Continue with Facebook'), findsNothing);
   });
 
-  testWidgets('Android hides Apple and keeps Google and Guest visible', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: Theme(
-            data: ThemeData(platform: TargetPlatform.android),
-            child: const AuthScreen(),
+  testWidgets(
+    'Android hides Apple and keeps Google with a create-wardrobe path',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Theme(
+              data: ThemeData(platform: TargetPlatform.android),
+              child: const AuthScreen(),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Continue with Apple'), findsNothing);
-    expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue as guest'), findsOneWidget);
-  });
+      expect(find.text('Continue with Apple'), findsNothing);
+      expect(find.text('Continue with Google'), findsOneWidget);
+      expect(find.text('New to MMM? Create a wardrobe'), findsOneWidget);
+    },
+  );
 }

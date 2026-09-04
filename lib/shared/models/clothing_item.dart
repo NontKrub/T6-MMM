@@ -235,11 +235,11 @@ extension ClothingCategoryExt on ClothingCategory {
       case ClothingCategory.shoes:
         return AppColors.colorShoes;
       case ClothingCategory.outerwear:
-        return AppColors.seedColor;
+        return AppColors.brandIndigo;
       case ClothingCategory.dress:
-        return AppColors.gradientEnd;
+        return AppColors.brandPink;
       case ClothingCategory.bag:
-        return AppColors.accentGold;
+        return AppColors.warning;
       case ClothingCategory.accessory:
         return AppColors.colorAccessories;
       case ClothingCategory.unknown:

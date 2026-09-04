@@ -213,7 +213,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-image-picker')));
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.textContaining('Camera permission is denied'), findsOneWidget);
+    expect(find.textContaining('Camera access is off'), findsOneWidget);
     expect(find.byKey(const Key('add-item-preview-image')), findsNothing);
   });
 

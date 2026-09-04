@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/outfit_provider.dart';
@@ -11,10 +11,12 @@ import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/local_account_repository.dart';
 import '../../core/services/supabase_service.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/user_profile.dart';
+import '../../shared/widgets/mmm_choice_chip.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -25,219 +27,180 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider);
     final wardrobe = ref.watch(wardrobeProvider);
     final outfits = ref.watch(outfitsProvider);
-    final uniqueOutfitIds = outfits.map((outfit) => outfit.id).toSet();
+    final favorite = wardrobe.isEmpty
+        ? '—'
+        : wardrobe
+              .reduce((a, b) => a.wearCount > b.wearCount ? a : b)
+              .name
+              .split(' ')
+              .first;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.profileTitle ?? 'Profile')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Avatar & name header
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        profile.name.isNotEmpty
-                            ? profile.name[0].toUpperCase()
-                            : 'A',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    profile.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${profile.colorSeason.label} · ${profile.avatarType.name}',
-                    style: TextStyle(
-                      color: Colors.grey.withValues(alpha: 0.6),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+        children: [
+          _ProfileHeader(profile: profile),
+          const SizedBox(height: AppSpacing.xl),
+          Row(
+            children: [
+              _Stat(
+                value: '${wardrobe.length}',
+                label: l10n?.profileItems ?? 'Items',
               ),
-            ).animate().fadeIn(duration: 300.ms),
-            const SizedBox(height: 24),
-            // Stats
-            Row(
-              children: [
-                _StatCard(
-                  value: '${wardrobe.length}',
-                  label: l10n?.profileItems ?? 'Items',
-                ),
-                const SizedBox(width: 12),
-                _StatCard(
-                  value: '${uniqueOutfitIds.length}',
-                  label: l10n?.profileOutfits ?? 'Outfits',
-                ),
-                const SizedBox(width: 12),
-                _StatCard(
-                  value: wardrobe.isNotEmpty
-                      ? wardrobe
-                            .reduce((a, b) => a.wearCount > b.wearCount ? a : b)
-                            .name
-                            .split(' ')
-                            .first
-                      : '—',
-                  label: l10n?.profileFavItem ?? 'Fav item',
-                ),
-              ],
-            ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
-            const SizedBox(height: 24),
-            Text(
-              l10n?.profileColorSeason ?? 'Color Season',
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 10),
-            ...ColorSeason.values.map((season) {
-              final sel = profile.colorSeason == season;
-              return GestureDetector(
-                onTap: () => ref
-                    .read(userProfileProvider.notifier)
-                    .updateColorSeason(season),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: sel
-                        ? AppColors.seedColor.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: sel
-                          ? AppColors.seedColor
-                          : Colors.grey.withValues(alpha: 0.2),
-                      width: sel ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              season.label,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              season.description,
-                              style: TextStyle(
-                                color: Colors.grey.withValues(alpha: 0.6),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (sel)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: AppColors.seedColor,
-                          size: 20,
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 24),
-            // Style preferences
-            if (profile.stylePreferences.isNotEmpty) ...[
-              Text(
-                l10n?.profileStylePreferences ?? 'Style Preferences',
-                style: Theme.of(context).textTheme.labelLarge,
+              const SizedBox(width: AppSpacing.sm),
+              _Stat(
+                value: '${outfits.map((outfit) => outfit.id).toSet().length}',
+                label: l10n?.profileOutfits ?? 'Outfits',
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: profile.stylePreferences
-                    .map(
-                      (s) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.seedColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          s,
-                          style: TextStyle(
-                            color: AppColors.seedColor,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(width: AppSpacing.sm),
+              _Stat(value: favorite, label: l10n?.profileFavItem ?? 'Fav item'),
             ],
-            // Sign out
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _signOut(context, ref),
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: Text(l10n?.profileSignOut ?? 'Sign Out'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red.withValues(alpha: 0.8),
-                  side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-            ),
-            if (SupabaseService.isSignedIn) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _deleteAccount(context, ref, l10n),
-                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
-                  label: Text(l10n?.profileDeleteAccount ?? 'Delete Account'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          _SectionTitle(l10n?.profileColorSeason ?? 'Color Season'),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: ColorSeason.values
+                .map(
+                  (season) => MmmChoiceChip(
+                    label: season.label,
+                    selected: profile.colorSeason == season,
+                    onSelected: (_) => ref
+                        .read(userProfileProvider.notifier)
+                        .updateColorSeason(season),
                   ),
-                ),
-              ),
-            ],
+                )
+                .toList(),
+          ),
+          if (profile.stylePreferences.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            _SectionTitle(l10n?.profileStylePreferences ?? 'Style Preferences'),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: profile.stylePreferences
+                  .map((style) => Chip(label: Text(style)))
+                  .toList(),
+            ),
           ],
-        ),
+          const SizedBox(height: AppSpacing.xxl),
+          const _SectionTitle('Account'),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: () => _signOut(context, ref),
+              icon: const Icon(Icons.logout_rounded, size: 20),
+              label: Text(l10n?.profileSignOut ?? 'Sign Out'),
+            ),
+          ),
+          if (SupabaseService.isSignedIn) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            const _SectionTitle('Danger zone', destructive: true),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: () => _deleteAccount(context, ref, l10n),
+                icon: const Icon(Icons.delete_forever_outlined, size: 20),
+                label: Text(l10n?.profileDeleteAccount ?? 'Delete Account'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: MmmBrandTheme.of(context).destructive,
+                  side: BorderSide(
+                    color: MmmBrandTheme.of(context).destructive,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.profile});
+  final UserProfile profile;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      children: [
+        Container(
+          width: 88,
+          height: 88,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: MmmBrandTheme.of(context).primaryGradient,
+          ),
+          child: Text(
+            profile.name.isNotEmpty ? profile.name[0].toUpperCase() : 'M',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              color: Colors.white,
+              fontSize: 32,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(profile.name, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          '${profile.colorSeason.label} · ${profile.avatarType.name}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    ),
+  );
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: MmmSurfaceCard(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {this.destructive = false});
+  final String title;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    title,
+    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: destructive ? MmmBrandTheme.of(context).destructive : null,
+    ),
+  );
 }
 
 Future<void> _deleteAccount(
@@ -260,6 +223,9 @@ Future<void> _deleteAccount(
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: MmmBrandTheme.of(context).destructive,
+          ),
           child: Text(l10n?.profileDeleteAccountConfirm ?? 'Delete Account'),
         ),
       ],
@@ -275,13 +241,13 @@ Future<void> _deleteAccount(
     ref.invalidate(sessionProvider);
     ref.invalidate(wardrobeProvider);
     if (!context.mounted) return;
-    context.go('/auth');
-  } catch (error) {
+    context.go('/welcome');
+  } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${l10n?.profileDeleteAccountFailed ?? 'Account deletion failed'}: $error',
+          l10n?.profileDeleteAccountFailed ?? 'Account deletion failed',
         ),
       ),
     );
@@ -289,47 +255,11 @@ Future<void> _deleteAccount(
 }
 
 Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-  if (AppConfig.isSupabaseConfigured) {
-    await AuthService().signOut();
-  }
+  if (AppConfig.isSupabaseConfigured) await AuthService().signOut();
   ref.invalidate(userProfileProvider);
   ref.invalidate(aiConsentProvider);
   ref.invalidate(sessionProvider);
   ref.invalidate(wardrobeProvider);
   if (!context.mounted) return;
-  context.go('/auth');
-}
-
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  const _StatCard({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GlassContainer(
-        borderRadius: 16,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey.withValues(alpha: 0.6),
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  context.go('/welcome');
 }

@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../shared/models/user_profile.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_brand_theme.dart';
+import '../../../core/theme/app_motion.dart';
 
 class AvatarViewer extends StatefulWidget {
   final AvatarType avatarType;
@@ -33,6 +34,7 @@ class _AvatarViewerState extends State<AvatarViewer>
 
   double _yAngle = 0.0;
   bool _isDragging = false;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -55,13 +57,31 @@ class _AvatarViewerState extends State<AvatarViewer>
 
     _entryController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 950),
+      duration: AppMotion.transition,
     )..forward();
 
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3400),
     )..repeat(reverse: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = AppMotion.reduceMotion(context);
+    if (reduceMotion == _reduceMotion) return;
+    _reduceMotion = reduceMotion;
+    if (reduceMotion) {
+      _spinController.stop();
+      _glowController.stop();
+      _floatController.stop();
+      _entryController.value = 1;
+      return;
+    }
+    if (!_spinController.isAnimating) _spinController.repeat();
+    if (!_glowController.isAnimating) _glowController.repeat(reverse: true);
+    if (!_floatController.isAnimating) _floatController.repeat(reverse: true);
   }
 
   @override
@@ -86,6 +106,7 @@ class _AvatarViewerState extends State<AvatarViewer>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -128,7 +149,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                           center: const Alignment(0, -0.20),
                           radius: 0.88,
                           colors: [
-                            AppColors.seedColor.withValues(
+                            brand.primaryGradient.colors.first.withValues(
                               alpha: isDark
                                   ? 0.11 + _glowController.value * 0.08
                                   : 0.05 + _glowController.value * 0.03,
@@ -151,7 +172,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            AppColors.gradientEnd.withValues(
+                            brand.primaryGradient.colors.last.withValues(
                               alpha: isDark
                                   ? 0.07 + _glowController.value * 0.04
                                   : 0.03,
@@ -164,7 +185,7 @@ class _AvatarViewerState extends State<AvatarViewer>
                   ),
 
                   // Shimmer particles
-                  ..._buildParticles(w, h, isDark),
+                  ..._buildParticles(w, h, isDark, brand),
 
                   // Platform rings
                   Positioned(
@@ -173,6 +194,8 @@ class _AvatarViewerState extends State<AvatarViewer>
                       width: w * 0.58,
                       glow: _glowController.value,
                       isDark: isDark,
+                      primary: brand.primaryGradient.colors.first,
+                      accent: brand.primaryGradient.colors.last,
                     ),
                   ),
 
@@ -203,9 +226,9 @@ class _AvatarViewerState extends State<AvatarViewer>
                             .scale(
                               begin: const Offset(0.70, 0.70),
                               end: const Offset(1, 1),
-                              curve: Curves.elasticOut,
+                              curve: AppMotion.curve,
                             )
-                            .fadeIn(duration: 500.ms),
+                            .fadeIn(duration: AppMotion.transition),
                   ),
 
                   // Drag hint
@@ -226,7 +249,12 @@ class _AvatarViewerState extends State<AvatarViewer>
     );
   }
 
-  List<Widget> _buildParticles(double w, double h, bool isDark) {
+  List<Widget> _buildParticles(
+    double w,
+    double h,
+    bool isDark,
+    MmmBrandTheme brand,
+  ) {
     const positions = [
       [0.10, 0.12],
       [0.88, 0.20],
@@ -248,8 +276,11 @@ class _AvatarViewerState extends State<AvatarViewer>
           height: i.isEven ? 3 : 2,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: (i.isEven ? AppColors.seedColor : AppColors.gradientEnd)
-                .withValues(alpha: isDark ? alpha * 0.55 : alpha * 0.28),
+            color:
+                (i.isEven
+                        ? brand.primaryGradient.colors.first
+                        : brand.primaryGradient.colors.last)
+                    .withValues(alpha: isDark ? alpha * 0.55 : alpha * 0.28),
           ),
         ),
       );
@@ -263,11 +294,15 @@ class _PlatformRings extends StatelessWidget {
   final double width;
   final double glow;
   final bool isDark;
+  final Color primary;
+  final Color accent;
 
   const _PlatformRings({
     required this.width,
     required this.glow,
     required this.isDark,
+    required this.primary,
+    required this.accent,
   });
 
   @override
@@ -276,7 +311,12 @@ class _PlatformRings extends StatelessWidget {
       width: width,
       height: width * 0.20,
       child: CustomPaint(
-        painter: _PlatformPainter(glow: glow, isDark: isDark),
+        painter: _PlatformPainter(
+          glow: glow,
+          isDark: isDark,
+          primary: primary,
+          accent: accent,
+        ),
       ),
     );
   }
@@ -285,8 +325,15 @@ class _PlatformRings extends StatelessWidget {
 class _PlatformPainter extends CustomPainter {
   final double glow;
   final bool isDark;
+  final Color primary;
+  final Color accent;
 
-  const _PlatformPainter({required this.glow, required this.isDark});
+  const _PlatformPainter({
+    required this.glow,
+    required this.isDark,
+    required this.primary,
+    required this.accent,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -306,8 +353,8 @@ class _PlatformPainter extends CustomPainter {
         Paint()
           ..shader = RadialGradient(
             colors: [
-              AppColors.seedColor.withValues(alpha: ringAlpha * 1.6),
-              AppColors.gradientEnd.withValues(alpha: ringAlpha * 0.4),
+              primary.withValues(alpha: ringAlpha * 1.6),
+              accent.withValues(alpha: ringAlpha * 0.4),
             ],
           ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
           ..style = PaintingStyle.stroke
@@ -324,7 +371,7 @@ class _PlatformPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            AppColors.seedColor.withValues(alpha: 0.22 + glow * 0.14),
+            primary.withValues(alpha: 0.22 + glow * 0.14),
             Colors.transparent,
           ],
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
@@ -332,7 +379,8 @@ class _PlatformPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PlatformPainter old) => old.glow != glow;
+  bool shouldRepaint(_PlatformPainter old) =>
+      old.glow != glow || old.primary != primary || old.accent != accent;
 }
 
 // ─── Drag Hint ────────────────────────────────────────────────────────────────

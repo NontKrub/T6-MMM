@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/features/missing_pieces/missing_pieces_screen.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
+import 'package:mix_match_mood/shared/widgets/mmm_gradient_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -26,7 +27,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    var button = tester.widget<FilledButton>(
+    var button = tester.widget<MmmGradientButton>(
       find.byKey(const Key('missing-piece-analyze')),
     );
     expect(button.onPressed, isNull);
@@ -40,7 +41,7 @@ void main() {
     await tester.tap(find.text('Blue Jeans').last);
     await tester.pumpAndSettle();
 
-    button = tester.widget<FilledButton>(
+    button = tester.widget<MmmGradientButton>(
       find.byKey(const Key('missing-piece-analyze')),
     );
     expect(button.onPressed, isNotNull);

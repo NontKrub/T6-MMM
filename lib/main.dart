@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,13 +16,6 @@ import 'l10n/app_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await notificationService.initialize();
-    await notificationService.restoreDailyReminder();
-  } catch (error) {
-    debugPrint('Notifications are unavailable: $error');
-  }
-
   if (AppConfig.isSupabaseConfigured) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
@@ -34,6 +29,16 @@ void main() async {
   ]);
 
   runApp(const ProviderScope(child: MixMatchMoodApp()));
+  unawaited(_initializeNotifications());
+}
+
+Future<void> _initializeNotifications() async {
+  try {
+    await notificationService.initialize();
+    await notificationService.restoreDailyReminder();
+  } catch (error) {
+    debugPrint('Notifications are unavailable: $error');
+  }
 }
 
 class MixMatchMoodApp extends ConsumerWidget {

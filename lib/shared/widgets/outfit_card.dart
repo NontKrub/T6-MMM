@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/models/clothing_item.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../l10n/app_localizations.dart';
 import 'wardrobe_image.dart';
 
 class OutfitCard extends StatelessWidget {
@@ -20,18 +24,21 @@ class OutfitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final brand = MmmBrandTheme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      duration: AppMotion.duration(context, AppMotion.selection),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: isDark ? const Color(0xFF1A1628) : Colors.white,
+        borderRadius: AppRadii.cardBorder,
+        color: brand.raisedSurface,
         border: Border.all(
-          color: isSelected ? AppColors.seedColor : Colors.transparent,
-          width: 2,
+          color: isSelected
+              ? brand.primaryGradient.colors.first
+              : brand.subtleBorder,
+          width: isSelected ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -42,7 +49,7 @@ class OutfitCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
             // Item thumbnails
@@ -59,7 +66,7 @@ class OutfitCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.sm),
             // Name & style
             Expanded(
               child: Column(
@@ -120,10 +127,12 @@ class OutfitCard extends StatelessWidget {
                     horizontal: 14,
                     vertical: 8,
                   ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: const Size(64, 44),
                 ),
-                child: const Text('Wear', style: TextStyle(fontSize: 13)),
+                child: Text(
+                  l10n?.outfitWear ?? 'Wear',
+                  style: const TextStyle(fontSize: 13),
+                ),
               ),
           ],
         ),
@@ -138,16 +147,17 @@ class _ScorePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.seedColor.withValues(alpha: 0.14),
+        color: brand.subtleAccentSurface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         score.round().toString(),
-        style: const TextStyle(
-          color: AppColors.seedColor,
+        style: TextStyle(
+          color: brand.primaryGradient.colors.first,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
@@ -162,16 +172,17 @@ class _FactorChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.seedColor.withValues(alpha: 0.15),
+        color: brand.subtleAccentSurface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label.replaceAll('_', ' '),
-        style: const TextStyle(
-          color: AppColors.seedColor,
+        style: TextStyle(
+          color: brand.primaryGradient.colors.first,
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),

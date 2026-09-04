@@ -1,22 +1,22 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/outfit_provider.dart';
-import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/guest_account_migration_service.dart';
-import '../../core/services/local_account_repository.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/widgets/mmm_brand_mark.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -27,6 +27,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   StreamSubscription<AuthState>? _authSub;
+  String? _authenticatingProvider;
 
   @override
   void initState() {
@@ -59,12 +60,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             await _showMigrationWarnings(result);
           }
         } else if (mounted && result.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${AppLocalizations.of(context)?.authImportFailed ?? 'Local wardrobe import failed'}: ${result.error}',
-              ),
-            ),
+          _showMessage(
+            AppLocalizations.of(context)?.authImportFailed ??
+                'Local wardrobe import failed. Try again later.',
           );
         }
       }
@@ -78,7 +76,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Wardrobe imported with warnings'),
+        title: Text(
+          AppLocalizations.of(context)?.authImportWarningsTitle ??
+              'Wardrobe imported with warnings',
+        ),
         content: Text(
           'Some guest history could not be imported:\n\n${result.warnings.map((warning) => '• $warning').join('\n')}',
         ),
@@ -131,7 +132,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         content: Row(
           children: [
             CircularProgressIndicator(),
-            SizedBox(width: 20),
+            SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Text(
                 AppLocalizations.of(context)?.authImportingGuest ??
@@ -147,261 +148,117 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     return result;
   }
 
-  Future<void> _handleGuestLogin() async {
-    await LocalAccountRepository().startGuestAccount();
-    ref.invalidate(sessionProvider);
-    await ref.read(userProfileProvider.notifier).load();
-    if (!mounted) return;
-    context.go('/onboarding', extra: {'isGuest': true});
-  }
-
-  Future<void> _handleOAuth(Future<void> Function() action) async {
+  Future<void> _handleOAuth(
+    String provider,
+    Future<void> Function() action,
+  ) async {
     if (!AppConfig.isSupabaseConfigured) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.authUnavailable ??
-                'Sign in is unavailable until Supabase is configured.',
-          ),
-        ),
+      _showMessage(
+        AppLocalizations.of(context)?.authUnavailable ??
+            'Sign in is unavailable until Supabase is configured.',
       );
       return;
     }
+    setState(() => _authenticatingProvider = provider);
     try {
       await action();
-      // Navigation is handled by _onAuthStateChange once the deep-link
-      // callback returns the session to the app.
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } catch (_) {
+      if (mounted) {
+        _showMessage(
+          AppLocalizations.of(context)?.authRetryMessage ??
+              'Sign in could not be completed. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _authenticatingProvider = null);
     }
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final l10n = AppLocalizations.of(context);
     final showApple = Theme.of(context).platform == TargetPlatform.iOS;
+    final isBusy = _authenticatingProvider != null;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient + orbs
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF0F0E1A),
-                  Color(0xFF1A0E2E),
-                  Color(0xFF0E1A2E),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: AppSpacing.entryScreen,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  tooltip: l10n?.authBack ?? 'Back',
+                  onPressed: isBusy ? null : () => context.go('/welcome'),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
               ),
-            ),
-          ),
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _GlowOrb(
-              color: AppColors.seedColor.withValues(alpha: 0.3),
-              size: 280,
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -80,
-            child: _GlowOrb(
-              color: AppColors.gradientEnd.withValues(alpha: 0.2),
-              size: 320,
-            ),
-          ),
-          // Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: size.height * 0.1),
-                  // Logo
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.checkroom_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
-                  const SizedBox(height: 28),
-                  Text(
-                        l10n?.authHeroTitle ?? 'Your wardrobe,\nreimagined.',
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
-                      )
-                      .animate(delay: 200.ms)
-                      .fadeIn(duration: 500.ms)
-                      .slideX(begin: -0.2, end: 0),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n?.authHeroSubtitle ??
-                        'AI-powered outfit suggestions,\npersonalized just for you.',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ).animate(delay: 350.ms).fadeIn(duration: 500.ms),
-                  const Spacer(),
-                  // Auth buttons
-                  GlassContainer(
-                        borderRadius: 28,
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n?.authGetStarted ?? 'Get started',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            if (showApple) ...[
-                              Semantics(
-                                button: true,
-                                label:
-                                    l10n?.authContinueWithApple ??
-                                    'Continue with Apple',
-                                child: SignInWithAppleButton(
-                                  onPressed: () => _handleOAuth(
-                                    AuthService().signInWithApple,
-                                  ),
-                                  text:
-                                      l10n?.authContinueWithApple ??
-                                      'Continue with Apple',
-                                  height: 52,
-                                  borderRadius: BorderRadius.circular(16),
-                                  style:
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? SignInWithAppleButtonStyle.white
-                                      : SignInWithAppleButtonStyle.black,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                            _SocialButton(
-                              icon: Icons.g_mobiledata_rounded,
-                              label:
-                                  l10n?.authContinueWithGoogle ??
-                                  'Continue with Google',
-                              onTap: () =>
-                                  _handleOAuth(AuthService().signInWithGoogle),
-                            ),
-                            if (AppConfig.enableFacebookAuth) ...[
-                              const SizedBox(height: 16),
-                              _SocialButton(
-                                icon: Icons.facebook,
-                                label:
-                                    l10n?.authContinueWithFacebook ??
-                                    'Continue with Facebook',
-                                onTap: () => _handleOAuth(
-                                  AuthService().signInWithFacebook,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: _handleGuestLogin,
-                              child: Text(
-                                l10n?.authContinueAsGuest ??
-                                    'Continue as guest',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 13,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      .animate(delay: 500.ms)
-                      .fadeIn(duration: 500.ms)
-                      .slideY(begin: 0.3, end: 0),
-                  const SizedBox(height: 32),
-                ],
+              const Spacer(),
+              const MmmBrandMark(size: 150),
+              const SizedBox(height: AppSpacing.xxl),
+              Text(
+                l10n?.welcomeAuthTitle ?? 'Welcome back',
+                style: theme.textTheme.headlineMedium,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                l10n?.welcomeAuthSubtitle ?? 'Your wardrobe is waiting.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxxl),
+              if (showApple) ...[
+                _AppleButton(
+                  isLoading: _authenticatingProvider == 'apple',
+                  enabled: !isBusy,
+                  label: l10n?.authContinueWithApple ?? 'Continue with Apple',
+                  onPressed: () =>
+                      _handleOAuth('apple', AuthService().signInWithApple),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+              _ProviderButton(
+                icon: Icons.g_mobiledata_rounded,
+                label: l10n?.authContinueWithGoogle ?? 'Continue with Google',
+                loading: _authenticatingProvider == 'google',
+                enabled: !isBusy,
+                onPressed: () =>
+                    _handleOAuth('google', AuthService().signInWithGoogle),
+              ),
+              if (AppConfig.enableFacebookAuth) ...[
+                const SizedBox(height: AppSpacing.sm),
+                _ProviderButton(
+                  icon: Icons.facebook,
+                  label:
+                      l10n?.authContinueWithFacebook ??
+                      'Continue with Facebook',
+                  loading: _authenticatingProvider == 'facebook',
+                  enabled: !isBusy,
+                  onPressed: () => _handleOAuth(
+                    'facebook',
+                    AuthService().signInWithFacebook,
                   ),
                 ),
               ],
-            ),
+              const SizedBox(height: AppSpacing.xl),
+              TextButton(
+                onPressed: isBusy ? null : () => context.go('/welcome'),
+                child: Text(
+                  l10n?.welcomeNewToMmm ?? 'New to MMM? Create a wardrobe',
+                ),
+              ),
+              const Spacer(),
+            ],
           ),
         ),
       ),
@@ -409,20 +266,92 @@ class _SocialButton extends StatelessWidget {
   }
 }
 
-class _GlowOrb extends StatelessWidget {
-  final Color color;
-  final double size;
-  const _GlowOrb({required this.color, required this.size});
+class _AppleButton extends StatelessWidget {
+  const _AppleButton({
+    required this.isLoading,
+    required this.enabled,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final bool isLoading;
+  final bool enabled;
+  final String label;
+  final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, Colors.transparent]),
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: enabled,
+    label: label,
+    child: IgnorePointer(
+      ignoring: !enabled,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Opacity(
+            opacity: isLoading ? 0 : 1,
+            child: SignInWithAppleButton(
+              onPressed: onPressed,
+              text: label,
+              height: 52,
+              borderRadius: AppRadii.controlBorder,
+              style: Theme.of(context).brightness == Brightness.dark
+                  ? SignInWithAppleButtonStyle.white
+                  : SignInWithAppleButtonStyle.black,
+            ),
+          ),
+          if (isLoading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+class _ProviderButton extends StatelessWidget {
+  const _ProviderButton({
+    required this.icon,
+    required this.label,
+    required this.loading,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool loading;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 52,
+    child: OutlinedButton(
+      onPressed: enabled ? onPressed : null,
+      style: OutlinedButton.styleFrom(
+        shape: const RoundedRectangleBorder(
+          borderRadius: AppRadii.controlBorder,
+        ),
+      ),
+      child: loading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22),
+                const SizedBox(width: AppSpacing.xs),
+                Text(label),
+              ],
+            ),
+    ),
+  );
 }

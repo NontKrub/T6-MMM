@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const seedColor = Color(0xFF8B5CF6);
-  static const accentGold = Color(0xFFF59E0B);
+  static const brandBlue = Color(0xFF317DFD);
+  static const brandIndigo = Color(0xFF4851E8);
+  static const brandViolet = Color(0xFFA06BEF);
+  static const brandPink = Color(0xFFF97CB0);
 
-  static const surfaceLight = Color(0xFFF8F7FF);
-  static const surfaceDark = Color(0xFF0F0E1A);
+  static const surfaceLight = Color(0xFFF8F8FA);
+  static const surfaceDark = Color(0xFF0B0C0F);
+  static const surfaceRaisedLight = Color(0xFFFFFFFF);
+  static const surfaceRaisedDark = Color(0xFF15161B);
+  static const surfaceSecondaryLight = Color(0xFFF1F1F5);
+  static const surfaceSecondaryDark = Color(0xFF1C1D23);
 
   // Glass tints
-  static const glassLight = Color(0x26FFFFFF);
-  static const glassDark = Color(0x14FFFFFF);
-  static const glassBorder = Color(0x40FFFFFF);
-  static const glassBorderDark = Color(0x1AFFFFFF);
+  static const glassLight = Color(0xEFFFFFFF);
+  static const glassDark = Color(0xE815161B);
+  static const glassBorder = Color(0xFFE5E5EB);
+  static const glassBorderDark = Color(0xFF2B2C33);
 
   // Text
-  static const textPrimaryLight = Color(0xFF1A1A2E);
-  static const textPrimaryDark = Color(0xFFF0EEFF);
-  static const textSecondaryLight = Color(0xFF6B6B8A);
-  static const textSecondaryDark = Color(0xFFAAAACC);
+  static const textPrimaryLight = Color(0xFF111114);
+  static const textPrimaryDark = Color(0xFFF8F8FA);
+  static const textSecondaryLight = Color(0xFF6E6E78);
+  static const textSecondaryDark = Color(0xFFA3A3AD);
+  static const borderLight = Color(0xFFE5E5EB);
+  static const borderDark = Color(0xFF2B2C33);
+
+  static const success = Color(0xFF208A5A);
+  static const warning = Color(0xFFB66A00);
+  static const destructive = Color(0xFFC9364A);
 
   // Gradient stops
-  static const gradientStart = Color(0xFF8B5CF6);
-  static const gradientEnd = Color(0xFFEC4899);
+  static const gradientStart = brandBlue;
+  static const gradientMiddle = brandViolet;
+  static const gradientEnd = brandPink;
 
   // Category colors
   static const colorHats = Color(0xFFE879F9);

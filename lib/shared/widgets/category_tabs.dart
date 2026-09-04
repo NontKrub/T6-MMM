@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../shared/models/clothing_item.dart';
-import '../../core/theme/app_colors.dart';
+import 'mmm_choice_chip.dart';
 
 class CategoryTabs extends StatelessWidget {
   final ClothingCategory? selected;
@@ -12,7 +12,7 @@ class CategoryTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final all = [null, ...ClothingCategory.values];
     return SizedBox(
-      height: 38,
+      height: 52,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -20,28 +20,11 @@ class CategoryTabs extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final cat = all[i];
-          final isSelected = cat == selected;
-          final color = cat?.color ?? AppColors.seedColor;
           final label = cat?.label ?? 'All';
-
-          return GestureDetector(
-            onTap: () => onSelect(cat),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? color : color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          return MmmChoiceChip(
+            label: label,
+            selected: cat == selected,
+            onSelected: (_) => onSelect(cat),
           );
         },
       ),

@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/clothing_analysis_service.dart';
 import '../../core/services/supabase_service.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
 import '../../shared/models/outfit.dart';
 import '../../shared/widgets/outfit_card.dart';
+import '../../shared/widgets/mmm_choice_chip.dart';
+import '../../shared/widgets/mmm_gradient_button.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
 
 class OutfitGeneratorSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
@@ -48,7 +51,11 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
         ? null
         : normalizeHexColor(_targetHexController.text);
     if (_targetHexController.text.trim().isNotEmpty && targetHex == null) {
-      setState(() => _error = 'Enter a valid HEX color such as #3366FF.');
+      setState(
+        () => _error =
+            l10n?.outfitTargetColorInvalid ??
+            'Enter a valid HEX color such as #3366FF.',
+      );
       return;
     }
     setState(() {
@@ -86,6 +93,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
 
   Future<void> _wear(Outfit outfit) async {
     if (_wearing) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _wearing = true);
     try {
       final count = await ref
@@ -96,16 +104,19 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
         final action = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Repeat outfit'),
-            content: Text("You've worn this combination $count times."),
+            title: Text(l10n?.outfitRepeatTitle ?? 'Repeat outfit'),
+            content: Text(
+              l10n?.outfitRepeatMessage(count) ??
+                  "You've worn this combination $count times.",
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, 'another'),
-                child: const Text('Generate Another'),
+                child: Text(l10n?.outfitGenerateAnother ?? 'Generate another'),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, 'wear'),
-                child: const Text('Wear Anyway'),
+                child: Text(l10n?.outfitWearAnyway ?? 'Wear anyway'),
               ),
             ],
           ),
@@ -168,7 +179,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
     final appSettings = ref.watch(appSettingsProvider);
     final weatherDisabled = appSettings.weatherLocationMode == 'off';
@@ -177,8 +188,9 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
     return Container(
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 40),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1628) : const Color(0xFFF8F7FF),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        color: brand.raisedSurface,
+        borderRadius: AppRadii.sheetBorder,
+        border: Border(top: BorderSide(color: brand.subtleBorder)),
       ),
       child: Column(
         children: [
@@ -189,14 +201,19 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: brand.subtleBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -217,29 +234,10 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                     spacing: 8,
                     children: _styles.map((s) {
                       final sel = _selectedStyle == s;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedStyle = s),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? AppColors.seedColor
-                                : AppColors.seedColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _localizedStyle(l10n, s),
-                            style: TextStyle(
-                              color: sel ? Colors.white : AppColors.seedColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                      return MmmChoiceChip(
+                        label: _localizedStyle(l10n, s),
+                        selected: sel,
+                        onSelected: (_) => setState(() => _selectedStyle = s),
                       );
                     }).toList(),
                   ),
@@ -256,7 +254,8 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                         'Use my personal color season',
                     subtitle: backendAvailable
                         ? null
-                        : 'Sign in to use profile color season',
+                        : (l10n?.outfitSignInColor ??
+                              'Sign in to use profile color season'),
                     value: _usePersonalColor,
                     onChanged: backendAvailable
                         ? (v) => setState(() => _usePersonalColor = v)
@@ -293,8 +292,10 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                     key: const Key('outfit-target-hex'),
                     controller: _targetHexController,
                     textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Optional outfit color (HEX)',
+                    decoration: InputDecoration(
+                      labelText:
+                          l10n?.outfitTargetColorLabel ??
+                          'Optional outfit color (HEX)',
                       hintText: '#3366FF',
                       prefixIcon: Icon(Icons.palette_outlined),
                     ),
@@ -303,32 +304,23 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                   // Generate button
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.icon(
+                    child: MmmGradientButton(
+                      label: _loading
+                          ? (l10n?.outfitGeneratorGenerating ??
+                                'Mixing your wardrobe…')
+                          : (l10n?.outfitGeneratorGenerate ??
+                                'Generate outfit'),
+                      icon: Icons.auto_awesome_rounded,
+                      isLoading: _loading,
                       onPressed: _loading ? null : _generate,
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: Text(
-                        _loading
-                            ? (l10n?.outfitGeneratorGenerating ??
-                                  'Generating...')
-                            : (l10n?.outfitGeneratorGenerate ?? 'Generate'),
-                      ),
                     ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 16),
-                    Text(
-                      _error!,
-                      style: TextStyle(
-                        color: Colors.grey.withValues(alpha: 0.7),
+                    MmmSurfaceCard(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: brand.destructive),
                       ),
                     ),
                   ],
@@ -352,13 +344,10 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
                           .whereType<ClothingItem>()
                           .toList();
                       return OutfitCard(
-                            outfit: outfit,
-                            items: items,
-                            onWear: () => _wear(outfit),
-                          )
-                          .animate(delay: (e.key * 100).ms)
-                          .fadeIn(duration: 300.ms)
-                          .slideY(begin: 0.2, end: 0);
+                        outfit: outfit,
+                        items: items,
+                        onWear: () => _wear(outfit),
+                      );
                     }),
                   ],
                 ],
@@ -388,8 +377,7 @@ class _FilterToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: GlassContainer(
-        borderRadius: 14,
+      child: MmmSurfaceCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Row(
           children: [
@@ -402,10 +390,7 @@ class _FilterToggle extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: TextStyle(
-                        color: Colors.grey.withValues(alpha: 0.65),
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ],
@@ -414,7 +399,9 @@ class _FilterToggle extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: MmmBrandTheme.of(
+                context,
+              ).primaryGradient.colors.first,
             ),
           ],
         ),

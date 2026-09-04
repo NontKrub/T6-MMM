@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/recommendation_repository.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
+import '../../shared/widgets/mmm_empty_state.dart';
+import '../../shared/widgets/mmm_error_state.dart';
+import '../../shared/widgets/mmm_bottom_sheet.dart';
+import '../../shared/widgets/mmm_gradient_button.dart';
+import '../../shared/widgets/mmm_loading_indicator.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
+import '../../shared/widgets/wardrobe_image.dart';
 
 final missingPiecesProvider =
     FutureProvider.autoDispose<List<MissingPieceRecommendation>>((ref) {
@@ -34,11 +41,9 @@ class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
         top: top,
         pants: pants,
       );
-      if (!mounted) return;
-      setState(() => _selectedResult = AsyncData(result));
+      if (mounted) setState(() => _selectedResult = AsyncData(result));
     } catch (error, stack) {
-      if (!mounted) return;
-      setState(() => _selectedResult = AsyncError(error, stack));
+      if (mounted) setState(() => _selectedResult = AsyncError(error, stack));
     }
   }
 
@@ -56,6 +61,8 @@ class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
     final selectedPants = pants
         .where((item) => item.id == _pantsId)
         .firstOrNull;
+    final topLabel = l10n?.missingTop ?? 'Top';
+    final bottomLabel = l10n?.missingBottom ?? 'Bottom';
     final AsyncValue<List<MissingPieceRecommendation>> recommendations =
         _selectedResult ?? ref.watch(missingPiecesProvider);
 
@@ -66,103 +73,95 @@ class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n?.missingTitle ?? 'Your wardrobe needs...',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n?.missingSubtitleUnlocked ??
-                        'Curated to fill the gaps in your collection',
-                    style: TextStyle(
-                      color: Colors.grey.withValues(alpha: 0.6),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
               ),
-            ).animate().fadeIn(duration: 300.ms),
+              child: Text(
+                l10n?.missingTitle ?? 'What’s missing?',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              child: Text(
+                l10n?.missingSubtitleUnlocked ??
+                    'Pick a base outfit and MMM will find the gap.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 children: [
-                  DropdownButtonFormField<String>(
+                  _GarmentSelector(
                     key: const Key('missing-piece-top'),
-                    initialValue: _topId,
-                    decoration: const InputDecoration(
-                      labelText: 'Selected top',
-                    ),
-                    items: tops
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item.id,
-                            child: Text(item.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) => setState(() {
-                      _topId = value;
+                    label: topLabel,
+                    placeholder: l10n?.missingChoose(topLabel) ?? 'Choose Top',
+                    value: selectedTop,
+                    items: tops,
+                    onChanged: (item) => setState(() {
+                      _topId = item?.id;
                       _selectedResult = null;
                     }),
                   ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
+                  const SizedBox(height: AppSpacing.sm),
+                  _GarmentSelector(
                     key: const Key('missing-piece-pants'),
-                    initialValue: _pantsId,
-                    decoration: const InputDecoration(
-                      labelText: 'Selected pants / bottom',
-                    ),
-                    items: pants
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item.id,
-                            child: Text(item.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) => setState(() {
-                      _pantsId = value;
+                    label: bottomLabel,
+                    placeholder:
+                        l10n?.missingChoose(bottomLabel) ?? 'Choose Bottom',
+                    value: selectedPants,
+                    items: pants,
+                    onChanged: (item) => setState(() {
+                      _pantsId = item?.id;
                       _selectedResult = null;
                     }),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.icon(
+                    child: MmmGradientButton(
                       key: const Key('missing-piece-analyze'),
+                      label: l10n?.missingAnalyze ?? 'Analyze the gap',
+                      icon: Icons.auto_awesome_rounded,
                       onPressed: selectedTop == null || selectedPants == null
                           ? null
                           : () => _analyze(selectedTop, selectedPants),
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      label: const Text('Analyze Missing Piece'),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
             Expanded(
               child: recommendations.when(
                 data: (items) => items.isEmpty
-                    ? const _EmptyState()
+                    ? _EmptyState(l10n: l10n)
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          0,
+                          AppSpacing.lg,
+                          120,
+                        ),
                         itemCount: items.length,
-                        itemBuilder: (context, i) =>
-                            _RecommendationCard(rec: items[i])
-                                .animate(delay: (i * 100).ms)
-                                .fadeIn(duration: 400.ms)
-                                .slideX(begin: 0.1, end: 0),
+                        itemBuilder: (_, index) =>
+                            _RecommendationCard(rec: items[index]),
                       ),
-                error: (error, _) => _ErrorState(error: error),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.seedColor),
+                loading: () => Center(
+                  child: MmmLoadingIndicator(
+                    label: l10n?.missingLoading ?? 'Finding the gap…',
+                  ),
                 ),
+                error: (_, _) => _ErrorState(l10n: l10n),
               ),
             ),
           ],
@@ -172,181 +171,204 @@ class _MissingPiecesScreenState extends ConsumerState<MissingPiecesScreen> {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _CenteredMessage(
-      icon: Icons.inventory_2_outlined,
-      title: l10n?.missingEmptyTitle ?? 'No recommendations yet',
-      message:
-          l10n?.missingEmptyMessage ??
-          'The backend did not return any missing pieces.',
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final Object error;
-
-  const _ErrorState({required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _CenteredMessage(
-      icon: Icons.error_outline_rounded,
-      title: l10n?.missingErrorTitle ?? 'Could not generate recommendations',
-      message: error.toString(),
-    );
-  }
-}
-
-class _CenteredMessage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String message;
-
-  const _CenteredMessage({
-    required this.icon,
-    required this.title,
-    required this.message,
+class _GarmentSelector extends StatelessWidget {
+  const _GarmentSelector({
+    super.key,
+    required this.label,
+    this.placeholder,
+    required this.value,
+    required this.items,
+    required this.onChanged,
   });
+  final String label;
+  final String? placeholder;
+  final ClothingItem? value;
+  final List<ClothingItem> items;
+  final ValueChanged<ClothingItem?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: GlassContainer(
-          borderRadius: 20,
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppColors.seedColor, size: 36),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                textAlign: TextAlign.center,
+    final selectedLabel = value?.name ?? placeholder ?? 'Choose $label';
+    return MmmSurfaceCard(
+      onTap: items.isEmpty ? null : () => _showPicker(context),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Row(
+        children: [
+          if (value != null)
+            ClipRRect(
+              borderRadius: AppRadii.compactBorder,
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: WardrobeImage(item: value!),
               ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            )
+          else
+            const SizedBox(width: 40, height: 40),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              selectedLabel,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
           ),
-        ),
+          const Icon(Icons.chevron_right_rounded),
+        ],
       ),
     );
   }
+
+  Future<void> _showPicker(BuildContext context) async {
+    final selected = await MmmBottomSheet.show<ClothingItem>(
+      context: context,
+      builder: (sheetContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 420),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: items.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.xs),
+              itemBuilder: (_, index) {
+                final item = items[index];
+                return Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadii.controlBorder,
+                    ),
+                    leading: ClipRRect(
+                      borderRadius: AppRadii.compactBorder,
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: WardrobeImage(item: item),
+                      ),
+                    ),
+                    title: Text(item.name),
+                    trailing: value?.id == item.id
+                        ? const Icon(Icons.check_rounded)
+                        : null,
+                    onTap: () => Navigator.pop(sheetContext, item),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+    if (selected != null) onChanged(selected);
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.l10n});
+  final AppLocalizations? l10n;
+  @override
+  Widget build(BuildContext context) => MmmEmptyState(
+    title: l10n?.missingEmptyTitle ?? 'No recommendations yet',
+    message:
+        l10n?.missingEmptyMessage ??
+        'Choose a top and bottom to find the next piece.',
+  );
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.l10n});
+  final AppLocalizations? l10n;
+  @override
+  Widget build(BuildContext context) => MmmErrorState(
+    title: l10n?.missingErrorTitle ?? 'Could not generate recommendations',
+    message: l10n?.missingTryAgain ?? 'Try again in a moment.',
+  );
 }
 
 class _RecommendationCard extends StatefulWidget {
-  final MissingPieceRecommendation rec;
   const _RecommendationCard({required this.rec});
-
+  final MissingPieceRecommendation rec;
   @override
   State<_RecommendationCard> createState() => _RecommendationCardState();
 }
 
 class _RecommendationCardState extends State<_RecommendationCard> {
   bool _expanded = false;
-
   @override
   Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
     final rec = widget.rec;
     final category = clothingCategoryFromString(rec.category);
-
-    return GlassContainer(
-      borderRadius: 20,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: category.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: MmmSurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: brand.subtleAccentSurface,
+                    borderRadius: AppRadii.controlBorder,
+                  ),
+                  child: Icon(
+                    category.icon,
+                    color: brand.primaryGradient.colors.first,
+                  ),
                 ),
-                child: Icon(category.icon, color: category.color, size: 20),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        rec.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        rec.priority,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: brand.primaryGradient.colors.first,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            TextButton.icon(
+              onPressed: () => setState(() => _expanded = !_expanded),
+              icon: Icon(
+                _expanded
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      rec.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      rec.priority,
-                      style: const TextStyle(
-                        color: AppColors.seedColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+              label: Text(
+                _expanded
+                    ? (AppLocalizations.of(context)?.missingWhyCollapse ??
+                          'Hide reason')
+                    : (AppLocalizations.of(context)?.missingWhyExpand ??
+                          'Why?'),
+              ),
+            ),
+            if (_expanded) ...[
+              Text(rec.reason, style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                rec.suggestion,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                children: [
-                  Text(
-                    _expanded
-                        ? (AppLocalizations.of(context)?.missingWhyCollapse ??
-                              'Hide reason')
-                        : (AppLocalizations.of(context)?.missingWhyExpand ??
-                              'Why?'),
-                    style: const TextStyle(
-                      color: AppColors.seedColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.seedColor,
-                    size: 18,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_expanded) ...[
-            const SizedBox(height: 10),
-            Text(rec.reason, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Text(
-              rec.suggestion,
-              style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }

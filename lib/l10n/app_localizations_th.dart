@@ -15,6 +15,62 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appTagline => 'จับคู่ตู้เสื้อผ้ากับอารมณ์ของคุณ';
 
   @override
+  String get welcomeLanguageTooltip => 'เลือกภาษา';
+
+  @override
+  String get welcomeTitle => 'Mix Match Mood';
+
+  @override
+  String get welcomeSubtitle => 'ตู้เสื้อผ้าของคุณ จับคู่ตามอารมณ์';
+
+  @override
+  String get welcomeValueProp => 'สร้างชุดจากเสื้อผ้าที่คุณมีอยู่แล้ว';
+
+  @override
+  String get welcomeCreate => 'สร้างตู้เสื้อผ้าของฉัน';
+
+  @override
+  String get welcomeSignIn => 'เข้าสู่ระบบ';
+
+  @override
+  String get welcomeLocalNote =>
+      'ตู้เสื้อผ้าในเครื่องจะอยู่บนอุปกรณ์นี้จนกว่าคุณจะเลือกเข้าสู่ระบบ';
+
+  @override
+  String get welcomeAuthTitle => 'ยินดีต้อนรับกลับมา';
+
+  @override
+  String get welcomeAuthSubtitle => 'ตู้เสื้อผ้าของคุณกำลังรออยู่';
+
+  @override
+  String get welcomeNewToMmm => 'เพิ่งใช้ MMM? สร้างตู้เสื้อผ้า';
+
+  @override
+  String get welcomeTerms => 'ข้อกำหนด';
+
+  @override
+  String get welcomePrivacy => 'ความเป็นส่วนตัว';
+
+  @override
+  String get welcomeLegalNotConfigured =>
+      'ลิงก์ทางกฎหมายจะพร้อมใช้งานก่อนเปิดตัว';
+
+  @override
+  String get authBack => 'ย้อนกลับ';
+
+  @override
+  String get authImportWarningsTitle => 'นำเข้าตู้เสื้อผ้าพร้อมคำเตือน';
+
+  @override
+  String get authImportingGuest => 'กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…';
+
+  @override
+  String get authRetryMessage => 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
+  String get splashLoading => 'กำลังโหลด Mix Match Mood';
+
+  @override
   String get languageScreenTitle => 'Choose your language';
 
   @override
@@ -28,6 +84,30 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get languageThai => 'ภาษาไทย';
+
+  @override
+  String get commonBack => 'ย้อนกลับ';
+
+  @override
+  String get commonSettings => 'การตั้งค่า';
+
+  @override
+  String get commonProfile => 'เปิดโปรไฟล์';
+
+  @override
+  String get commonAddItem => 'เพิ่มไอเท็ม';
+
+  @override
+  String get commonClearSearch => 'ล้างการค้นหา';
+
+  @override
+  String get commonRetry => 'ลองอีกครั้ง';
+
+  @override
+  String get commonCancel => 'ยกเลิก';
+
+  @override
+  String get commonClose => 'ปิด';
 
   @override
   String get authHeroTitle => 'ตู้เสื้อผ้าของคุณ\nถูกสร้างใหม่แล้ว';
@@ -232,6 +312,14 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeGenerateOutfit => 'สร้างชุด';
 
   @override
+  String homeGreeting(String name) {
+    return 'สวัสดีตอนเช้า $name';
+  }
+
+  @override
+  String get homePrompt => 'วันนี้จะแต่งตัวแบบไหนดี?';
+
+  @override
   String get wardrobeTitle => 'ตู้เสื้อผ้า';
 
   @override
@@ -250,6 +338,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get wardrobeNoResults => 'ไม่พบรายการ';
+
+  @override
+  String get wardrobeNoResultsHint => 'ลองใช้ชื่อ แบรนด์ หรือแท็กอื่น';
+
+  @override
+  String get wardrobeEmptyMessage => 'ตู้เสื้อผ้าของคุณพร้อมสำหรับชิ้นแรกแล้ว';
+
+  @override
+  String get wardrobeEmptyAdd => 'เพิ่มไอเท็ม';
+
+  @override
+  String get wardrobeAll => 'ทั้งหมด';
 
   @override
   String get missingTitle => 'ตู้เสื้อผ้าของคุณต้องการ...';
@@ -284,6 +384,26 @@ class AppLocalizationsTh extends AppLocalizations {
   String get missingWhyCollapse => 'ซ่อนเหตุผล';
 
   @override
+  String get missingTop => 'เสื้อ';
+
+  @override
+  String get missingBottom => 'กางเกง/ท่อนล่าง';
+
+  @override
+  String missingChoose(String label) {
+    return 'เลือก$label';
+  }
+
+  @override
+  String get missingAnalyze => 'วิเคราะห์ช่องว่าง';
+
+  @override
+  String get missingLoading => 'กำลังค้นหาช่องว่าง…';
+
+  @override
+  String get missingTryAgain => 'ลองอีกครั้งในอีกสักครู่';
+
+  @override
   String get chatTitle => 'Fashion AI';
 
   @override
@@ -306,9 +426,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'แชทใช้ตู้เสื้อผ้าที่บันทึกไว้และ AI ดำเนินการต่อด้วย Google หลังจากตั้งค่า Supabase';
 
   @override
-  String get authImportingGuest => 'กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…';
-
-  @override
   String get chatConsentTitle => 'Fashion AI ต้องการความยินยอม';
 
   @override
@@ -329,6 +446,21 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get chatPrompt5 => 'ลุคควายเอท ลักชัวรี่';
+
+  @override
+  String get chatSend => 'ส่งข้อความ';
+
+  @override
+  String get chatRetry => 'ลองอีกครั้ง';
+
+  @override
+  String get chatThinking => 'MMM กำลังคิด…';
+
+  @override
+  String get chatSignIn => 'เข้าสู่ระบบ';
+
+  @override
+  String get chatReviewConsent => 'ตรวจสอบสิทธิ์ AI';
 
   @override
   String get profileTitle => 'โปรไฟล์';
@@ -366,6 +498,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get profileDeleteAccountFailed => 'ลบบัญชีไม่สำเร็จ';
+
+  @override
+  String get profileAccount => 'บัญชี';
+
+  @override
+  String get profileDangerZone => 'โซนอันตราย';
 
   @override
   String get settingsTitle => 'การตั้งค่า';
@@ -635,6 +773,32 @@ class AppLocalizationsTh extends AppLocalizations {
   String get outfitStyleDate => 'เดต';
 
   @override
+  String get outfitRepeatTitle => 'ชุดซ้ำ';
+
+  @override
+  String outfitRepeatMessage(int count) {
+    return 'คุณใส่ชุดนี้มาแล้ว $count ครั้ง';
+  }
+
+  @override
+  String get outfitGenerateAnother => 'สร้างชุดใหม่';
+
+  @override
+  String get outfitWearAnyway => 'ใส่อยู่ดี';
+
+  @override
+  String get outfitWear => 'สวมใส่';
+
+  @override
+  String get outfitTargetColorLabel => 'สีชุดเพิ่มเติม (HEX)';
+
+  @override
+  String get outfitTargetColorInvalid => 'กรอกสี HEX ที่ถูกต้อง เช่น #3366FF';
+
+  @override
+  String get outfitSignInColor => 'เข้าสู่ระบบเพื่อใช้ฤดูกาลสีของโปรไฟล์';
+
+  @override
   String get rushTitle => 'เร่งรีบ';
 
   @override
@@ -722,6 +886,100 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get addItemAnalysisReading => 'MMM กำลังอ่านไอเท็มนี้…';
+
+  @override
+  String get addItemAnalysisFailed =>
+      'วิเคราะห์รูปไม่สำเร็จ คุณยังติดแท็กไอเท็มด้วยตนเองได้';
+
+  @override
+  String get addItemPhotoRequired => 'เพิ่มรูปก่อนบันทึก';
+
+  @override
+  String get addItemCategoryRequired => 'เลือกหมวดหมู่ก่อนบันทึก';
+
+  @override
+  String get addItemDetectedColors => 'สีที่ตรวจพบ';
+
+  @override
+  String get addItemNoColors => 'ยังไม่ได้เลือกสี';
+
+  @override
+  String get addItemAddHex => 'เพิ่ม HEX เอง';
+
+  @override
+  String get addItemPattern => 'ลวดลาย';
+
+  @override
+  String get addItemSilhouette => 'ทรง';
+
+  @override
+  String get addItemSaveFailed => 'บันทึกไอเท็มไม่สำเร็จ ลองอีกครั้ง';
+
+  @override
+  String get addItemInvalidHex => 'กรอกสี HEX ที่ถูกต้อง เช่น #3366FF';
+
+  @override
+  String get addItemRecoveryFailed =>
+      'กู้คืนรูปภาพล่าสุดไม่สำเร็จ กรุณาเลือกใหม่อีกครั้ง';
+
+  @override
+  String get addItemCameraOpenFailed =>
+      'เปิดกล้องไม่สำเร็จ ลองอีกครั้งหรือเลือกรูปภาพแทน';
+
+  @override
+  String get addItemPhotoLibraryOpenFailed =>
+      'เปิดคลังรูปภาพไม่สำเร็จ ลองอีกครั้ง';
+
+  @override
+  String get addItemImagePathUnavailable => 'ไม่พบรูปภาพนี้ กรุณาลองอีกครั้ง';
+
+  @override
+  String get addItemPhotoUnavailable =>
+      'รูปภาพนี้ไม่พร้อมใช้งานแล้ว กรุณาเลือกรูปอื่น';
+
+  @override
+  String get addItemCameraPermissionDenied =>
+      'ไม่ได้เปิดสิทธิ์กล้อง เปิดใช้ในการตั้งค่าหรือเลือกรูปภาพแทน';
+
+  @override
+  String get addItemPhotoPermissionDenied =>
+      'ไม่ได้เปิดสิทธิ์รูปภาพ เปิดใช้ในการตั้งค่าหรือเลือกรูปอื่น';
+
+  @override
+  String get addItemCaptureFailed => 'ถ่ายรูปไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
+  String get addItemSelectionFailed => 'เลือกรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
+  String get clothingCategoryHat => 'หมวก';
+
+  @override
+  String get clothingCategoryTop => 'เสื้อ';
+
+  @override
+  String get clothingCategoryPants => 'กางเกง';
+
+  @override
+  String get clothingCategoryShoes => 'รองเท้า';
+
+  @override
+  String get clothingCategoryOuterwear => 'เสื้อคลุม';
+
+  @override
+  String get clothingCategoryDress => 'เดรส';
+
+  @override
+  String get clothingCategoryBag => 'กระเป๋า';
+
+  @override
+  String get clothingCategoryAccessory => 'เครื่องประดับ';
+
+  @override
+  String get clothingCategoryUnknown => 'ไม่ทราบหมวดหมู่';
+
+  @override
   String get tagCasual => 'แคชชวล';
 
   @override
@@ -797,6 +1055,43 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get itemDeleteConfirm => 'ลบ';
+
+  @override
+  String get itemMoreActions => 'การดำเนินการเพิ่มเติม';
+
+  @override
+  String get itemRetryAnalysis => 'วิเคราะห์อีกครั้ง';
+
+  @override
+  String get itemAnalysisUpdated => 'อัปเดตผลวิเคราะห์แล้ว';
+
+  @override
+  String get itemAnalysisRetryFailed => 'วิเคราะห์อีกครั้งไม่สำเร็จ ลองใหม่';
+
+  @override
+  String get itemDetails => 'รายละเอียด';
+
+  @override
+  String get itemColors => 'สี';
+
+  @override
+  String get itemPattern => 'ลวดลาย';
+
+  @override
+  String get itemSilhouette => 'ทรง';
+
+  @override
+  String get itemAnalysisFailed =>
+      'วิเคราะห์ไม่สำเร็จ แต่ไอเท็มยังถูกบันทึกไว้';
+
+  @override
+  String get itemAnalysisPartial => 'รายละเอียดบางส่วนอาจยังไม่ครบ';
+
+  @override
+  String get onboardingBack => 'ย้อนกลับ';
+
+  @override
+  String get onboardingProgress => 'ความคืบหน้าการเริ่มต้นใช้งาน';
 
   @override
   String get settingsLuckyColorBirthProfile => 'โปรไฟล์วันเกิด';

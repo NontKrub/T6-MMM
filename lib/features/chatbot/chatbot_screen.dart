@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/providers/session_provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/chat_message.dart';
+import '../../shared/widgets/mmm_brand_mark.dart';
+import '../../shared/widgets/mmm_choice_chip.dart';
+import '../../shared/widgets/mmm_gradient_button.dart';
+import '../../shared/widgets/mmm_loading_indicator.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
 
 class ChatbotScreen extends ConsumerStatefulWidget {
   const ChatbotScreen({super.key});
-
   @override
   ConsumerState<ChatbotScreen> createState() => _ChatbotScreenState();
 }
@@ -20,8 +27,15 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   List<String> _quickPrompts(AppLocalizations? l) => [
-    l?.chatPrompt1 ?? 'What\'s my color season?',
+    l?.chatPrompt1 ?? 'What’s my color season?',
     l?.chatPrompt2 ?? 'Name this style',
     l?.chatPrompt3 ?? 'Build a capsule wardrobe',
     l?.chatPrompt4 ?? 'Streetwear basics',
@@ -29,16 +43,17 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
   ];
 
   void _send([String? text]) {
-    final msg = text ?? _controller.text.trim();
-    if (msg.isEmpty) return;
+    final message = text ?? _controller.text.trim();
+    if (message.isEmpty) return;
+    final scrollDuration = AppMotion.duration(context, AppMotion.transition);
     _controller.clear();
-    ref.read(chatProvider.notifier).sendMessage(msg);
+    ref.read(chatProvider.notifier).sendMessage(message);
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent + 200,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: scrollDuration,
+          curve: AppMotion.curve,
         );
       }
     });
@@ -47,7 +62,6 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final prompts = _quickPrompts(l10n);
     final messages = ref.watch(chatProvider);
     final isTyping = ref.watch(chatTypingProvider);
     final pendingTurn = ref.watch(chatPendingRetryProvider);
@@ -60,184 +74,152 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
         .maybeWhen(data: (value) => value, orElse: () => false);
     final consentLocked = signedIn && !consentGranted;
     final locked = !signedIn || consentLocked;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
+              ),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n?.chatTitle ?? 'Fashion AI',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                  const MmmBrandMark(size: 72),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n?.chatTitle ?? 'MMM Stylist',
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
-                      ),
-                      Text(
-                        !signedIn
-                            ? (l10n?.chatStatusLocked ?? 'Sign in required')
-                            : consentLocked
-                            ? (l10n?.chatStatusConsentRequired ??
-                                  'Consent required')
-                            : (l10n?.chatStatusUnlocked ?? 'Always styled'),
-                        style: TextStyle(
-                          color: Colors.grey.withValues(alpha: 0.6),
-                          fontSize: 12,
+                        Text(
+                          !signedIn
+                              ? (l10n?.chatStatusLocked ?? 'Sign in required')
+                              : consentLocked
+                              ? (l10n?.chatStatusConsentRequired ??
+                                    'Consent required')
+                              : (l10n?.chatStatusUnlocked ??
+                                    'Your fashion assistant'),
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms),
-            // Quick prompts
+            ),
             if (locked)
               Expanded(
                 child: _LockedAiState(
                   title: consentLocked
                       ? (l10n?.chatConsentTitle ??
                             'Fashion AI needs your consent')
-                      : (l10n?.chatLockedTitle ?? 'Fashion AI needs a login'),
+                      : (l10n?.chatLockedTitle ?? 'Sign in to use MMM Stylist'),
                   message: consentLocked
                       ? (l10n?.chatConsentMessage ??
-                            'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.')
+                            'Review AI permissions to continue.')
                       : (l10n?.chatLockedMessage ??
-                            'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.'),
+                            'Chat uses your saved wardrobe and backend AI.'),
+                  actionLabel: consentLocked
+                      ? (l10n?.chatReviewConsent ?? 'Review AI permissions')
+                      : (l10n?.chatSignIn ?? 'Sign in'),
+                  onAction: () =>
+                      context.go(consentLocked ? '/settings' : '/auth'),
                 ),
               )
-            else if (messages.length <= 1) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 36,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: prompts.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) => GestureDetector(
-                    onTap: () => _send(prompts[i]),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.seedColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.seedColor.withValues(alpha: 0.2),
+            else ...[
+              if (messages.length <= 1)
+                SizedBox(
+                  height: 64,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                      AppSpacing.lg,
+                      0,
+                    ),
+                    itemCount: _quickPrompts(l10n).length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.xs),
+                    itemBuilder: (_, i) => MmmChoiceChip(
+                      label: _quickPrompts(l10n)[i],
+                      selected: false,
+                      onSelected: (_) => _send(_quickPrompts(l10n)[i]),
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  itemCount: messages.length + (isTyping ? 1 : 0),
+                  itemBuilder: (_, i) => i == messages.length
+                      ? const _TypingBubble()
+                      : _MessageBubble(message: messages[i]),
+                ),
+              ),
+              if (pendingTurn != null)
+                _RetryChatTurn(
+                  message: pendingTurn.userMessage,
+                  onRetry: () =>
+                      ref.read(chatProvider.notifier).retryPendingTurn(),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: MmmSurfaceCard(
+                    padding: const EdgeInsets.only(left: AppSpacing.md),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            onSubmitted: (_) => _send(),
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            decoration: InputDecoration(
+                              hintText:
+                                  l10n?.chatInputHint ??
+                                  'Ask about your wardrobe…',
+                              border: InputBorder.none,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        prompts[i],
-                        style: TextStyle(
-                          color: AppColors.seedColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: brand.primaryGradient,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: IconButton(
+                            tooltip: l10n?.chatSend ?? 'Send message',
+                            onPressed: _send,
+                            icon: const Icon(
+                              Icons.arrow_upward_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ],
-            // Messages
-            if (!locked)
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  itemCount: messages.length + (isTyping ? 1 : 0),
-                  itemBuilder: (context, i) {
-                    if (i == messages.length && isTyping) {
-                      return _TypingBubble();
-                    }
-                    return _MessageBubble(message: messages[i])
-                        .animate(delay: 50.ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideY(begin: 0.1, end: 0);
-                  },
-                ),
-              ),
-            if (!locked && pendingTurn != null)
-              _RetryChatTurn(
-                message: pendingTurn.userMessage,
-                onRetry: () =>
-                    ref.read(chatProvider.notifier).retryPendingTurn(),
-              ),
-            // Input bar
-            if (!locked)
-              Container(
-                color: isDark
-                    ? const Color(0xFF0F0E1A)
-                    : const Color(0xFFF8F7FF),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          onSubmitted: (_) => _send(),
-                          decoration: InputDecoration(
-                            hintText:
-                                l10n?.chatInputHint ?? 'Ask about fashion…',
-                            border: InputBorder.none,
-                          ),
-                          maxLines: null,
-                          textInputAction: TextInputAction.send,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _send,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.seedColor,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: const Icon(
-                            Icons.send_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -247,154 +229,136 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
 
 class _RetryChatTurn extends StatelessWidget {
   const _RetryChatTurn({required this.message, required this.onRetry});
-
   final String message;
   final VoidCallback onRetry;
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+    child: MmmSurfaceCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: Row(
         children: [
-          Expanded(child: Text(message)),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          Expanded(
+            child: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(AppLocalizations.of(context)?.chatRetry ?? 'Retry'),
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _LockedAiState extends StatelessWidget {
+  const _LockedAiState({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
   final String title;
   final String message;
-
-  const _LockedAiState({required this.title, required this.message});
-
+  final String actionLabel;
+  final VoidCallback onAction;
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: GlassContainer(
-          borderRadius: 20,
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.lock_outline_rounded,
-                color: AppColors.seedColor,
-                size: 36,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: TextStyle(color: Colors.grey.withValues(alpha: 0.7)),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: MmmSurfaceCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.lock_outline_rounded,
+              size: 40,
+              color: MmmBrandTheme.of(context).primaryGradient.colors.first,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: MmmGradientButton(label: actionLabel, onPressed: onAction),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _MessageBubble extends StatelessWidget {
-  final ChatMessage message;
   const _MessageBubble({required this.message});
-
+  final ChatMessage message;
   @override
   Widget build(BuildContext context) {
-    final isUser = message.isUser;
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.78,
-        ),
-        child: isUser
-            ? Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.seedColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(18),
-                    topRight: Radius.circular(18),
-                    bottomLeft: Radius.circular(18),
-                    bottomRight: Radius.circular(4),
-                  ),
-                ),
-                child: Text(
-                  message.text,
-                  style: const TextStyle(color: Colors.white, height: 1.4),
-                ),
-              )
-            : GlassContainer(
-                borderRadius: 18,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Text(
-                  message.text,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(height: 1.5),
-                ),
+    final user = message.isUser;
+    final brand = MmmBrandTheme.of(context);
+    final bubble = user
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: brand.primaryGradient,
+              borderRadius: const BorderRadius.only(
+                topLeft: AppRadii.control,
+                topRight: AppRadii.control,
+                bottomLeft: AppRadii.control,
+                bottomRight: Radius.circular(4),
               ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Text(
+                message.text,
+                style: const TextStyle(color: Colors.white, height: 1.4),
+              ),
+            ),
+          )
+        : MmmSurfaceCard(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Text(
+              message.text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.5),
+            ),
+          );
+    return Align(
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * .78,
+        ),
+        child: bubble,
       ),
     );
   }
 }
 
 class _TypingBubble extends StatelessWidget {
+  const _TypingBubble();
   @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: GlassContainer(
-        borderRadius: 18,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        margin: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(
-            3,
-            (i) =>
-                Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.seedColor,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat())
-                    .scaleXY(
-                      begin: 0.5,
-                      end: 1.0,
-                      delay: (i * 150).ms,
-                      duration: 400.ms,
-                      curve: Curves.easeInOut,
-                    ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: MmmLoadingIndicator(
+      label: AppLocalizations.of(context)?.chatThinking ?? 'MMM is thinking…',
+    ),
+  );
 }

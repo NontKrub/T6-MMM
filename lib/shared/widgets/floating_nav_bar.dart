@@ -1,7 +1,12 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_colors.dart';
+
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 
 class FloatingNavBar extends StatelessWidget {
@@ -11,7 +16,7 @@ class FloatingNavBar extends StatelessWidget {
   static const _tabIcons = [
     Icons.home_rounded,
     Icons.checkroom_rounded,
-    Icons.add_shopping_cart_rounded,
+    Icons.auto_awesome_rounded,
     Icons.chat_bubble_rounded,
   ];
 
@@ -24,42 +29,47 @@ class FloatingNavBar extends StatelessWidget {
       l10n?.navMissing ?? 'Missing',
       l10n?.navChat ?? 'Chat',
     ];
-    final location = GoRouterState.of(context).uri.toString();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    int selectedIndex = _tabPaths.indexWhere((p) => location.startsWith(p));
+    final location = GoRouterState.of(context).uri.path;
+    final brand = MmmBrandTheme.of(context);
+    var selectedIndex = _tabPaths.indexWhere(location.startsWith);
     if (selectedIndex < 0) selectedIndex = 0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0x1AFFFFFF) : const Color(0x33FFFFFF),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0x1AFFFFFF)
-                    : const Color(0x40FFFFFF),
-                width: 1,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: ClipRRect(
+          borderRadius: AppRadii.sheetBorder,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: brand.raisedSurface.withValues(alpha: 0.92),
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadii.sheetBorder,
+                side: BorderSide(color: brand.subtleBorder),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(_tabPaths.length, (i) {
-                final selected = i == selectedIndex;
-                return _NavItem(
-                  navKey: ValueKey('nav-${_tabPaths[i]}'),
-                  icon: _tabIcons[i],
-                  label: labels[i],
-                  selected: selected,
-                  onTap: () => context.go(_tabPaths[i]),
-                );
-              }),
+              child: SizedBox(
+                height: 68,
+                child: Row(
+                  children: List.generate(
+                    _tabPaths.length,
+                    (index) => Expanded(
+                      child: _NavItem(
+                        navKey: ValueKey('nav-${_tabPaths[index]}'),
+                        icon: _tabIcons[index],
+                        label: labels[index],
+                        selected: index == selectedIndex,
+                        onTap: () => context.go(_tabPaths[index]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -69,12 +79,6 @@ class FloatingNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final Key navKey;
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
   const _NavItem({
     required this.navKey,
     required this.icon,
@@ -83,26 +87,49 @@ class _NavItem extends StatelessWidget {
     required this.onTap,
   });
 
+  final Key navKey;
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final brand = MmmBrandTheme.of(context);
+    final color = selected
+        ? brand.primaryGradient.colors.first
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+    return Semantics(
       key: navKey,
+      button: true,
+      selected: selected,
+      label: label,
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.seedColor.withValues(alpha: 0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Icon(
-          icon,
-          size: 24,
-          color: selected ? AppColors.seedColor : Colors.grey,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        child: Material(
+          color: selected ? brand.subtleAccentSurface : Colors.transparent,
+          borderRadius: AppRadii.compactBorder,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppRadii.compactBorder,
+            child: AnimatedDefaultTextStyle(
+              duration: AppMotion.duration(context, AppMotion.selection),
+              curve: AppMotion.curve,
+              style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                color: color,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 22, color: color),
+                  const SizedBox(height: 2),
+                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

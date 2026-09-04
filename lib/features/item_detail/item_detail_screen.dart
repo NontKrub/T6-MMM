@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/clothing_item.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
 import '../../shared/widgets/outfit_card.dart';
 import '../../shared/widgets/wardrobe_image.dart';
 
 class ItemDetailScreen extends ConsumerWidget {
-  final String itemId;
   const ItemDetailScreen({super.key, required this.itemId});
+
+  final String itemId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final wardrobe = ref.watch(wardrobeProvider);
-    final item = wardrobe.where((i) => i.id == itemId).firstOrNull;
+    final item = wardrobe.where((entry) => entry.id == itemId).firstOrNull;
 
     if (item == null) {
       return Scaffold(
@@ -31,16 +34,16 @@ class ItemDetailScreen extends ConsumerWidget {
       );
     }
 
-    final allOutfits = ref.watch(outfitsProvider);
-    final outfitsWithItem = allOutfits
-        .where((o) => o.itemIds.contains(item.id))
+    final outfits = ref
+        .watch(outfitsProvider)
+        .where((outfit) => outfit.itemIds.contains(item.id))
         .toList();
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 340,
+            expandedHeight: 360,
             pinned: true,
             stretch: true,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -51,218 +54,108 @@ class ItemDetailScreen extends ConsumerWidget {
                 child: WardrobeImage(item: item),
               ),
             ),
-            leading: Padding(
-              padding: const EdgeInsets.all(8),
-              child: GlassContainer(
-                borderRadius: 12,
-                padding: const EdgeInsets.all(4),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  onPressed: () => Navigator.pop(context),
-                  iconSize: 20,
-                ),
-              ),
+            leading: _ImageAction(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              icon: Icons.arrow_back_rounded,
+              onPressed: () => Navigator.pop(context),
             ),
             actions: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: GlassContainer(
-                  borderRadius: 12,
-                  padding: const EdgeInsets.all(4),
-                  child: IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded),
-                    onPressed: () => _confirmDelete(context, ref, item, l10n),
-                    iconSize: 20,
+              PopupMenuButton<_ItemAction>(
+                tooltip: l10n?.itemMoreActions ?? 'More actions',
+                icon: const _ImageActionIcon(Icons.more_horiz_rounded),
+                onSelected: (action) {
+                  if (action == _ItemAction.delete) {
+                    _confirmDelete(context, ref, item, l10n);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _ItemAction.delete,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_outline_rounded,
+                          color: MmmBrandTheme.of(context).destructive,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(l10n?.itemDeleteConfirm ?? 'Remove'),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
+              const SizedBox(width: AppSpacing.xs),
             ],
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              112,
+            ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Name & Brand
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.name,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          if (item.brand != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              item.brand!,
-                              style: TextStyle(
-                                color: Colors.grey.withValues(alpha: 0.7),
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: item.category.color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.category.icon,
-                            size: 14,
-                            color: item.category.color,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            item.category.label,
-                            style: TextStyle(
-                              color: item.category.color,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 300.ms),
-                const SizedBox(height: 16),
-                // Tags
-                if (item.tags.isNotEmpty)
+                _ItemHeader(item: item),
+                if (item.tags.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
                     children: item.tags
-                        .map(
-                          (tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.seedColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                color: AppColors.seedColor,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                        .map((tag) => _Tag(tag: tag))
+                        .toList(growable: false),
                   ),
+                ],
                 if (item.analysisStatus == AnalysisStatus.failed ||
                     item.analysisStatus == AnalysisStatus.partial) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    item.analysisStatus == AnalysisStatus.failed
-                        ? 'Analysis failed. Your item is still saved.'
-                        : 'Some details may be incomplete.',
-                    style: TextStyle(
-                      color: Colors.orange.shade700,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.lg),
+                  _AnalysisNotice(item: item, l10n: l10n),
+                  const SizedBox(height: AppSpacing.sm),
                   OutlinedButton.icon(
                     key: const Key('item-retry-analysis'),
-                    onPressed: () async {
-                      try {
-                        await ref
-                            .read(wardrobeProvider.notifier)
-                            .reanalyzeItem(item.id);
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Analysis updated.')),
-                        );
-                      } catch (error) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Retry failed: $error')),
-                        );
-                      }
-                    },
+                    onPressed: () => _retryAnalysis(context, ref, item),
                     icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Retry analysis'),
+                    label: Text(l10n?.itemRetryAnalysis ?? 'Retry analysis'),
                   ),
                 ],
                 if (item.colorHexes.isNotEmpty ||
                     item.pattern != ClothingPattern.unknown ||
                     item.silhouette != ClothingSilhouette.unknown) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ...item.colorHexes.map(
-                        (hex) => Chip(
-                          avatar: CircleAvatar(
-                            backgroundColor: Color(
-                              int.parse(hex.substring(1), radix: 16) |
-                                  0xFF000000,
-                            ),
-                          ),
-                          label: Text(hex),
-                        ),
-                      ),
-                      if (item.pattern != ClothingPattern.unknown)
-                        Chip(label: Text('Pattern: ${item.pattern.name}')),
-                      if (item.silhouette != ClothingSilhouette.unknown)
-                        Chip(
-                          label: Text('Silhouette: ${item.silhouette.value}'),
-                        ),
-                    ],
-                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _Details(item: item, l10n: l10n),
                 ],
-                const SizedBox(height: 20),
-                // Wear stats
-                _WearStatsCard(
-                  item: item,
-                  l10n: l10n,
-                ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
-                const SizedBox(height: 20),
-                // Outfits with this item
-                if (outfitsWithItem.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xl),
+                _WearStatsCard(item: item, l10n: l10n),
+                if (outfits.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xxl),
                   Text(
                     l10n?.itemOutfitsTitle ?? 'Outfits featuring this item',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const SizedBox(height: 12),
-                  ...outfitsWithItem.map((outfit) {
+                  const SizedBox(height: AppSpacing.md),
+                  ...outfits.map((outfit) {
                     final items = outfit.itemIds
                         .map(
-                          (id) => wardrobe.where((i) => i.id == id).firstOrNull,
+                          (id) => wardrobe
+                              .where((wardrobeItem) => wardrobeItem.id == id)
+                              .firstOrNull,
                         )
                         .whereType<ClothingItem>()
                         .toList();
-                    return OutfitCard(
-                      outfit: outfit,
-                      items: items,
-                      onWear: () {
-                        ref
-                            .read(outfitsProvider.notifier)
-                            .selectOutfit(outfit, ref);
-                        Navigator.pop(context);
-                      },
-                    ).animate(delay: 200.ms).fadeIn(duration: 300.ms);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: OutfitCard(
+                        outfit: outfit,
+                        items: items,
+                        onWear: () {
+                          ref
+                              .read(outfitsProvider.notifier)
+                              .selectOutfit(outfit, ref);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
                   }),
                 ],
               ]),
@@ -273,15 +166,42 @@ class ItemDetailScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _retryAnalysis(
+    BuildContext context,
+    WidgetRef ref,
+    ClothingItem item,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref.read(wardrobeProvider.notifier).reanalyzeItem(item.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n?.itemAnalysisUpdated ?? 'Analysis updated.'),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.itemAnalysisRetryFailed ??
+                'Could not retry analysis. Try again.',
+          ),
+        ),
+      );
+    }
+  }
+
   void _confirmDelete(
     BuildContext context,
     WidgetRef ref,
     ClothingItem item,
     AppLocalizations? l10n,
   ) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(l10n?.itemDeleteTitle ?? 'Remove Item'),
         content: Text(
           l10n?.itemDeleteMessage(item.name) ??
@@ -289,16 +209,18 @@ class ItemDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
               ref.read(wardrobeProvider.notifier).removeItem(item.id);
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               Navigator.pop(context);
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: MmmBrandTheme.of(context).destructive,
+            ),
             child: Text(l10n?.itemDeleteConfirm ?? 'Remove'),
           ),
         ],
@@ -307,90 +229,350 @@ class ItemDetailScreen extends ConsumerWidget {
   }
 }
 
-class _WearStatsCard extends StatelessWidget {
+enum _ItemAction { delete }
+
+class _ImageAction extends StatelessWidget {
+  const _ImageAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(AppSpacing.xs),
+    child: Material(
+      color: MmmBrandTheme.of(context).raisedSurface.withValues(alpha: .88),
+      borderRadius: AppRadii.compactBorder,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+      ),
+    ),
+  );
+}
+
+class _ImageActionIcon extends StatelessWidget {
+  const _ImageActionIcon(this.icon);
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: MmmBrandTheme.of(context).raisedSurface.withValues(alpha: .88),
+    borderRadius: AppRadii.compactBorder,
+    child: SizedBox(width: 44, height: 44, child: Icon(icon, size: 20)),
+  );
+}
+
+class _ItemHeader extends StatelessWidget {
+  const _ItemHeader({required this.item});
+
   final ClothingItem item;
-  final AppLocalizations? l10n;
-  const _WearStatsCard({required this.item, this.l10n});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(item.name, style: Theme.of(context).textTheme.headlineMedium),
+            if (item.brand != null) ...[
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                item.brand!,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(width: AppSpacing.md),
+      _CategoryLabel(item: item),
+    ],
+  );
+}
+
+class _CategoryLabel extends StatelessWidget {
+  const _CategoryLabel({required this.item});
+
+  final ClothingItem item;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.sm,
+      vertical: AppSpacing.xs,
+    ),
+    decoration: BoxDecoration(
+      color: item.category.color.withValues(alpha: .15),
+      borderRadius: AppRadii.compactBorder,
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(item.category.icon, size: 16, color: item.category.color),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          item.category.label,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+      ],
+    ),
+  );
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.tag});
+
+  final String tag;
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      borderRadius: 18,
-      padding: const EdgeInsets.all(18),
+    final brand = MmmBrandTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: brand.neutralSurface,
+        borderRadius: AppRadii.compactBorder,
+        border: Border.all(color: brand.subtleBorder),
+      ),
+      child: Text(tag, style: Theme.of(context).textTheme.labelMedium),
+    );
+  }
+}
+
+class _AnalysisNotice extends StatelessWidget {
+  const _AnalysisNotice({required this.item, required this.l10n});
+
+  final ClothingItem item;
+  final AppLocalizations? l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = item.analysisStatus == AnalysisStatus.failed;
+    final brand = MmmBrandTheme.of(context);
+    return MmmSurfaceCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Stat(
-            label: l10n?.itemStatsTimesWorn ?? 'Times worn',
-            value: '${item.wearCount}x',
-          ),
-          _Divider(),
-          _Stat(
-            label: l10n?.itemStatsLastWorn ?? 'Last worn',
-            value: item.lastWorn != null
-                ? _formatDate(item.lastWorn!, l10n)
-                : (l10n?.itemStatsNever ?? 'Never'),
-          ),
-          _Divider(),
-          _Stat(
-            label: l10n?.itemStatsCostPerWear ?? 'Cost per wear',
-            value: item.wearCount > 0
-                ? '—'
-                : (l10n?.itemStatsNotWornYet ?? 'Not worn yet'),
+          Icon(Icons.info_outline_rounded, color: brand.warning),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              failed
+                  ? (l10n?.itemAnalysisFailed ??
+                        'Analysis failed. Your item is still saved.')
+                  : (l10n?.itemAnalysisPartial ??
+                        'Some details may be incomplete.'),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date, AppLocalizations? l) {
-    final diff = DateTime.now().difference(date).inDays;
-    if (diff == 0) return l?.itemStatsToday ?? 'Today';
-    if (diff == 1) return l?.itemStatsYesterday ?? 'Yesterday';
-    if (diff < 7) return l?.itemStatsDaysAgo(diff) ?? '$diff days ago';
-    if (diff < 30) {
-      return l?.itemStatsWeeksAgo(diff ~/ 7) ?? '${diff ~/ 7}w ago';
+class _Details extends StatelessWidget {
+  const _Details({required this.item, required this.l10n});
+
+  final ClothingItem item;
+  final AppLocalizations? l10n;
+
+  @override
+  Widget build(BuildContext context) => MmmSurfaceCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n?.itemDetails ?? 'Details',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        if (item.colorHexes.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            l10n?.itemColors ?? 'Colors',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: item.colorHexes.map(_ColorToken.new).toList(),
+          ),
+        ],
+        if (item.pattern != ClothingPattern.unknown ||
+            item.silhouette != ClothingSilhouette.unknown) ...[
+          const SizedBox(height: AppSpacing.md),
+          if (item.pattern != ClothingPattern.unknown)
+            _DetailRow(
+              label: l10n?.itemPattern ?? 'Pattern',
+              value: item.pattern.name,
+            ),
+          if (item.silhouette != ClothingSilhouette.unknown)
+            _DetailRow(
+              label: l10n?.itemSilhouette ?? 'Silhouette',
+              value: item.silhouette.value,
+            ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _ColorToken extends StatelessWidget {
+  const _ColorToken(this.hex);
+
+  final String hex;
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: brand.neutralSurface,
+        borderRadius: AppRadii.compactBorder,
+        border: Border.all(color: brand.subtleBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: _colorFromHex(hex),
+              shape: BoxShape.circle,
+              border: Border.all(color: brand.subtleBorder),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(hex, style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
+
+  Color _colorFromHex(String value) {
+    final normalized = value.replaceFirst('#', '');
+    final parsed = int.tryParse(normalized, radix: 16);
+    return parsed == null ? Colors.transparent : Color(0xFF000000 | parsed);
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.xs),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Text(value, style: Theme.of(context).textTheme.bodyMedium),
+      ],
+    ),
+  );
+}
+
+class _WearStatsCard extends StatelessWidget {
+  const _WearStatsCard({required this.item, this.l10n});
+
+  final ClothingItem item;
+  final AppLocalizations? l10n;
+
+  @override
+  Widget build(BuildContext context) => MmmSurfaceCard(
+    child: Wrap(
+      spacing: AppSpacing.lg,
+      runSpacing: AppSpacing.md,
+      children: [
+        _Stat(
+          label: l10n?.itemStatsTimesWorn ?? 'Times worn',
+          value: '${item.wearCount}x',
+        ),
+        _Stat(
+          label: l10n?.itemStatsLastWorn ?? 'Last worn',
+          value: item.lastWorn == null
+              ? l10n?.itemStatsNever ?? 'Never'
+              : _formatDate(item.lastWorn!),
+        ),
+        _Stat(
+          label: l10n?.itemStatsCostPerWear ?? 'Cost per wear',
+          value: item.wearCount > 0
+              ? '—'
+              : l10n?.itemStatsNotWornYet ?? 'Not worn yet',
+        ),
+      ],
+    ),
+  );
+
+  String _formatDate(DateTime date) {
+    final days = DateTime.now().difference(date).inDays;
+    if (days == 0) {
+      return l10n?.itemStatsToday ?? 'Today';
     }
-    return l?.itemStatsMonthsAgo(diff ~/ 30) ?? '${diff ~/ 30}mo ago';
+    if (days == 1) {
+      return l10n?.itemStatsYesterday ?? 'Yesterday';
+    }
+    if (days < 7) {
+      return l10n?.itemStatsDaysAgo(days) ?? '$days days ago';
+    }
+    if (days < 30) {
+      return l10n?.itemStatsWeeksAgo(days ~/ 7) ?? '${days ~/ 7}w ago';
+    }
+    return l10n?.itemStatsMonthsAgo(days ~/ 30) ?? '${days ~/ 30}mo ago';
   }
 }
 
 class _Stat extends StatelessWidget {
-  final String label;
-  final String value;
   const _Stat({required this.label, required this.value});
 
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.withValues(alpha: 0.6),
-              fontSize: 11,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
+  final String label;
+  final String value;
 
-class _Divider extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 36,
-      color: Colors.grey.withValues(alpha: 0.2),
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(
+    width: 112,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    ),
+  );
 }

@@ -4,6 +4,7 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/language/language_screen.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/welcome/welcome_screen.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/wardrobe/wardrobe_screen.dart';
@@ -19,7 +20,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
-  onException: (_, __, router) => router.go('/auth'),
+  onException: (_, __, router) => router.go('/welcome'),
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
     GoRoute(
@@ -30,6 +31,7 @@ final appRouter = GoRouter(
             false,
       ),
     ),
+    GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
     GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
     GoRoute(
       path: '/onboarding',

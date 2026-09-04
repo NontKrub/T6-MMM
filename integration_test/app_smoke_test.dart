@@ -32,7 +32,7 @@ void main() {
   }
 
   testWidgets(
-    'splash routes to auth when language is chosen and no profile exists',
+    'splash routes to welcome when language is chosen and no profile exists',
     (tester) async {
       SharedPreferences.setMockInitialValues({
         'app_locale_chosen': true,
@@ -41,9 +41,56 @@ void main() {
 
       await pumpApp(tester);
 
-      expect(find.text('Continue as guest'), findsOneWidget);
+      expect(find.text('Create my wardrobe'), findsOneWidget);
     },
   );
+
+  testWidgets('welcome sign-in path reaches authentication', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'app_locale_chosen': true,
+      'app_locale': 'en',
+    });
+
+    await pumpApp(tester);
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    expect(appRouter.routeInformationProvider.value.uri.path, '/auth');
+    expect(find.text('Welcome back'), findsOneWidget);
+  });
+
+  testWidgets('guest path reaches wardrobe without online account', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'app_locale_chosen': true,
+      'app_locale': 'en',
+    });
+
+    await pumpApp(tester);
+    await tester.tap(find.text('Create my wardrobe'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Nont');
+    for (var step = 0; step < 6; step++) {
+      if (find.text('Enter MMM').evaluate().isNotEmpty) break;
+      if (find.text('Continue').evaluate().isEmpty) break;
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
+    if (find.text('Enter MMM').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Enter MMM'));
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    expect(appRouter.routeInformationProvider.value.uri.path, '/home');
+    await tester.tap(find.byKey(const ValueKey('nav-/wardrobe')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add item'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add Item'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Add Item'))).pop();
+    await tester.pumpAndSettle();
+  });
 
   testWidgets(
     'guest onboarding-complete profile reaches home and bottom nav works',
@@ -71,7 +118,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(appRouter.routeInformationProvider.value.uri.path, '/wardrobe');
-      expect(find.text('Wardrobe'), findsOneWidget);
+      expect(find.text('Wardrobe'), findsAtLeastNWidgets(1));
 
       await tester.tap(find.byKey(const ValueKey('nav-/missing')));
       await tester.pump();
