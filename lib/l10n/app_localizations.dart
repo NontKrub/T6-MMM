@@ -971,7 +971,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsVersionValue.
   ///
   /// In en, this message translates to:
-  /// **'1.0.0 (build 1)'**
+  /// **'—'**
   String get settingsVersionValue;
 
   /// No description provided for @settingsPrivacy.
