@@ -77,7 +77,7 @@ export async function handleDeleteAccount(
       throw userError;
     }
 
-    const { data: attempt, error: attemptError } = await admin
+    const { data: loadedAttempt, error: attemptError } = await admin
       .from("account_deletion_attempts")
       .select(
         "apple_revoked_at,apple_refresh_token,apple_refresh_token_expires_at",
@@ -85,6 +85,11 @@ export async function handleDeleteAccount(
       .eq("user_id", userId)
       .maybeSingle();
     if (attemptError) throw attemptError;
+    const attempt = loadedAttempt;
+    const discardRefreshToken = hasDiscardableAppleRefreshToken(attempt);
+    if (discardRefreshToken) {
+      await clearAppleRefreshToken(admin, userId);
+    }
 
     if (!data.user) {
       await removeUserStorage(admin, userId);
@@ -95,7 +100,9 @@ export async function handleDeleteAccount(
       identity.provider === "apple"
     );
     const hasAppleIdentity = appleIdentity != null;
-    const pendingRefreshToken = recoverableAppleRefreshToken(attempt);
+    const pendingRefreshToken = discardRefreshToken
+      ? null
+      : recoverableAppleRefreshToken(attempt);
 
     if (
       (hasAppleIdentity || pendingRefreshToken != null) &&
@@ -161,6 +168,17 @@ export async function handleDeleteAccount(
 
 const appleRefreshTokenLifetimeMs = 10 * 60 * 1000;
 
+function hasDiscardableAppleRefreshToken(
+  attempt: Record<string, unknown> | null,
+): boolean {
+  const token = attempt?.apple_refresh_token;
+  if (typeof token !== "string" || !token.trim()) return false;
+  const expiresAt = attempt?.apple_refresh_token_expires_at;
+  return typeof expiresAt !== "string" ||
+    !Number.isFinite(Date.parse(expiresAt)) ||
+    Date.parse(expiresAt) <= Date.now();
+}
+
 function recoverableAppleRefreshToken(
   attempt: Record<string, unknown> | null,
 ): string | null {
@@ -175,6 +193,17 @@ function recoverableAppleRefreshToken(
     return null;
   }
   return token.trim();
+}
+
+async function clearAppleRefreshToken(
+  admin: ReturnType<typeof serviceClient>,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin.from("account_deletion_attempts").update({
+    apple_refresh_token: null,
+    apple_refresh_token_expires_at: null,
+  }).eq("user_id", userId);
+  if (error) throw error;
 }
 
 async function storeAppleRefreshToken(

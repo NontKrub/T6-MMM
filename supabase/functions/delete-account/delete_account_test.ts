@@ -116,6 +116,33 @@ Deno.test("a retry with recorded Apple revocation skips a second revoke", async 
   assertEquals(fixture.state.authDeleteCalls, 1);
 });
 
+Deno.test(
+  "expired Apple refresh-token recovery state is purged before retry",
+  async () => {
+    const fixture = makeFixture({
+      appleRefreshToken: "expired-token",
+      appleRefreshTokenExpiresAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    const response = await handleDeleteAccount(
+      deleteRequest({}),
+      fixture.dependencies,
+    );
+
+    assertEquals(response.status, 400);
+    assertEquals(await response.json(), {
+      error: "Fresh Sign in with Apple authorization is required.",
+      code: "apple_reauthentication_required",
+    });
+    assertEquals(fixture.state.expiredRefreshTokenClearCalls, 1);
+    assertEquals(fixture.state.appleRefreshToken, null);
+    assertEquals(fixture.state.revokeCalls, 0);
+    assertEquals(fixture.state.storedRevocationCalls, 0);
+    assertEquals(fixture.state.storageRemoveCalls, 0);
+    assertEquals(fixture.state.authDeleteCalls, 0);
+  },
+);
+
 Deno.test("storage failure preserves the marker and retry skips revocation", async () => {
   const fixture = makeFixture({ storageShouldFail: true });
 
@@ -171,6 +198,8 @@ type FixtureState = {
   appleRefreshToken: string | null;
   authDeleteCalls: number;
   authDeleteShouldFail: boolean;
+  appleRefreshTokenExpiresAt: string | null;
+  expiredRefreshTokenClearCalls: number;
   failRevocationMarkerWrites: number;
   markerWrites: number;
   revokeCalls: number;
@@ -189,6 +218,8 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
     appleRefreshToken: null,
     authDeleteCalls: 0,
     authDeleteShouldFail: false,
+    appleRefreshTokenExpiresAt: null,
+    expiredRefreshTokenClearCalls: 0,
     failRevocationMarkerWrites: 0,
     markerWrites: 0,
     revokeCalls: 0,
@@ -228,16 +259,18 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
                     ? state.appleRefreshToken == null ? null : {
                       apple_revoked_at: null,
                       apple_refresh_token: state.appleRefreshToken,
-                      apple_refresh_token_expires_at: new Date(
-                        Date.now() + 60_000,
-                      ).toISOString(),
+                      apple_refresh_token_expires_at:
+                        state.appleRefreshTokenExpiresAt ?? new Date(
+                          Date.now() + 60_000,
+                        ).toISOString(),
                     }
                     : {
                       apple_revoked_at: state.appleRevokedAt,
                       apple_refresh_token: state.appleRefreshToken,
-                      apple_refresh_token_expires_at: new Date(
-                        Date.now() + 60_000,
-                      ).toISOString(),
+                      apple_refresh_token_expires_at:
+                        state.appleRefreshTokenExpiresAt ?? new Date(
+                          Date.now() + 60_000,
+                        ).toISOString(),
                     },
                   error: null,
                 }),
@@ -264,6 +297,18 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
             state.appleRefreshToken = row.apple_refresh_token;
           }
           return { error: null };
+        },
+        update(row: Record<string, unknown>) {
+          return {
+            eq: async () => {
+              state.expiredRefreshTokenClearCalls++;
+              if (row.apple_refresh_token === null) {
+                state.appleRefreshToken = null;
+                state.appleRefreshTokenExpiresAt = null;
+              }
+              return { error: null };
+            },
+          };
         },
       };
     },

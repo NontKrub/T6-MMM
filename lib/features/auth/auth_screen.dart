@@ -80,7 +80,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Wardrobe imported with warnings'),
         content: Text(
-          '${result.warnings.length} older activity record${result.warnings.length == 1 ? '' : 's'} could not be imported because a wardrobe item was no longer available.',
+          'Some guest history could not be imported:\n\n${result.warnings.map((warning) => '• $warning').join('\n')}',
         ),
         actions: [
           TextButton(
