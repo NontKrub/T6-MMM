@@ -80,6 +80,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authBack => 'Back';
 
   @override
+  String get authExternalPending =>
+      'Continue in the browser to finish signing in.';
+
+  @override
   String get authImportWarningsTitle => 'Wardrobe imported with warnings';
 
   @override

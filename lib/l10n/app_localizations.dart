@@ -230,6 +230,12 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get authBack;
 
+  /// No description provided for @authExternalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in the browser to finish signing in.'**
+  String get authExternalPending;
+
   /// No description provided for @authImportWarningsTitle.
   ///
   /// In en, this message translates to:

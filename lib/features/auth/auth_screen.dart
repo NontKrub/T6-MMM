@@ -34,6 +34,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   StreamSubscription<AuthState>? _authSub;
   String? _authenticatingProvider;
+  var _waitingForOAuthCallback = false;
   var _routingAfterAuth = false;
 
   @override
@@ -55,6 +56,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
     _routingAfterAuth = true;
+    if (mounted) {
+      setState(() {
+        _authenticatingProvider = null;
+        _waitingForOAuthCallback = false;
+      });
+    }
     ref.invalidate(aiConsentProvider);
     await ref.read(userProfileProvider.notifier).load();
     final migration = GuestAccountMigrationService();
@@ -166,8 +173,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _handleOAuth(
     String provider,
-    Future<void> Function() action,
-  ) async {
+    Future<bool> Function() action, {
+    bool waitsForCallback = false,
+  }) async {
     if (!AppConfig.isSupabaseConfigured) {
       _showMessage(
         AppLocalizations.of(context)?.authUnavailable ??
@@ -175,18 +183,38 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       );
       return;
     }
-    setState(() => _authenticatingProvider = provider);
+    setState(() {
+      _authenticatingProvider = provider;
+      _waitingForOAuthCallback = false;
+    });
     try {
-      await action();
+      final launched = await action();
+      if (!launched) {
+        if (!mounted) return;
+        setState(() {
+          _authenticatingProvider = null;
+          _waitingForOAuthCallback = false;
+        });
+        _showMessage(
+          AppLocalizations.of(context)?.authRetryMessage ??
+              'Sign in could not be started. Please try again.',
+        );
+        return;
+      }
+      if (mounted && waitsForCallback) {
+        setState(() => _waitingForOAuthCallback = true);
+      }
     } catch (_) {
       if (mounted) {
+        setState(() {
+          _authenticatingProvider = null;
+          _waitingForOAuthCallback = false;
+        });
         _showMessage(
           AppLocalizations.of(context)?.authRetryMessage ??
               'Sign in could not be completed. Please try again.',
         );
       }
-    } finally {
-      if (mounted) setState(() => _authenticatingProvider = null);
     }
   }
 
@@ -251,8 +279,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               label: l10n?.authContinueWithGoogle ?? 'Continue with Google',
               loading: _authenticatingProvider == 'google',
               enabled: !isBusy,
-              onPressed: () =>
-                  _handleOAuth('google', AuthService().signInWithGoogle),
+              onPressed: () => _handleOAuth(
+                'google',
+                AuthService().signInWithGoogle,
+                waitsForCallback: true,
+              ),
             ),
             if (AppConfig.enableFacebookAuth) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -262,8 +293,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     l10n?.authContinueWithFacebook ?? 'Continue with Facebook',
                 loading: _authenticatingProvider == 'facebook',
                 enabled: !isBusy,
-                onPressed: () =>
-                    _handleOAuth('facebook', AuthService().signInWithFacebook),
+                onPressed: () => _handleOAuth(
+                  'facebook',
+                  AuthService().signInWithFacebook,
+                  waitsForCallback: true,
+                ),
+              ),
+            ],
+            if (_waitingForOAuthCallback) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                l10n?.authExternalPending ??
+                    'Continue in the browser to finish signing in.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ],

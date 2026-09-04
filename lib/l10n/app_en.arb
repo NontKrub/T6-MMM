@@ -24,6 +24,7 @@
   "authBackToChat": "Back to Chat",
   "authBackToWelcome": "Back to welcome",
   "authBack": "Back",
+  "authExternalPending": "Continue in the browser to finish signing in.",
   "authImportWarningsTitle": "Wardrobe imported with warnings",
   "authImportingGuest": "Importing local wardrobe…",
   "authRetryMessage": "Sign in could not be completed. Please try again.",

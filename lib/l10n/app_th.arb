@@ -24,6 +24,7 @@
   "authBackToChat": "กลับไปที่แชท",
   "authBackToWelcome": "กลับไปหน้าต้อนรับ",
   "authBack": "ย้อนกลับ",
+  "authExternalPending": "ดำเนินการต่อในเบราว์เซอร์เพื่อเข้าสู่ระบบให้เสร็จสิ้น",
   "authImportWarningsTitle": "นำเข้าตู้เสื้อผ้าพร้อมคำเตือน",
   "authImportingGuest": "กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…",
   "authRetryMessage": "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง",

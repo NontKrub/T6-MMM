@@ -79,6 +79,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authBack => 'ย้อนกลับ';
 
   @override
+  String get authExternalPending =>
+      'ดำเนินการต่อในเบราว์เซอร์เพื่อเข้าสู่ระบบให้เสร็จสิ้น';
+
+  @override
   String get authImportWarningsTitle => 'นำเข้าตู้เสื้อผ้าพร้อมคำเตือน';
 
   @override
