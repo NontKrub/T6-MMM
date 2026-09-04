@@ -34,7 +34,15 @@ import UserNotifications
         do {
           let request = VNClassifyImageRequest()
 #if targetEnvironment(simulator)
-          request.usesCPUOnly = true
+          if #available(iOS 17.0, *) {
+            if let supported = try? request.supportedComputeStageDevices,
+               let cpu = supported[.main]?.first(where: {
+                 if case .cpu = $0 { return true }
+                 return false
+               }) {
+              request.setComputeDevice(cpu, for: .main)
+            }
+          }
 #endif
           try VNImageRequestHandler(data: bytes.data, options: [:]).perform([request])
           let labels = (request.results ?? [])
