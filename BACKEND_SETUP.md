@@ -38,6 +38,23 @@ Function runtime may still expose its managed `SUPABASE_ANON_KEY` to the
 user-scoped client and uses `SUPABASE_SERVICE_ROLE_KEY` only for explicitly
 privileged server operations. Never place either server value in Flutter code.
 
+## Android Release Signing
+
+Debug builds require no signing setup. Release builds require an untracked
+`android/key.properties` file and a keystore kept outside Git:
+
+```properties
+storeFile=release-upload.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+The keystore path is relative to `android/` unless an absolute path is used.
+The release Gradle task fails clearly when these values or the keystore are
+missing; it never falls back to the debug key. CI should provide the file from
+its protected signing setup only in a deployment workflow.
+
 ## OAuth Redirect Setup
 
 In Supabase Dashboard > Authentication > URL Configuration, add this redirect
