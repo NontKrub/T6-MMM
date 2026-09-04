@@ -1,5 +1,9 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { hasAiConsent } from "../_shared/ai_consent.ts";
+import {
+  assertChatThreadOwner,
+  insertChatMessage,
+} from "../_shared/fashion_chat.ts";
 import { chatSchema, openAiJson } from "../_shared/openai.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
@@ -31,22 +35,25 @@ Deno.serve(async (req) => {
         .insert({ user_id: userId, title: "Fashion chat" })
         .select()
         .single();
-      if (error || !thread) throw error;
+      if (error) throw error;
+      if (!thread) throw new Error("Chat thread was not created.");
       threadId = String(thread.id);
+    } else {
+      await assertChatThreadOwner(supabase, threadId, userId);
     }
 
     if (!threadId) {
       return jsonResponse({ error: "Unable to create chat thread." }, 500);
     }
 
-    await supabase.from("chat_messages").insert({
+    await insertChatMessage(supabase, {
       thread_id: threadId,
       user_id: userId,
       role: "user",
       content: body.message,
     });
 
-    const [{ data: profile }, { data: wardrobe }, { data: recentMessages }] =
+    const [profileResult, wardrobeResult, recentMessagesResult] =
       await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("clothing_items")
@@ -59,6 +66,9 @@ Deno.serve(async (req) => {
           .order("created_at", { ascending: false })
           .limit(10),
       ]);
+    if (profileResult.error) throw profileResult.error;
+    if (wardrobeResult.error) throw wardrobeResult.error;
+    if (recentMessagesResult.error) throw recentMessagesResult.error;
 
     const result = await openAiJson<{ reply: string; title: string }>({
       instructions:
@@ -69,9 +79,9 @@ Deno.serve(async (req) => {
           type: "input_text",
           text: JSON.stringify({
             user_message: body.message,
-            profile,
-            wardrobe,
-            recent_messages: (recentMessages ?? []).reverse(),
+            profile: profileResult.data,
+            wardrobe: wardrobeResult.data,
+            recent_messages: (recentMessagesResult.data ?? []).reverse(),
           }),
         }],
       }],
@@ -83,22 +93,17 @@ Deno.serve(async (req) => {
       },
     });
 
-    const { data: assistantMessage, error } = await supabase.from(
-      "chat_messages",
-    )
-      .insert({
-        thread_id: threadId,
-        user_id: userId,
-        role: "assistant",
-        content: result.reply,
-      })
-      .select()
-      .single();
-    if (error) throw error;
+    const assistantMessage = await insertChatMessage(supabase, {
+      thread_id: threadId,
+      user_id: userId,
+      role: "assistant",
+      content: result.reply,
+    });
 
-    await supabase.from("chat_threads")
+    const { error: titleError } = await supabase.from("chat_threads")
       .update({ title: result.title, updated_at: new Date().toISOString() })
       .eq("id", threadId);
+    if (titleError) throw titleError;
 
     return jsonResponse({ thread_id: threadId, message: assistantMessage });
   } catch (error) {
