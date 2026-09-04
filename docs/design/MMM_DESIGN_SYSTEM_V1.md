@@ -87,6 +87,41 @@ No decorative elastic animation, long startup choreography, or cascading list st
 
 The shell has four named destinations with icon and localized label. Selection uses a restrained brand tint/background, never a rainbow item color. Glass is reserved for overlays above imagery, bottom navigation, and modal context—not ordinary forms, settings rows, or content cards.
 
+## Phase 1 responsive and flow contract
+
+The app uses three width classes: compact below 600 logical pixels, medium from
+600 through 839, and expanded at 840 or wider. Entry screens (Language,
+Welcome, and Auth) use `SafeArea`, a scrollable constrained column, a maximum
+content width, and height-aware mark sizing. They must remain usable at short
+heights and at 100%, 135%, and 200% text scale; accessibility text is never
+globally clamped to preserve a screenshot.
+
+`MainShell` owns the adaptive bottom-navigation height and exposes the content
+inset through the shell layout. Feature screens must not guess the navigation
+height with magic bottom padding. Interactive controls use at least 44pt on
+iOS and 48dp on Android, including localized labels that wrap at larger text
+sizes.
+
+Authentication receives a typed, non-persisted `AuthEntry`. Root sign-in uses
+the generic cloud-account copy; feature-triggered sign-in uses contextual copy,
+opens with `push`, returns with `pop`, and may route only to a known local
+destination after a successful migration/profile refresh. Apple uses the
+platform Sign in with Apple control; Google uses the official G identity asset
+with equivalent control height and semantics.
+
+Startup resolves local language/profile state first and bounds any remote
+profile refresh. A signed-in user can enter the usable app from cached/local
+state when Supabase is unavailable. Legal links are rendered only when a
+configured HTTPS URL is available and are opened externally; unavailable links
+show a localized failure state rather than a placeholder dialog.
+
+`MmmDialog` is the canonical thin wrapper around Material's accessible
+`AlertDialog`, providing shared geometry, surfaces, spacing, and destructive
+action treatment without introducing a second dialog framework. Rich,
+stateful experiences such as the rush result use a `Dialog` with the same
+`MmmSurfaceCard`/sheet geometry rather than forcing a confirmation-dialog
+title-and-actions layout.
+
 ## Accessibility contract
 
 - Semantic label and meaningful state for every important control.

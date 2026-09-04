@@ -23,3 +23,14 @@ Blue `#317DFD` to violet `#A06BEF` to pink `#F97CB0` is limited to identity, maj
 ## Constraints
 
 Preserve working app behavior and use the complete design contract for accessibility, light/dark behavior, localization, semantics, and the supplied-brand-asset rule.
+
+## Phase 1 implementation contract
+
+Language, Welcome, and Auth share a safe-area, scrollable, max-width entry
+layout that adapts to short heights and 100/135/200% text scale. The shell
+owns its adaptive navigation inset; screens must not add magic bottom padding.
+Auth uses typed contextual intent with `push`/`pop` semantics and validated
+local return destinations. Apple remains the native platform control and
+Google uses the official G asset. `MmmDialog` is the thin shared Material
+confirmation-dialog primitive; rich rush results use matching surface
+geometry. Legal links are external HTTPS URLs only when configured.

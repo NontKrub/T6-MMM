@@ -30,6 +30,11 @@ Current branch evidence covers the checked implementation and automated gates. T
 ## Localization and accessibility
 
 - [x] New visible copy is in English and Thai ARB files; generated localization files are regenerated, not hand-edited.
+- [x] Contextual auth intent, safe return navigation, and guest migration copy are localized.
+- [x] Responsive entry layout, adaptive shell inset/navigation, and width-class primitives are implemented.
+- [x] Auth provider controls use balanced sizing, native Apple rendering, and the official Google identity asset.
+- [x] Legal links require configured HTTPS destinations; confirmation/destructive dialogs use `MmmDialog`, while the rich rush modal follows the same surface geometry.
+- [x] Reduced-motion avatar interaction does not restart decorative rotation.
 - [ ] Light/dark and English/Thai work for all migrated surfaces.
 - [ ] Semantics, iOS/Android tap targets, contrast, and large-text checks pass.
 - [ ] Reduce Motion, keyboard, safe-area, sheet, and back-navigation behavior are verified.
@@ -40,6 +45,7 @@ Current branch evidence covers the checked implementation and automated gates. T
 - [x] Existing integration tests are preserved and updated for splash-to-welcome.
 - [x] Guest path integration test covers language, welcome, guest onboarding, home, wardrobe, and Add Item.
 - [x] `dart format lib test integration_test`, `flutter analyze`, `flutter test`, and `flutter build ios --simulator` pass.
+- [x] Compatible iOS-facing plugin constraints are current and MMM-owned Vision simulator configuration uses the supported compute-device API.
 - [ ] Production-readiness workflow checks pass without weakening checks.
 - [ ] Device Hub crawl has PASS/FAIL/BLOCKED evidence by device, language, and theme.
 - [ ] Screenshots exist for welcome, auth, onboarding, home, wardrobe, Add Item, generator, missing pieces, chat, profile, and settings.

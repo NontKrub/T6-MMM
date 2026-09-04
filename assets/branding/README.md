@@ -1,8 +1,10 @@
 # MMM branding assets
 
 The supplied MMM brand sheet is now the approved visual source for this
-implementation. The transparent PNGs in this directory are raster crops of
-that sheet, preserving the supplied ribbon geometry and light/dark variants.
+implementation. The transparent PNGs in this directory are clearly labeled
+temporary development crops of that sheet, preserving the supplied ribbon
+geometry and light/dark variants until an original vector/master export is
+available.
 
 - `mmm_mark.png` / `mmm_mark_dark.png`: ribbon-only mark.
 - `mmm_wordmark.png` / `mmm_wordmark_dark.png`: mark plus wordmark, without the
