@@ -368,16 +368,15 @@ class SettingsScreen extends ConsumerWidget {
       ref.invalidate(outfitsProvider);
     }
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.completed
+    final message = result.completed
+        ? result.warnings.isEmpty
               ? (l10n?.settingsImportLocalComplete ??
                     'Local wardrobe imported.')
-              : '${l10n?.settingsImportLocalFailed ?? 'Import failed'}: ${result.error}',
-        ),
-      ),
-    );
+              : 'Local wardrobe imported with ${result.warnings.length} warning${result.warnings.length == 1 ? '' : 's'}.'
+        : '${l10n?.settingsImportLocalFailed ?? 'Import failed'}: ${result.error}';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _aiConsentTile(

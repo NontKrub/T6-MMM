@@ -54,6 +54,38 @@ class LocalPreferenceEvent {
   };
 }
 
+class GuestItemTombstone {
+  const GuestItemTombstone({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.deletedAt,
+  });
+
+  final String id;
+  final String name;
+  final ClothingCategory category;
+  final DateTime deletedAt;
+
+  factory GuestItemTombstone.fromJson(Map<String, dynamic> json) {
+    return GuestItemTombstone(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      category: clothingCategoryFromString(json['category'] as String?),
+      deletedAt:
+          DateTime.tryParse(json['deleted_at'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'category': category.name,
+    'deleted_at': deletedAt.toUtc().toIso8601String(),
+  };
+}
+
 class LocalAccountRepository {
   static const _guestEnabledKey = 'mmm_guest_enabled';
   static const _profileKey = 'mmm_guest_profile';
@@ -63,6 +95,7 @@ class LocalAccountRepository {
   static const _preferenceHistoryKey = 'mmm_guest_preference_history';
   static const _recommendationEventsKey = 'mmm_guest_recommendation_events';
   static const _behavioralWeightsKey = 'mmm_guest_behavioral_weights';
+  static const _itemTombstonesKey = 'mmm_guest_item_tombstones';
 
   Future<bool> hasGuestAccount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,6 +126,7 @@ class LocalAccountRepository {
     await prefs.remove(_preferenceHistoryKey);
     await prefs.remove(_recommendationEventsKey);
     await prefs.remove(_behavioralWeightsKey);
+    await prefs.remove(_itemTombstonesKey);
     await prefs.remove(_migrationStateKey);
   }
 
@@ -161,7 +195,40 @@ class LocalAccountRepository {
 
   Future<void> archiveItem(String id) async {
     final items = await fetchItems();
+    final item = items.where((item) => item.id == id).firstOrNull;
+    if (item != null) {
+      final tombstones = await fetchItemTombstones();
+      tombstones.removeWhere((entry) => entry.id == id);
+      tombstones.add(
+        GuestItemTombstone(
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          deletedAt: DateTime.now().toUtc(),
+        ),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _itemTombstonesKey,
+        jsonEncode(tombstones.map((entry) => entry.toJson()).toList()),
+      );
+    }
     await _saveItems(items.where((item) => item.id != id).toList());
+  }
+
+  Future<List<GuestItemTombstone>> fetchItemTombstones() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_itemTombstonesKey);
+    if (raw == null || raw.isEmpty) return <GuestItemTombstone>[];
+    final rows = jsonDecode(raw);
+    if (rows is! List) return <GuestItemTombstone>[];
+    return rows
+        .whereType<Map>()
+        .map(
+          (row) => GuestItemTombstone.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .where((entry) => entry.id.isNotEmpty)
+        .toList(growable: true);
   }
 
   Future<void> updateItems(List<ClothingItem> items) => _saveItems(items);

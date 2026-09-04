@@ -71,5 +71,34 @@ void main() {
       throwsStateError,
     );
     expect(mapGuestItemIds(['local-item'], state), ['cloud-item']);
+    expect(tryMapGuestItemIds(['local-item', 'missing-item'], state), isNull);
   });
+
+  test(
+    'deleted guest items leave a tombstone for migration warnings',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final local = LocalAccountRepository();
+      await local.startGuestAccount();
+      await local.insertItem(
+        const ClothingItem(
+          id: 'deleted-item',
+          name: 'Old hat',
+          category: ClothingCategory.hat,
+          imageUrl: '',
+        ),
+      );
+
+      await local.archiveItem('deleted-item');
+
+      final tombstones = await local.fetchItemTombstones();
+      expect(tombstones, hasLength(1));
+      expect(tombstones.single.id, 'deleted-item');
+      expect(tombstones.single.category, ClothingCategory.hat);
+      expect(await local.fetchItems(), isEmpty);
+
+      await local.clearGuestAccount();
+      expect(await local.fetchItemTombstones(), isEmpty);
+    },
+  );
 }

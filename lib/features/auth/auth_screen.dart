@@ -55,6 +55,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await ref.read(userProfileProvider.notifier).load();
           ref.invalidate(wardrobeProvider);
           ref.invalidate(outfitsProvider);
+          if (result.warnings.isNotEmpty && mounted) {
+            await _showMigrationWarnings(result);
+          }
         } else if (mounted && result.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -69,6 +72,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final profile = ref.read(userProfileProvider);
     if (!mounted) return;
     context.go(profile.onboardingComplete ? '/home' : '/onboarding');
+  }
+
+  Future<void> _showMigrationWarnings(GuestMigrationResult result) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Wardrobe imported with warnings'),
+        content: Text(
+          '${result.warnings.length} older activity record${result.warnings.length == 1 ? '' : 's'} could not be imported because a wardrobe item was no longer available.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.dialogClose ?? 'Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> _askToImportGuestData() async {

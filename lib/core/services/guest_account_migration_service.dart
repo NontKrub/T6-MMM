@@ -26,6 +26,7 @@ class GuestMigrationState {
     required this.targetUserId,
     this.phase = GuestMigrationPhase.profile,
     this.itemIdMap = const {},
+    this.warnings = const [],
     this.error,
     this.updatedAt,
   });
@@ -34,6 +35,7 @@ class GuestMigrationState {
   final String targetUserId;
   final GuestMigrationPhase phase;
   final Map<String, String> itemIdMap;
+  final List<String> warnings;
   final String? error;
   final DateTime? updatedAt;
 
@@ -56,6 +58,8 @@ class GuestMigrationState {
               (key, value) => MapEntry(key.toString(), value.toString()),
             )
           : const {},
+      warnings:
+          (json['warnings'] as List?)?.whereType<String>().toList() ?? const [],
       error: json['error'] as String?,
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -66,6 +70,7 @@ class GuestMigrationState {
     'target_user_id': targetUserId,
     'phase': phase.name,
     'item_id_map': itemIdMap,
+    'warnings': warnings,
     'error': error,
     'updated_at': updatedAt?.toUtc().toIso8601String(),
   };
@@ -74,6 +79,8 @@ class GuestMigrationState {
     GuestMigrationStatus? status,
     GuestMigrationPhase? phase,
     Map<String, String>? itemIdMap,
+    List<String>? warnings,
+    bool clearWarnings = false,
     String? error,
     bool clearError = false,
     DateTime? updatedAt,
@@ -82,6 +89,7 @@ class GuestMigrationState {
     targetUserId: targetUserId,
     phase: phase ?? this.phase,
     itemIdMap: itemIdMap ?? this.itemIdMap,
+    warnings: clearWarnings ? const [] : warnings ?? this.warnings,
     error: clearError ? null : error ?? this.error,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -94,6 +102,10 @@ class GuestMigrationResult {
     this.wearEventsMigrated = 0,
     this.preferenceEventsMigrated = 0,
     this.recommendationEventsMigrated = 0,
+    this.warnings = const [],
+    this.skippedWearEvents = 0,
+    this.skippedPreferenceEvents = 0,
+    this.skippedRecommendationEvents = 0,
     this.error,
   });
 
@@ -102,6 +114,10 @@ class GuestMigrationResult {
   final int wearEventsMigrated;
   final int preferenceEventsMigrated;
   final int recommendationEventsMigrated;
+  final List<String> warnings;
+  final int skippedWearEvents;
+  final int skippedPreferenceEvents;
+  final int skippedRecommendationEvents;
   final String? error;
 
   bool get completed => state.status == GuestMigrationStatus.completed;
@@ -114,6 +130,7 @@ class GuestAccountSnapshot {
     required this.wearEvents,
     required this.preferenceEvents,
     required this.recommendationEvents,
+    this.tombstones = const [],
   });
 
   final UserProfile? profile;
@@ -121,6 +138,27 @@ class GuestAccountSnapshot {
   final List<WearEvent> wearEvents;
   final List<LocalPreferenceEvent> preferenceEvents;
   final List<RecommendationEvent> recommendationEvents;
+  final List<GuestItemTombstone> tombstones;
+}
+
+class _MigrationEventResult {
+  const _MigrationEventResult({
+    this.wearIds = const [],
+    this.preferenceIds = const [],
+    this.recommendationIds = const [],
+    this.warnings = const [],
+    this.skippedWearEvents = 0,
+    this.skippedPreferenceEvents = 0,
+    this.skippedRecommendationEvents = 0,
+  });
+
+  final List<String> wearIds;
+  final List<String> preferenceIds;
+  final List<String> recommendationIds;
+  final List<String> warnings;
+  final int skippedWearEvents;
+  final int skippedPreferenceEvents;
+  final int skippedRecommendationEvents;
 }
 
 class GuestAccountMigrationService {
@@ -178,12 +216,14 @@ class GuestAccountMigrationService {
     var wearEventsMigrated = 0;
     var preferenceEventsMigrated = 0;
     var recommendationEventsMigrated = 0;
+    var eventResult = const _MigrationEventResult();
 
     try {
       state = await _save(
         state.copyWith(
           status: GuestMigrationStatus.running,
           phase: GuestMigrationPhase.profile,
+          clearWarnings: true,
           clearError: true,
         ),
       );
@@ -240,15 +280,16 @@ class GuestAccountMigrationService {
       }
 
       state = await _save(state.copyWith(phase: GuestMigrationPhase.events));
-      final eventCounts = await _migrateEvents(snapshot, state, user.id);
-      wearEventsMigrated = eventCounts.$1;
-      preferenceEventsMigrated = eventCounts.$2;
-      recommendationEventsMigrated = eventCounts.$3;
+      eventResult = await _migrateEvents(snapshot, state, user.id);
+      wearEventsMigrated = eventResult.wearIds.length;
+      preferenceEventsMigrated = eventResult.preferenceIds.length;
+      recommendationEventsMigrated = eventResult.recommendationIds.length;
+      state = await _save(state.copyWith(warnings: eventResult.warnings));
 
       state = await _save(
         state.copyWith(phase: GuestMigrationPhase.verification),
       );
-      await _verify(snapshot, state, user.id);
+      await _verify(snapshot, state, user.id, eventResult);
       await _local.clearGuestAccount();
 
       return GuestMigrationResult(
@@ -257,6 +298,10 @@ class GuestAccountMigrationService {
         wearEventsMigrated: wearEventsMigrated,
         preferenceEventsMigrated: preferenceEventsMigrated,
         recommendationEventsMigrated: recommendationEventsMigrated,
+        warnings: eventResult.warnings,
+        skippedWearEvents: eventResult.skippedWearEvents,
+        skippedPreferenceEvents: eventResult.skippedPreferenceEvents,
+        skippedRecommendationEvents: eventResult.skippedRecommendationEvents,
       );
     } catch (error) {
       final failed = await _save(
@@ -271,6 +316,10 @@ class GuestAccountMigrationService {
         wearEventsMigrated: wearEventsMigrated,
         preferenceEventsMigrated: preferenceEventsMigrated,
         recommendationEventsMigrated: recommendationEventsMigrated,
+        warnings: state.warnings,
+        skippedWearEvents: eventResult.skippedWearEvents,
+        skippedPreferenceEvents: eventResult.skippedPreferenceEvents,
+        skippedRecommendationEvents: eventResult.skippedRecommendationEvents,
         error: error.toString(),
       );
     }
@@ -282,6 +331,7 @@ class GuestAccountMigrationService {
     wearEvents: await _local.fetchWearEvents(),
     preferenceEvents: await _local.fetchPreferenceEvents(),
     recommendationEvents: await _local.fetchRecommendationEvents(),
+    tombstones: await _local.fetchItemTombstones(),
   );
 
   Future<GuestMigrationState> _stateFor(String userId) async {
@@ -316,28 +366,37 @@ class GuestAccountMigrationService {
     return File(path).readAsBytes();
   }
 
-  Future<(int, int, int)> _migrateEvents(
+  Future<_MigrationEventResult> _migrateEvents(
     GuestAccountSnapshot snapshot,
     GuestMigrationState state,
     String userId,
   ) async {
     final client = _client!;
     final itemById = {for (final item in snapshot.items) item.id: item};
-    var wearCount = 0;
-    var preferenceCount = 0;
-    var recommendationCount = 0;
+    final wearIds = <String>[];
+    final preferenceIds = <String>[];
+    final recommendationIds = <String>[];
+    final warnings = <String>[];
+    var skippedWearEvents = 0;
+    var skippedPreferenceEvents = 0;
+    var skippedRecommendationEvents = 0;
 
-    for (var index = 0; index < snapshot.wearEvents.length; index++) {
-      final event = snapshot.wearEvents[index];
-      final itemIds = _mappedItemIds(event.itemIds, state);
+    for (final event in snapshot.wearEvents) {
+      final itemIds = tryMapGuestItemIds(event.itemIds, state);
+      if (itemIds == null) {
+        skippedWearEvents++;
+        warnings.add(_eventWarning('wear', event.itemIds, snapshot.tombstones));
+        continue;
+      }
       final colors = event.itemIds
           .map((id) => itemById[id]?.color)
           .whereType<String>()
           .where((color) => color.isNotEmpty)
           .toSet()
           .toList();
+      final eventId = _eventId(userId, 'wear', _wearEventKey(event));
       await client.from('wear_events').upsert({
-        'id': _eventId(userId, 'wear', _wearEventKey(event)),
+        'id': eventId,
         'user_id': userId,
         'outfit_id': null,
         'clothing_item_ids': itemIds,
@@ -345,17 +404,29 @@ class GuestAccountMigrationService {
         'worn_at': event.wornAt.toUtc().toIso8601String(),
         'source': _wearSource(event.source),
       }, onConflict: 'id');
-      wearCount++;
+      wearIds.add(eventId);
     }
 
-    for (var index = 0; index < snapshot.preferenceEvents.length; index++) {
-      final event = snapshot.preferenceEvents[index];
+    for (final event in snapshot.preferenceEvents) {
+      final itemIds = tryMapGuestItemIds(event.itemIds, state);
+      if (itemIds == null) {
+        skippedPreferenceEvents++;
+        warnings.add(
+          _eventWarning('preference', event.itemIds, snapshot.tombstones),
+        );
+        continue;
+      }
+      final eventId = _eventId(
+        userId,
+        'preference',
+        jsonEncode(event.toJson()),
+      );
       await client.from('outfit_preference_events').upsert({
-        'id': _eventId(userId, 'preference', jsonEncode(event.toJson())),
+        'id': eventId,
         'user_id': userId,
         'outfit_id': null,
         'style': event.style,
-        'clothing_item_ids': _mappedItemIds(event.itemIds, state),
+        'clothing_item_ids': itemIds,
         'tags': event.tags,
         'colors': event.colors,
         'selection_factors': const <String>[],
@@ -363,35 +434,52 @@ class GuestAccountMigrationService {
         'source': event.source,
         'created_at': event.selectedAt.toUtc().toIso8601String(),
       }, onConflict: 'id');
-      preferenceCount++;
+      preferenceIds.add(eventId);
     }
 
-    for (var index = 0; index < snapshot.recommendationEvents.length; index++) {
-      final event = snapshot.recommendationEvents[index];
+    for (final event in snapshot.recommendationEvents) {
       if (event.eventType == RecommendationEventType.unknown) continue;
+      final itemIds = tryMapGuestItemIds(event.itemIds, state);
+      if (itemIds == null) {
+        skippedRecommendationEvents++;
+        warnings.add(
+          _eventWarning('recommendation', event.itemIds, snapshot.tombstones),
+        );
+        continue;
+      }
+      final eventId = _eventId(
+        userId,
+        'recommendation',
+        _recommendationEventKey(event),
+      );
       await client.from('recommendation_events').upsert({
-        'id': _eventId(
-          userId,
-          'recommendation',
-          _recommendationEventKey(event),
-        ),
+        'id': eventId,
         'user_id': userId,
         'outfit_id': null,
         'event_type': event.eventType.name,
-        'clothing_item_ids': _mappedItemIds(event.itemIds, state),
+        'clothing_item_ids': itemIds,
         'metadata': {...event.metadata, 'guest_event_id': event.id},
         'created_at': event.createdAt.toUtc().toIso8601String(),
       }, onConflict: 'id');
-      recommendationCount++;
+      recommendationIds.add(eventId);
     }
 
-    return (wearCount, preferenceCount, recommendationCount);
+    return _MigrationEventResult(
+      wearIds: wearIds,
+      preferenceIds: preferenceIds,
+      recommendationIds: recommendationIds,
+      warnings: warnings,
+      skippedWearEvents: skippedWearEvents,
+      skippedPreferenceEvents: skippedPreferenceEvents,
+      skippedRecommendationEvents: skippedRecommendationEvents,
+    );
   }
 
   Future<void> _verify(
     GuestAccountSnapshot snapshot,
     GuestMigrationState state,
     String userId,
+    _MigrationEventResult eventResult,
   ) async {
     final client = _client!;
     if (snapshot.profile != null) {
@@ -403,7 +491,11 @@ class GuestAccountMigrationService {
       if (profile == null) throw StateError('The cloud profile was not saved.');
     }
 
-    final targetIds = state.itemIdMap.values.toSet().toList();
+    final targetIds = snapshot.items
+        .map((item) => state.itemIdMap[item.id])
+        .whereType<String>()
+        .toSet()
+        .toList();
     if (targetIds.length != snapshot.items.length) {
       throw StateError('The wardrobe ID mapping is incomplete.');
     }
@@ -425,57 +517,37 @@ class GuestAccountMigrationService {
       }
     }
 
-    final eventIds = [
-      for (var i = 0; i < snapshot.wearEvents.length; i++)
-        _eventId(userId, 'wear', _wearEventKey(snapshot.wearEvents[i])),
-      for (var i = 0; i < snapshot.preferenceEvents.length; i++)
-        _eventId(
-          userId,
-          'preference',
-          jsonEncode(snapshot.preferenceEvents[i].toJson()),
-        ),
-      for (var i = 0; i < snapshot.recommendationEvents.length; i++)
-        if (snapshot.recommendationEvents[i].eventType !=
-            RecommendationEventType.unknown)
-          _eventId(
-            userId,
-            'recommendation',
-            _recommendationEventKey(snapshot.recommendationEvents[i]),
-          ),
-    ];
-    if (eventIds.isEmpty) return;
     final tables = [
-      ('wear_events', snapshot.wearEvents.length),
-      ('outfit_preference_events', snapshot.preferenceEvents.length),
-      (
-        'recommendation_events',
-        snapshot.recommendationEvents
-            .where(
-              (event) => event.eventType != RecommendationEventType.unknown,
-            )
-            .length,
-      ),
+      ('wear_events', eventResult.wearIds),
+      ('outfit_preference_events', eventResult.preferenceIds),
+      ('recommendation_events', eventResult.recommendationIds),
     ];
-    var offset = 0;
-    for (final (table, count) in tables) {
-      if (count == 0) continue;
-      final ids = eventIds.sublist(offset, offset + count);
-      offset += count;
+    for (final (table, ids) in tables) {
+      if (ids.isEmpty) continue;
       final rows = await client
           .from(table)
           .select('id')
           .eq('user_id', userId)
           .inFilter('id', ids);
-      if (rows.length != count) {
+      if (rows.length != ids.length) {
         throw StateError('Migrated $table could not be verified.');
       }
     }
   }
 
-  List<String> _mappedItemIds(
+  String _eventWarning(
+    String type,
     List<String> itemIds,
-    GuestMigrationState state,
-  ) => mapGuestItemIds(itemIds, state);
+    List<GuestItemTombstone> tombstones,
+  ) {
+    final hasTombstone = itemIds.any(
+      (id) => tombstones.any((tombstone) => tombstone.id == id),
+    );
+    final reason = hasTombstone
+        ? 'a referenced wardrobe item was deleted locally'
+        : 'a referenced wardrobe item is unavailable';
+    return 'Skipped $type history because $reason.';
+  }
 
   String _eventId(String userId, String type, String source) =>
       _uuid.v5(Namespace.url.value, 'mmm-guest-event:$userId:$type:$source');
@@ -501,13 +573,24 @@ class GuestAccountMigrationService {
 }
 
 List<String> mapGuestItemIds(List<String> itemIds, GuestMigrationState state) {
+  final mapped = tryMapGuestItemIds(itemIds, state);
+  if (mapped == null) {
+    throw StateError('A migrated event references an unknown wardrobe item.');
+  }
+  return mapped;
+}
+
+List<String>? tryMapGuestItemIds(
+  List<String> itemIds,
+  GuestMigrationState state,
+) {
   final sourceIds = itemIds.toSet();
   final mappedIds = sourceIds
       .map((id) => state.itemIdMap[id])
       .whereType<String>()
       .toSet();
   if (mappedIds.length != sourceIds.length) {
-    throw StateError('A migrated event references an unknown wardrobe item.');
+    return null;
   }
   return mappedIds.toList();
 }
