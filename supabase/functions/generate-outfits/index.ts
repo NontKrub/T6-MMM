@@ -23,23 +23,70 @@ type Body = {
   target_hex?: string;
 };
 
-Deno.serve(async (req) => {
+type GeneratedOutfitResponse = {
+  outfits: Array<{
+    name: string;
+    item_ids: string[];
+    style: string;
+    reason: string;
+    score: number;
+  }>;
+};
+
+type OutfitAiRequest = {
+  instructions: string;
+  input: unknown;
+  responseFormat: {
+    type: "json_schema";
+    name: string;
+    schema: Record<string, unknown>;
+    strict: boolean;
+  };
+};
+
+export type GenerateOutfitsDependencies = {
+  requireUser: typeof requireUser;
+  hasAiConsent: typeof hasAiConsent;
+  openAiJson: (params: OutfitAiRequest) => Promise<GeneratedOutfitResponse>;
+};
+
+const defaultDependencies: GenerateOutfitsDependencies = {
+  requireUser,
+  hasAiConsent,
+  openAiJson: (params) => openAiJson<GeneratedOutfitResponse>(params),
+};
+
+if (import.meta.main) {
+  Deno.serve((req) => handleGenerateOutfits(req));
+}
+
+export async function handleGenerateOutfits(
+  req: Request,
+  overrides: Partial<GenerateOutfitsDependencies> = {},
+): Promise<Response> {
+  const dependencies: GenerateOutfitsDependencies = {
+    ...defaultDependencies,
+    ...overrides,
+  };
   const options = handleOptions(req);
   if (options) return options;
 
   try {
-    const { supabase, userId } = await requireUser(req);
-    const aiConsent = await hasAiConsent(supabase, userId);
+    const { supabase, userId } = await dependencies.requireUser(req);
+    const aiConsent = await dependencies.hasAiConsent(supabase, userId);
     const body = await readJson<Body>(req);
     const style = body.style ?? "casual";
 
     const learnPreferences = body.learn_preferences ?? true;
 
-    const [{ data: profile }, { data: stylePreferencesRows }, { data: items }, {
-      data: events,
-    }, { data: preferenceEvents }] = await Promise
-      .all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
+    const [
+      profileResult,
+      stylePreferencesResult,
+      itemsResult,
+      wearEventsResult,
+      preferenceEventsResult,
+    ] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase.from("style_preferences").select("kind,value"),
         supabase.from("clothing_items")
           .select(
@@ -54,6 +101,31 @@ Deno.serve(async (req) => {
           "style,tags,colors,selection_factors,score,created_at",
         ).order("created_at", { ascending: false }).limit(40),
       ]);
+
+    const contextError = [
+      profileResult.error,
+      stylePreferencesResult.error,
+      itemsResult.error,
+      wearEventsResult.error,
+      preferenceEventsResult.error,
+    ].find(Boolean);
+    if (contextError) {
+      console.error(
+        contextError instanceof Error
+          ? contextError.message
+          : "Outfit generation context query failed.",
+      );
+      return jsonResponse({
+        error: "Outfit generation context is temporarily unavailable.",
+        code: "outfit_context_unavailable",
+      }, 500);
+    }
+
+    const profile = profileResult.data;
+    const stylePreferencesRows = stylePreferencesResult.data;
+    const items = itemsResult.data;
+    const events = wearEventsResult.data;
+    const preferenceEvents = preferenceEventsResult.data;
 
     const wardrobe = (items ?? []) as ClothingItemRow[];
     const recentEvents = (events ?? []) as WearEventRow[];
@@ -98,19 +170,7 @@ Deno.serve(async (req) => {
     } | null = null;
     if (aiConsent) {
       try {
-        generated = await openAiJson<
-          {
-            outfits: Array<
-              {
-                name: string;
-                item_ids: string[];
-                style: string;
-                reason: string;
-                score: number;
-              }
-            >;
-          }
-        >({
+        generated = await dependencies.openAiJson({
           instructions:
             "You are a fashion outfit planner. Choose only from the provided scored candidates. A complete outfit may be top + pants + shoes, or dress + shoes. Optional outerwear and accessories may be included when present in the candidate. Never invent clothing IDs. Preserve practical weather, lucky color, personal color, and low-repetition reasoning.",
           input: [{
@@ -228,7 +288,7 @@ Deno.serve(async (req) => {
       error: error instanceof Error ? error.message : "Unknown error",
     }, 500);
   }
-});
+}
 
 function selectUsableOutfits(
   generated: GeneratedOutfitDraft[],
