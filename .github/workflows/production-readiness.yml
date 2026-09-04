@@ -70,6 +70,7 @@ jobs:
           supabase/functions/_shared/fashion_chat_test.ts
           supabase/functions/_shared/openai_test.ts
           supabase/functions/delete-account/delete_account_test.ts
+          supabase/functions/generate-outfits/generate_outfits_test.ts
       - name: Type-check every Edge Function
         shell: bash
         run: |
@@ -106,7 +107,21 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: flutter --version && dart --version && xcodebuild -version
       - run: flutter build ios --simulator
+
+  ios-release-compile:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter --version && dart --version && xcodebuild -version
+      - run: flutter build ios --release --no-codesign
 
   android-compile:
     runs-on: ubuntu-latest
@@ -122,4 +137,55 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: flutter --version && dart --version && java -version
       - run: flutter build apk --debug
+
+  android-release-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter --version && dart --version && java -version
+      - name: Build an ephemerally signed release App Bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt \
+            -keystore "$RUNNER_TEMP/mmm-ci-release.jks" \
+            -storepass changeit \
+            -keypass changeit \
+            -alias mmm-ci \
+            -dname "CN=MMM CI,O=CI,C=US" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1
+          printf '%s\n' \
+            "storeFile=$RUNNER_TEMP/mmm-ci-release.jks" \
+            'storePassword=changeit' \
+            'keyAlias=mmm-ci' \
+            'keyPassword=changeit' > android/key.properties
+          flutter build appbundle --release
+          test -s build/app/outputs/bundle/release/app.aab
+          jarsigner -verify -certs build/app/outputs/bundle/release/app.aab
+      - name: Remove ephemeral signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/mmm-ci-release.jks" android/key.properties
+
+  release-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - run: scripts/release_preflight.sh --self-test
+      - run: scripts/check_tracked_secrets.sh

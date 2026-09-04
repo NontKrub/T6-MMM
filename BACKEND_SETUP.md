@@ -89,7 +89,9 @@ against the linked Supabase Apple identity, then revokes the returned refresh
 token. It removes Storage before deleting the Auth user. A verified refresh
 token may be held temporarily in the service-role-only deletion-attempt row so
 a marker-write failure can be retried; it expires after ten minutes and is
-cleared when revocation is recorded. These Edge Function secrets are required
+cleared when revocation is recorded. The migration also schedules the
+`purge-expired-apple-deletion-tokens` Supabase Cron job every minute to remove
+abandoned expired recovery tokens. These Edge Function secrets are required
 for the server-side exchange and revocation:
 
 ```sh

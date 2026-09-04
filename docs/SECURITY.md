@@ -27,4 +27,6 @@ authorization code, verifies the returned RSA identity token, and compares its
 subject with the linked provider identity before revocation or destructive
 cleanup. A verified Apple refresh token is stored only temporarily in the
 service-role-only deletion-attempt row for marker-write recovery, expires after
-ten minutes, and is cleared once revocation is recorded.
+ten minutes, and is cleared once revocation is recorded. Request-time retries
+discard an expired token immediately; the `purge-expired-apple-deletion-tokens`
+Supabase Cron job also clears abandoned expired tokens every minute.
