@@ -66,7 +66,13 @@ export type AppleExchangeOptions = {
   fetchJwks?: () => Promise<AppleJwkSet>;
   fetchToken?: AppleFetch;
   fetchRevoke?: AppleFetch;
+  beforeRevoke?: (refreshToken: string) => Promise<void>;
   now?: number;
+};
+
+export type RevokeAppleRefreshTokenParams = {
+  refreshToken: string;
+  clientId: string;
 };
 
 export async function verifyAppleIdentityToken(
@@ -271,6 +277,42 @@ export async function revokeVerifiedAppleAuthorizationCode(
     },
   );
 
+  if (options.beforeRevoke) {
+    await options.beforeRevoke(tokenPayload.refresh_token);
+  }
+  await revokeAppleRefreshToken(
+    {
+      refreshToken: tokenPayload.refresh_token,
+      clientId: params.clientId,
+    },
+    options,
+  );
+  return claims;
+}
+
+export async function revokeAppleRefreshToken(
+  params: RevokeAppleRefreshTokenParams,
+  options: Pick<AppleExchangeOptions, "clientSecret" | "fetchRevoke"> = {},
+): Promise<void> {
+  if (!params.refreshToken.trim() || !params.clientId.trim()) {
+    throw new AppleDeletionError(
+      "apple_revocation_failed",
+      500,
+      "Apple authorization could not be revoked.",
+    );
+  }
+
+  let clientSecret: string;
+  try {
+    clientSecret = options.clientSecret ?? await createConfiguredClientSecret();
+  } catch (_) {
+    throw new AppleDeletionError(
+      "account_deletion_failed",
+      500,
+      "Apple account deletion is not configured safely.",
+    );
+  }
+
   let revokeResponse: Response;
   try {
     const fetchRevoke = options.fetchRevoke ?? (fetch as AppleFetch);
@@ -280,7 +322,7 @@ export async function revokeVerifiedAppleAuthorizationCode(
       body: new URLSearchParams({
         client_id: params.clientId,
         client_secret: clientSecret,
-        token: tokenPayload.refresh_token,
+        token: params.refreshToken,
         token_type_hint: "refresh_token",
       }),
     });
@@ -298,7 +340,6 @@ export async function revokeVerifiedAppleAuthorizationCode(
       "Apple authorization could not be revoked.",
     );
   }
-  return claims;
 }
 
 async function loadAppleJwks(

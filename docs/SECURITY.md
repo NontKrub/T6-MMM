@@ -21,7 +21,10 @@ transmitting wardrobe data or questions. Revocation is enforced server-side;
 the client setting is not the security boundary.
 
 Account deletion derives the user ID from the caller JWT, removes Storage
-objects before deleting the Auth user, and keeps Apple revocation credentials
-inside Edge Function secrets only. Apple deletion also verifies the fresh
-identity token signature, nonce, issuer, audience, expiry, and subject against
-the linked provider identity before revocation or destructive cleanup.
+objects before deleting the Auth user, and keeps Apple private-key/client-secret
+material inside Edge Function secrets. The server exchanges the submitted
+authorization code, verifies the returned RSA identity token, and compares its
+subject with the linked provider identity before revocation or destructive
+cleanup. A verified Apple refresh token is stored only temporarily in the
+service-role-only deletion-attempt row for marker-write recovery, expires after
+ten minutes, and is cleared once revocation is recorded.

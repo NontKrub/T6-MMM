@@ -8,6 +8,24 @@ import type { SupabaseClient } from "../_shared/supabase.ts";
 
 const clientId = "com.mixmatchmood.mmm";
 
+Deno.test("malformed deletion requests return a stable client error", async () => {
+  const fixture = makeFixture();
+
+  const response = await handleDeleteAccount(
+    deleteRequest({ apple_authorization_code: 42 }),
+    fixture.dependencies,
+  );
+
+  assertEquals(response.status, 400);
+  assertEquals(await response.json(), {
+    error: "The account deletion request is invalid.",
+    code: "apple_identity_invalid",
+  });
+  assertEquals(fixture.state.markerWrites, 0);
+  assertEquals(fixture.state.storageRemoveCalls, 0);
+  assertEquals(fixture.state.authDeleteCalls, 0);
+});
+
 Deno.test("Apple verification failure performs no destructive deletion", async () => {
   const fixture = makeFixture({
     revocationError: new AppleDeletionError(
@@ -44,11 +62,44 @@ Deno.test("successful Apple deletion marks revocation before cleanup", async () 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), { deleted: true });
   assertEquals(fixture.state.revokeCalls, 1);
-  assertEquals(fixture.state.markerWrites, 1);
+  assertEquals(fixture.state.markerWrites, 2);
   assertEquals(fixture.state.storageRemoveCalls, 1);
   assertEquals(fixture.state.authDeleteCalls, 1);
   assertEquals(fixture.state.appleRevokedAt != null, true);
+  assertEquals(fixture.state.appleRefreshToken, null);
 });
+
+Deno.test(
+  "a marker write failure recovers from the stored Apple refresh token",
+  async () => {
+    const fixture = makeFixture({ failRevocationMarkerWrites: 1 });
+
+    const firstResponse = await handleDeleteAccount(
+      deleteRequest({ apple_authorization_code: "code", apple_nonce: "nonce" }),
+      fixture.dependencies,
+    );
+
+    assertEquals(firstResponse.status, 500);
+    assertEquals(fixture.state.revokeCalls, 1);
+    assertEquals(fixture.state.storedRevocationCalls, 0);
+    assertEquals(fixture.state.appleRefreshToken, "refresh-token");
+    assertEquals(fixture.state.storageRemoveCalls, 0);
+    assertEquals(fixture.state.authDeleteCalls, 0);
+
+    const retryResponse = await handleDeleteAccount(
+      deleteRequest({}),
+      fixture.dependencies,
+    );
+
+    assertEquals(retryResponse.status, 200);
+    assertEquals(fixture.state.revokeCalls, 1);
+    assertEquals(fixture.state.storedRevocationCalls, 1);
+    assertEquals(fixture.state.markerWrites, 3);
+    assertEquals(fixture.state.appleRefreshToken, null);
+    assertEquals(fixture.state.storageRemoveCalls, 1);
+    assertEquals(fixture.state.authDeleteCalls, 1);
+  },
+);
 
 Deno.test("a retry with recorded Apple revocation skips a second revoke", async () => {
   const fixture = makeFixture({ appleRevokedAt: "2026-09-04T00:00:00.000Z" });
@@ -75,7 +126,7 @@ Deno.test("storage failure preserves the marker and retry skips revocation", asy
 
   assertEquals(firstResponse.status, 500);
   assertEquals(fixture.state.revokeCalls, 1);
-  assertEquals(fixture.state.markerWrites, 1);
+  assertEquals(fixture.state.markerWrites, 2);
   assertEquals(fixture.state.authDeleteCalls, 0);
 
   fixture.state.storageShouldFail = false;
@@ -100,7 +151,7 @@ Deno.test("Auth deletion failure can be retried after revocation and storage cle
 
   assertEquals(firstResponse.status, 500);
   assertEquals(fixture.state.revokeCalls, 1);
-  assertEquals(fixture.state.markerWrites, 1);
+  assertEquals(fixture.state.markerWrites, 2);
   assertEquals(fixture.state.storageRemoveCalls, 1);
 
   fixture.state.authDeleteShouldFail = false;
@@ -117,11 +168,14 @@ Deno.test("Auth deletion failure can be retried after revocation and storage cle
 
 type FixtureState = {
   appleRevokedAt: string | null;
+  appleRefreshToken: string | null;
   authDeleteCalls: number;
   authDeleteShouldFail: boolean;
+  failRevocationMarkerWrites: number;
   markerWrites: number;
   revokeCalls: number;
   revocationError: AppleDeletionError | null;
+  storedRevocationCalls: number;
   storageRemoveCalls: number;
   storageShouldFail: boolean;
 };
@@ -132,11 +186,14 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
 } {
   const state: FixtureState = {
     appleRevokedAt: null,
+    appleRefreshToken: null,
     authDeleteCalls: 0,
     authDeleteShouldFail: false,
+    failRevocationMarkerWrites: 0,
     markerWrites: 0,
     revokeCalls: 0,
     revocationError: null,
+    storedRevocationCalls: 0,
     storageRemoveCalls: 0,
     storageShouldFail: false,
     ...overrides,
@@ -168,17 +225,44 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
               return {
                 maybeSingle: async () => ({
                   data: state.appleRevokedAt == null
-                    ? null
-                    : { apple_revoked_at: state.appleRevokedAt },
+                    ? state.appleRefreshToken == null ? null : {
+                      apple_revoked_at: null,
+                      apple_refresh_token: state.appleRefreshToken,
+                      apple_refresh_token_expires_at: new Date(
+                        Date.now() + 60_000,
+                      ).toISOString(),
+                    }
+                    : {
+                      apple_revoked_at: state.appleRevokedAt,
+                      apple_refresh_token: state.appleRefreshToken,
+                      apple_refresh_token_expires_at: new Date(
+                        Date.now() + 60_000,
+                      ).toISOString(),
+                    },
                   error: null,
                 }),
               };
             },
           };
         },
-        upsert: async (row: { apple_revoked_at: string }) => {
+        upsert: async (row: Record<string, unknown>) => {
           state.markerWrites++;
-          state.appleRevokedAt = row.apple_revoked_at;
+          if (
+            "apple_revoked_at" in row &&
+            state.failRevocationMarkerWrites > 0
+          ) {
+            state.failRevocationMarkerWrites--;
+            return { error: new Error("marker write failed") };
+          }
+          if ("apple_revoked_at" in row) {
+            state.appleRevokedAt = row.apple_revoked_at as string | null;
+            if (row.apple_refresh_token === null) {
+              state.appleRefreshToken = null;
+            }
+          }
+          if (typeof row.apple_refresh_token === "string") {
+            state.appleRefreshToken = row.apple_refresh_token;
+          }
           return { error: null };
         },
       };
@@ -210,15 +294,19 @@ function makeFixture(overrides: Partial<FixtureState> = {}): {
       }),
       serviceClient: () => admin,
       appleClientId: () => clientId,
-      revokeAppleAuthorization: async () => {
+      revokeAppleAuthorization: async (_params, options) => {
         state.revokeCalls++;
         if (state.revocationError) throw state.revocationError;
+        await options?.beforeRevoke?.("refresh-token");
+      },
+      revokeAppleRefreshToken: async () => {
+        state.storedRevocationCalls++;
       },
     },
   };
 }
 
-function deleteRequest(body: Record<string, unknown>): Request {
+function deleteRequest(body: unknown): Request {
   return new Request("https://example.test/delete-account", {
     method: "POST",
     headers: {

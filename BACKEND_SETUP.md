@@ -82,12 +82,15 @@ the capability. The repository contains the Runner entitlement; Apple
 Developer and Supabase provider configuration are still required for a real
 login.
 
-Account deletion for Apple users requests a fresh native credential. The Edge
-Function verifies the signed identity token's signature, nonce, issuer,
-audience, expiry, and subject against the linked Supabase Apple identity before
-exchanging and revoking the short-lived authorization code. It then removes
-Storage before deleting the Auth user. These Edge Function secrets are required
-for that server-side exchange and revocation:
+Account deletion for Apple users requests a fresh native authorization code and
+raw nonce. The Edge Function exchanges that exact code, verifies the returned
+identity token's RSA signature, nonce, issuer, audience, expiry, and subject
+against the linked Supabase Apple identity, then revokes the returned refresh
+token. It removes Storage before deleting the Auth user. A verified refresh
+token may be held temporarily in the service-role-only deletion-attempt row so
+a marker-write failure can be retried; it expires after ten minutes and is
+cleared when revocation is recorded. These Edge Function secrets are required
+for the server-side exchange and revocation:
 
 ```sh
 supabase secrets set APPLE_TEAM_ID=YOUR_APPLE_TEAM_ID
