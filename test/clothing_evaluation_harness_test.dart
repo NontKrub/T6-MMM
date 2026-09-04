@@ -58,4 +58,56 @@ void main() {
     expect(json['server_confidence'], .91);
     expect(json['user_review_requested'], isTrue);
   });
+
+  test('summarizes server predictions, confusion, and review rate', () {
+    const top = ClothingEvaluationFixture(
+      name: 'top.jpg',
+      path: 'top.jpg',
+      expectedCategory: 'top',
+    );
+    const pants = ClothingEvaluationFixture(
+      name: 'pants.jpg',
+      path: 'pants.jpg',
+      expectedCategory: 'pants',
+    );
+    final summary = ClothingEvaluationHarness.summarize([
+      ClothingEvaluationRecord(
+        fixture: top,
+        local: const ClothingAnalysisResult(
+          category: ClothingCategory.unknown,
+          colorHexes: [],
+          colorNames: [],
+          confidence: .2,
+        ),
+        server: const ClothingAnalysisResult(
+          category: ClothingCategory.top,
+          colorHexes: [],
+          colorNames: [],
+          confidence: .9,
+        ),
+      ),
+      ClothingEvaluationRecord(
+        fixture: pants,
+        local: const ClothingAnalysisResult(
+          colorHexes: [],
+          colorNames: [],
+          confidence: .2,
+        ),
+        server: const ClothingAnalysisResult(
+          category: ClothingCategory.top,
+          colorHexes: [],
+          colorNames: [],
+          confidence: .8,
+        ),
+      ),
+    ]);
+
+    expect(summary.evaluatedCount, 2);
+    expect(summary.correctCount, 1);
+    expect(summary.accuracy, .5);
+    expect(summary.perCategoryAccuracy['top'], 1);
+    expect(summary.perCategoryAccuracy['pants'], 0);
+    expect(summary.confusion['pants']?['top'], 1);
+    expect(summary.manualReviewRate, .5);
+  });
 }

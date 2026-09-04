@@ -58,6 +58,33 @@ class ClothingEvaluationRecord {
   };
 }
 
+class ClothingEvaluationSummary {
+  const ClothingEvaluationSummary({
+    required this.evaluatedCount,
+    required this.correctCount,
+    required this.accuracy,
+    required this.perCategoryAccuracy,
+    required this.confusion,
+    required this.manualReviewRate,
+  });
+
+  final int evaluatedCount;
+  final int correctCount;
+  final double accuracy;
+  final Map<String, double> perCategoryAccuracy;
+  final Map<String, Map<String, int>> confusion;
+  final double manualReviewRate;
+
+  Map<String, dynamic> toJson() => {
+    'evaluated_count': evaluatedCount,
+    'correct_count': correctCount,
+    'accuracy': accuracy,
+    'per_category_accuracy': perCategoryAccuracy,
+    'confusion': confusion,
+    'manual_review_rate': manualReviewRate,
+  };
+}
+
 class ClothingEvaluationHarness {
   static const requiredCategoryCounts = <String, int>{
     'top': 5,
@@ -117,8 +144,54 @@ class ClothingEvaluationHarness {
         .toList();
   }
 
-  static String encodeResults(Iterable<ClothingEvaluationRecord> records) =>
-      const JsonEncoder.withIndent(
-        '  ',
-      ).convert(records.map((record) => record.toJson()).toList());
+  static ClothingEvaluationSummary summarize(
+    Iterable<ClothingEvaluationRecord> records,
+  ) {
+    final list = records.toList();
+    final categoryTotals = <String, int>{};
+    final categoryCorrect = <String, int>{};
+    final confusion = <String, Map<String, int>>{};
+    var evaluatedCount = 0;
+    var correctCount = 0;
+    var reviewCount = 0;
+
+    for (final record in list) {
+      if (record.local.category == null) reviewCount++;
+      final expected = record.fixture.expectedCategory;
+      if (expected == 'unknown') continue;
+      evaluatedCount++;
+      categoryTotals[expected] = (categoryTotals[expected] ?? 0) + 1;
+      final predicted =
+          record.server?.category?.name ??
+          record.local.category?.name ??
+          'unknown';
+      final predictions = confusion.putIfAbsent(expected, () => {});
+      predictions[predicted] = (predictions[predicted] ?? 0) + 1;
+      if (predicted == expected) {
+        correctCount++;
+        categoryCorrect[expected] = (categoryCorrect[expected] ?? 0) + 1;
+      }
+    }
+
+    return ClothingEvaluationSummary(
+      evaluatedCount: evaluatedCount,
+      correctCount: correctCount,
+      accuracy: evaluatedCount == 0 ? 0 : correctCount / evaluatedCount,
+      perCategoryAccuracy: {
+        for (final category in categoryTotals.keys)
+          category:
+              (categoryCorrect[category] ?? 0) / categoryTotals[category]!,
+      },
+      confusion: confusion,
+      manualReviewRate: list.isEmpty ? 0 : reviewCount / list.length,
+    );
+  }
+
+  static String encodeResults(Iterable<ClothingEvaluationRecord> records) {
+    final list = records.toList();
+    return const JsonEncoder.withIndent('  ').convert({
+      'records': list.map((record) => record.toJson()).toList(),
+      'summary': summarize(list).toJson(),
+    });
+  }
 }
