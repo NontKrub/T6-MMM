@@ -1,3 +1,5 @@
+create extension if not exists pg_cron;
+
 create or replace function public.purge_expired_account_deletion_tokens()
 returns integer
 language plpgsql
