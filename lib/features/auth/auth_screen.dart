@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
@@ -265,13 +266,26 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                             const SizedBox(height: 20),
                             if (showApple) ...[
-                              _SocialButton(
-                                icon: Icons.apple,
+                              Semantics(
+                                button: true,
                                 label:
                                     l10n?.authContinueWithApple ??
                                     'Continue with Apple',
-                                onTap: () =>
-                                    _handleOAuth(AuthService().signInWithApple),
+                                child: SignInWithAppleButton(
+                                  onPressed: () => _handleOAuth(
+                                    AuthService().signInWithApple,
+                                  ),
+                                  text:
+                                      l10n?.authContinueWithApple ??
+                                      'Continue with Apple',
+                                  height: 52,
+                                  borderRadius: BorderRadius.circular(16),
+                                  style:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? SignInWithAppleButtonStyle.white
+                                      : SignInWithAppleButtonStyle.black,
+                                ),
                               ),
                               const SizedBox(height: 16),
                             ],
