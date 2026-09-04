@@ -29,11 +29,21 @@ flutter run
 Run against Supabase:
 
 ```sh
-flutter run \
-  --dart-define=SUPABASE_URL=... \
-  --dart-define=SUPABASE_ANON_KEY=... \
-  --dart-define=AUTH_REDIRECT_URL=mmm://login-callback
+cp config/runtime.example.json config/runtime.local.json
+# Fill config/runtime.local.json with the public project values.
+flutter run --dart-define-from-file=config/runtime.local.json
 ```
+
+For a release build, use a local untracked production file:
+
+```sh
+flutter build ipa --release \
+  --dart-define-from-file=config/runtime.production.json
+```
+
+The mobile binary intentionally contains the Supabase publishable key. RLS
+and database grants protect data; privileged Supabase, OpenRouter/OpenAI,
+Apple, Google, and Facebook secrets remain server-side.
 
 ## Quality Checks
 
@@ -85,6 +95,22 @@ the local garment fixtures, so semantic garment recognition was not accepted
 as validated and category remained unselected. Manual category, pattern, and
 silhouette entry remains the supported fallback. Physical camera capture was
 not tested and still requires a real iPhone.
+
+### Clothing recognition evaluation
+
+The integration harness records expected category, local prediction/confidence,
+optional signed-in server prediction/confidence, and whether manual review was
+requested. It requires an owned or licensed, non-personal fixture set with at
+least five examples of each category (`top`, `pants`, `shoes`, `hat`,
+`outerwear`, `dress`, `bag`, and `accessory`). Start from
+`integration_test/fixtures/clothing/evaluation_manifest.example.json`; the
+current one-image fixture is not a release evaluation set. Run it with
+`VISION_FIXTURE_DIR` and optionally write JSON with
+`VISION_EVALUATION_OUTPUT`. The output includes overall/per-category accuracy,
+confusion counts, and manual-review rate. The initial MMM gate is at least 85%
+overall accuracy with no category below 70%; these are project thresholds, not
+platform guarantees. Guest evaluation never invokes a paid server analyzer;
+server comparison must use an authenticated, consented test account.
 
 ## Backend
 

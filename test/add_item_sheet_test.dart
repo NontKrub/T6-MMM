@@ -32,6 +32,16 @@ class _FakeImagePickerClient implements ImagePickerClient {
 class _TestWardrobeNotifier extends WardrobeNotifier {
   bool uploadFails = false;
   int uploads = 0;
+  Set<String> uploadedCorrectedFields = const {};
+  ClothingAnalysisResult? uploadedLocalAnalysis;
+  List<String> uploadedTags = const [];
+  List<String> uploadedColorHexes = const [];
+  String? uploadedColor;
+  ClothingPattern uploadedPattern = ClothingPattern.unknown;
+  ClothingSilhouette uploadedSilhouette = ClothingSilhouette.unknown;
+  double? uploadedAnalysisConfidence;
+  String? uploadedClassificationSource;
+  String? uploadedColorSource;
 
   @override
   Future<void> load() async {}
@@ -56,9 +66,55 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    Set<String> correctedFields = const {},
+    ClothingAnalysisResult? localAnalysis,
   }) async {
     if (uploadFails) throw StateError('upload failed');
     uploads++;
+    uploadedCorrectedFields = correctedFields;
+    uploadedLocalAnalysis = localAnalysis;
+    uploadedTags = tags;
+    uploadedColorHexes = colorHexes;
+    uploadedColor = color;
+    uploadedPattern = pattern;
+    uploadedSilhouette = silhouette;
+    uploadedAnalysisConfidence = analysisConfidence;
+    uploadedClassificationSource = classificationSource;
+    uploadedColorSource = colorSource;
+    final result = localAnalysis;
+    state = [
+      ...state,
+      ClothingItem(
+        id: 'uploaded-$uploads',
+        name: name.isEmpty ? 'Wardrobe item' : name,
+        brand: brand,
+        category: result?.category ?? fallbackCategory,
+        subtype: result?.subtype,
+        imageUrl: fileName,
+        imagePath: fileName,
+        tags: correctedFields.contains('tags') ? tags : const [],
+        color: color ?? result?.primaryColor,
+        colorHexes: colorHexes,
+        pattern: pattern,
+        material: result?.material ?? ClothingMaterial.unknown,
+        fit: result?.fit ?? ClothingFit.unknown,
+        silhouette: silhouette,
+        styles: result?.resolvedStyles ?? const [],
+        formality: result?.formality ?? ClothingFormality.unknown,
+        seasons: result?.seasons ?? const [],
+        weatherSuitability: result?.weatherSuitability ?? const [],
+        warmthLevel: result?.warmthLevel,
+        analysisConfidence: analysisConfidence ?? result?.confidence,
+        classificationSource:
+            classificationSource ?? result?.classificationSource,
+        colorSource: colorSource ?? result?.colorSource,
+        analysisSource: result?.source ?? AnalysisSource.unknown,
+        analysisStatus: result?.status ?? AnalysisStatus.failed,
+        analysisVersion: currentAnalysisVersion,
+        correctedFields: correctedFields,
+        userCorrected: correctedFields.isNotEmpty,
+      ),
+    ];
   }
 }
 
@@ -184,6 +240,8 @@ void main() {
     expect(notifier.state.first.name, 'Wardrobe item');
     expect(notifier.state.first.colorHexes, ['#FF0000']);
     expect(notifier.state.first.color, 'red');
+    expect(notifier.state.first.correctedFields, isEmpty);
+    expect(notifier.state.first.userCorrected, isFalse);
   });
 
   testWidgets('manual visual metadata overrides analysis before save', (
@@ -221,6 +279,13 @@ void main() {
     expect(notifier.state.single.silhouette, ClothingSilhouette.slim);
     expect(notifier.state.single.classificationSource, 'manual');
     expect(notifier.state.single.colorSource, 'manual');
+    expect(notifier.state.single.correctedFields, {
+      'dominant_colors',
+      'primary_color',
+      'pattern',
+      'silhouette',
+    });
+    expect(notifier.state.single.userCorrected, isTrue);
   });
 
   testWidgets('uncertain category requires explicit selection', (tester) async {
@@ -247,6 +312,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(notifier.state.single.category, ClothingCategory.accessory);
+    expect(notifier.state.single.correctedFields, {'category'});
   });
 
   testWidgets('retains palette removals and selected primary color', (
@@ -277,6 +343,11 @@ void main() {
 
     expect(notifier.state.single.colorHexes, ['#FF0000', '#0000FF']);
     expect(notifier.state.single.color, 'blue');
+    expect(notifier.state.single.colorSource, 'manual');
+    expect(notifier.state.single.correctedFields, {
+      'dominant_colors',
+      'primary_color',
+    });
   });
 
   testWidgets('replacement and cancellation clean managed images', (
@@ -304,6 +375,67 @@ void main() {
     expect(deleted, ['/managed/first.jpg', '/managed/second.jpg']);
   });
 
+  testWidgets('replacement analysis failure clears prior image metadata', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/first.jpg');
+    final notifier = _TestWardrobeNotifier();
+    var analysisCalls = 0;
+
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+      deleteImage: (_) async {},
+      analyzeImage: (_) async {
+        analysisCalls++;
+        if (analysisCalls == 1) {
+          return const ClothingAnalysisResult(
+            category: ClothingCategory.top,
+            colorHexes: ['#FF0000'],
+            colorNames: ['red'],
+            pattern: ClothingPattern.striped,
+            silhouette: ClothingSilhouette.fitted,
+            styles: ['casual'],
+            confidence: .95,
+            classificationSource: 'vision',
+            colorSource: 'vision',
+          );
+        }
+        throw StateError('vision failed');
+      },
+    );
+
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('add-item-color-#FF0000')), findsOneWidget);
+    expect(find.byKey(const Key('add-item-category-required')), findsNothing);
+    expect(find.text('striped'), findsOneWidget);
+
+    pickerClient.pickResult = XFile('/tmp/second.jpg');
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('add-item-category-required')), findsOneWidget);
+    expect(find.byKey(const Key('add-item-color-#FF0000')), findsNothing);
+    expect(find.text('No colors selected'), findsOneWidget);
+
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add-item-category-pants')));
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(notifier.state.single.category, ClothingCategory.pants);
+    expect(notifier.state.single.colorHexes, isEmpty);
+    expect(notifier.state.single.pattern, ClothingPattern.unknown);
+    expect(notifier.state.single.silhouette, ClothingSilhouette.unknown);
+    expect(notifier.state.single.tags, isEmpty);
+    expect(notifier.state.single.analysisConfidence, isNull);
+    expect(notifier.state.single.classificationSource, 'manual');
+    expect(notifier.state.single.colorSource, isNull);
+  });
+
   testWidgets('guest save retains managed image', (tester) async {
     final pickerClient = _FakeImagePickerClient()
       ..pickResult = XFile('/tmp/guest.jpg');
@@ -319,7 +451,66 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pumpAndSettle();
+    expect(notifier.uploads, 1);
     expect(deleted, isEmpty);
+  });
+
+  testWidgets('guest save sends rich metadata through upload path', (
+    tester,
+  ) async {
+    final pickerClient = _FakeImagePickerClient()
+      ..pickResult = XFile('/tmp/guest-rich.jpg');
+    final notifier = _TestWardrobeNotifier();
+    const analysis = ClothingAnalysisResult(
+      category: ClothingCategory.top,
+      subtype: 'linen shirt',
+      primaryColor: 'blue',
+      colorHexes: ['#3366FF', '#FFFFFF'],
+      colorNames: ['blue', 'white'],
+      styles: ['casual'],
+      pattern: ClothingPattern.striped,
+      material: ClothingMaterial.linen,
+      fit: ClothingFit.relaxed,
+      silhouette: ClothingSilhouette.regular,
+      formality: ClothingFormality.casual,
+      seasons: [Season.summer],
+      weatherSuitability: [WeatherSuitability.warm],
+      warmthLevel: .2,
+      tags: ['linen'],
+      confidence: .91,
+      classificationSource: 'vision',
+      colorSource: 'palette',
+      source: AnalysisSource.localVision,
+      status: AnalysisStatus.partial,
+    );
+
+    await pumpSheet(
+      tester,
+      imagePickService: ImagePickService(client: pickerClient),
+      wardrobeNotifier: notifier,
+      analysis: analysis,
+    );
+    await tester.tap(find.byKey(const Key('add-item-image-picker')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('work'));
+    await tester.tap(find.byKey(const Key('add-item-save')));
+    await tester.pumpAndSettle();
+
+    expect(notifier.uploads, 1);
+    expect(notifier.uploadedLocalAnalysis?.subtype, 'linen shirt');
+    expect(notifier.uploadedLocalAnalysis?.material, ClothingMaterial.linen);
+    expect(notifier.uploadedLocalAnalysis?.styles, ['casual']);
+    expect(notifier.uploadedTags, ['casual', 'work']);
+    expect(notifier.uploadedColorHexes, ['#3366FF', '#FFFFFF']);
+    expect(notifier.uploadedColor, 'blue');
+    expect(notifier.uploadedPattern, ClothingPattern.striped);
+    expect(notifier.uploadedSilhouette, ClothingSilhouette.regular);
+    expect(notifier.uploadedLocalAnalysis?.confidence, .91);
+    expect(notifier.uploadedLocalAnalysis?.source, AnalysisSource.localVision);
+    expect(notifier.uploadedAnalysisConfidence, isNull);
+    expect(notifier.uploadedClassificationSource, 'manual');
+    expect(notifier.uploadedColorSource, 'palette');
+    expect(notifier.uploadedCorrectedFields, {'tags'});
   });
 
   testWidgets('signed upload cleans staging only after success', (
@@ -341,6 +532,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-save')));
     await tester.pumpAndSettle();
     expect(notifier.uploads, 1);
+    expect(notifier.uploadedCorrectedFields, isEmpty);
     expect(deleted, ['/managed/signed.jpg']);
   });
 

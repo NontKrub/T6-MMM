@@ -40,7 +40,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authGetStarted => 'Get started';
 
   @override
+  String get authContinueWithApple => 'Continue with Apple';
+
+  @override
   String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authContinueWithFacebook => 'Continue with Facebook';
 
   @override
   String get authContinueAsGuest => 'Continue as guest';
@@ -48,6 +54,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authUnavailable =>
       'Sign in is unavailable until Supabase is configured.';
+
+  @override
+  String get authImportGuestTitle => 'Import your guest wardrobe?';
+
+  @override
+  String get authImportGuestMessage =>
+      'MMM found a local guest wardrobe. Import it into this signed-in account?';
+
+  @override
+  String get authImportGuest => 'Import wardrobe';
+
+  @override
+  String get authContinueWithoutImport => 'Not now';
+
+  @override
+  String get authImportFailed => 'Local wardrobe import failed';
 
   @override
   String onboardingStep(int current, int total) {
@@ -272,6 +294,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatStatusLocked => 'Sign in required';
 
   @override
+  String get chatStatusConsentRequired => 'Consent required';
+
+  @override
   String get chatStatusUnlocked => 'Always styled';
 
   @override
@@ -283,6 +308,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatLockedMessage =>
       'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.';
+
+  @override
+  String get authImportingGuest => 'Importing local wardrobe…';
+
+  @override
+  String get chatConsentTitle => 'Fashion AI needs your consent';
+
+  @override
+  String get chatConsentMessage =>
+      'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.';
 
   @override
   String get chatPrompt1 => 'What\'s my color season?';
@@ -321,6 +356,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSignOut => 'Sign Out';
 
   @override
+  String get profileDeleteAccount => 'Delete Account';
+
+  @override
+  String get profileDeleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get profileDeleteAccountMessage =>
+      'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.';
+
+  @override
+  String get profileDeleteAccountConfirm => 'Delete Account';
+
+  @override
+  String get profileDeleteAccountFailed => 'Account deletion failed';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -357,7 +408,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDailyReminder => 'Daily outfit reminder';
 
   @override
+  String get settingsNotificationsPermissionDenied =>
+      'Notifications are disabled. MMM will continue without reminders.';
+
+  @override
   String get settingsRepetitionAlerts => 'Repetition alerts';
+
+  @override
+  String get settingsImportLocal => 'Import local wardrobe';
+
+  @override
+  String get settingsImportLocalSubtitle =>
+      'Resume importing your guest wardrobe';
+
+  @override
+  String get settingsImportLocalComplete => 'Local wardrobe imported.';
+
+  @override
+  String get settingsImportLocalFailed => 'Import failed';
 
   @override
   String get settingsAI => 'AI Features';
@@ -370,16 +438,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'AI tracks your choices to improve suggestions';
 
   @override
+  String get settingsAIConsent => 'Third-party AI analysis';
+
+  @override
+  String get settingsAIConsentGranted => 'Allowed — revoke anytime';
+
+  @override
+  String get settingsAIConsentOff =>
+      'Off — local and deterministic fallbacks stay available';
+
+  @override
+  String get settingsAIConsentSignIn =>
+      'Sign in to manage third-party AI consent';
+
+  @override
+  String get settingsAIConsentTitle => 'Allow third-party AI?';
+
+  @override
+  String get settingsAIConsentMessage =>
+      'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.';
+
+  @override
+  String get settingsAIConsentAccept => 'Allow AI analysis';
+
+  @override
   String get settingsAbout => 'About';
 
   @override
   String get settingsVersion => 'Version';
 
   @override
-  String get settingsVersionValue => '1.0.0 (build 1)';
+  String get settingsVersionValue => '—';
 
   @override
   String get settingsPrivacy => 'Privacy Policy';
+
+  @override
+  String get settingsPrivacyNotConfigured =>
+      'A public HTTPS privacy-policy URL has not been configured yet.';
 
   @override
   String get settingsLanguage => 'Language';
@@ -579,6 +675,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.';
 
   @override
+  String get rushErrorUnavailable =>
+      'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.';
+
+  @override
   String get rushErrorSignIn =>
       'Rush outfit uses your saved backend wardrobe. Sign in to use it.';
 
@@ -732,7 +832,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyContent =>
-      'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.';
+      'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase. The app contains public Supabase configuration, while privileged API keys and secrets remain server-side.';
 
   @override
   String get dialogClose => 'Close';

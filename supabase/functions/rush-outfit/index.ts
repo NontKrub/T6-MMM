@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const [{ data: items, error }, { data: events }] = await Promise.all([
       supabase.from("clothing_items")
         .select(
-          "id,name,brand,category,tags,dominant_colors,primary_color,wear_count,last_worn",
+          "id,name,brand,category,tags,dominant_colors,primary_color,subtype,pattern,material,fit,silhouette,styles,formality,seasons,weather_suitability,warmth_level,analysis_confidence,analysis_status,user_corrected,wear_count,last_worn",
         )
         .is("archived_at", null)
         .order("last_worn", { ascending: true, nullsFirst: true }),
@@ -39,36 +39,27 @@ Deno.serve(async (req) => {
     })[0] ?? null;
     if (!outfit) {
       return jsonResponse({
-        error: "Add at least one top, one bottom, and one pair of shoes first.",
+        error: "Add compatible clothing and at least one pair of shoes first.",
       }, 422);
     }
 
-    const { data: inserted, error: outfitError } = await supabase.from(
-      "outfits",
-    ).insert({
-      user_id: userId,
-      name: outfit.name,
-      style,
-      reason: outfit.reason,
-      score: outfit.score,
-      selection_factors: outfit.selection_factors,
-      generation_context: { mode: "rush" },
-    }).select().single();
-    if (outfitError || !inserted) throw outfitError;
-
-    await supabase.from("outfit_items").insert(
-      outfit.item_ids.map((id, index) => {
-        const item = wardrobe.find((candidate) => candidate.id === id);
-        return {
-          outfit_id: inserted.id,
-          clothing_item_id: id,
-          slot: item?.category ?? "accessory",
-          position: index,
-        };
-      }),
+    const { data: inserted, error: outfitError } = await supabase.rpc(
+      "create_outfit_with_items",
+      {
+        p_name: outfit.name,
+        p_style: style,
+        p_reason: outfit.reason,
+        p_score: outfit.score,
+        p_selection_factors: outfit.selection_factors,
+        p_generation_context: { mode: "rush" },
+        p_item_ids: outfit.item_ids,
+      },
     );
+    if (outfitError || !inserted) {
+      throw outfitError ?? new Error("Outfit persistence returned no data.");
+    }
 
-    return jsonResponse({ outfit: { ...inserted, item_ids: outfit.item_ids } });
+    return jsonResponse({ outfit: inserted });
   } catch (error) {
     return jsonResponse({
       error: error instanceof Error ? error.message : "Unknown error",

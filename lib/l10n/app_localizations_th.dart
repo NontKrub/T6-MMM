@@ -39,7 +39,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authGetStarted => 'เริ่มต้นใช้งาน';
 
   @override
+  String get authContinueWithApple => 'ดำเนินการต่อด้วย Apple';
+
+  @override
   String get authContinueWithGoogle => 'ดำเนินการต่อด้วย Google';
+
+  @override
+  String get authContinueWithFacebook => 'ดำเนินการต่อด้วย Facebook';
 
   @override
   String get authContinueAsGuest => 'ดำเนินการต่อในฐานะผู้เยี่ยมชม';
@@ -47,6 +53,22 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get authUnavailable =>
       'ไม่สามารถเข้าสู่ระบบได้จนกว่าจะตั้งค่า Supabase';
+
+  @override
+  String get authImportGuestTitle => 'นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมหรือไม่?';
+
+  @override
+  String get authImportGuestMessage =>
+      'MMM พบตู้เสื้อผ้าของผู้เยี่ยมชมในอุปกรณ์ ต้องการนำเข้าไปยังบัญชีนี้หรือไม่?';
+
+  @override
+  String get authImportGuest => 'นำเข้าตู้เสื้อผ้า';
+
+  @override
+  String get authContinueWithoutImport => 'ไว้ภายหลัง';
+
+  @override
+  String get authImportFailed => 'นำเข้าตู้เสื้อผ้าไม่สำเร็จ';
 
   @override
   String onboardingStep(int current, int total) {
@@ -268,6 +290,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get chatStatusLocked => 'ต้องเข้าสู่ระบบ';
 
   @override
+  String get chatStatusConsentRequired => 'ต้องให้ความยินยอม';
+
+  @override
   String get chatStatusUnlocked => 'พร้อมแนะนำเสมอ';
 
   @override
@@ -279,6 +304,16 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get chatLockedMessage =>
       'แชทใช้ตู้เสื้อผ้าที่บันทึกไว้และ AI ดำเนินการต่อด้วย Google หลังจากตั้งค่า Supabase';
+
+  @override
+  String get authImportingGuest => 'กำลังนำเข้าตู้เสื้อผ้าในเครื่อง…';
+
+  @override
+  String get chatConsentTitle => 'Fashion AI ต้องการความยินยอม';
+
+  @override
+  String get chatConsentMessage =>
+      'อนุญาตให้ MMM ส่งรูปภาพและข้อมูลตู้เสื้อผ้า คำถามแฟชั่น และข้อมูลโปรไฟล์สไตล์ที่จำกัด เช่น ฤดูกาลสีของคุณ ไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้ คุณเพิกถอนสิทธิ์ได้ในการตั้งค่า';
 
   @override
   String get chatPrompt1 => 'ฤดูกาลสีของฉันคืออะไร?';
@@ -317,6 +352,22 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileSignOut => 'ออกจากระบบ';
 
   @override
+  String get profileDeleteAccount => 'ลบบัญชี';
+
+  @override
+  String get profileDeleteAccountTitle => 'ต้องการลบบัญชีหรือไม่?';
+
+  @override
+  String get profileDeleteAccountMessage =>
+      'การดำเนินการนี้จะลบโปรไฟล์ รูปตู้เสื้อผ้า ชุด และกิจกรรมทั้งหมดจาก MMM อย่างถาวร';
+
+  @override
+  String get profileDeleteAccountConfirm => 'ลบบัญชี';
+
+  @override
+  String get profileDeleteAccountFailed => 'ลบบัญชีไม่สำเร็จ';
+
+  @override
   String get settingsTitle => 'การตั้งค่า';
 
   @override
@@ -353,7 +404,24 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsDailyReminder => 'เตือนชุดประจำวัน';
 
   @override
+  String get settingsNotificationsPermissionDenied =>
+      'ปิดการแจ้งเตือนแล้ว MMM จะทำงานต่อได้โดยไม่มีการเตือน';
+
+  @override
   String get settingsRepetitionAlerts => 'แจ้งเตือนการซ้ำ';
+
+  @override
+  String get settingsImportLocal => 'นำเข้าตู้เสื้อผ้าในเครื่อง';
+
+  @override
+  String get settingsImportLocalSubtitle =>
+      'นำเข้าตู้เสื้อผ้าของผู้เยี่ยมชมต่อ';
+
+  @override
+  String get settingsImportLocalComplete => 'นำเข้าตู้เสื้อผ้าแล้ว';
+
+  @override
+  String get settingsImportLocalFailed => 'นำเข้าไม่สำเร็จ';
 
   @override
   String get settingsAI => 'ฟีเจอร์ AI';
@@ -366,16 +434,44 @@ class AppLocalizationsTh extends AppLocalizations {
       'AI ติดตามตัวเลือกของคุณเพื่อปรับปรุงคำแนะนำ';
 
   @override
+  String get settingsAIConsent => 'การวิเคราะห์ด้วย AI ภายนอก';
+
+  @override
+  String get settingsAIConsentGranted => 'อนุญาตแล้ว — เพิกถอนได้ทุกเมื่อ';
+
+  @override
+  String get settingsAIConsentOff =>
+      'ปิด — ยังคงใช้การวิเคราะห์ในเครื่องและการสำรองแบบกำหนดแน่นอนได้';
+
+  @override
+  String get settingsAIConsentSignIn =>
+      'เข้าสู่ระบบเพื่อจัดการความยินยอม AI ภายนอก';
+
+  @override
+  String get settingsAIConsentTitle => 'อนุญาต AI ภายนอกหรือไม่?';
+
+  @override
+  String get settingsAIConsentMessage =>
+      'MMM อาจส่งรูปภาพและข้อมูลตู้เสื้อผ้า คำถามแฟชั่น และข้อมูลโปรไฟล์สไตล์ที่จำกัด เช่น ฤดูกาลสีของคุณ ไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้เพื่อวิเคราะห์และให้คำแนะนำ การอนุญาตนี้เป็นทางเลือกและเพิกถอนได้ในการตั้งค่า';
+
+  @override
+  String get settingsAIConsentAccept => 'อนุญาตการวิเคราะห์ด้วย AI';
+
+  @override
   String get settingsAbout => 'เกี่ยวกับ';
 
   @override
   String get settingsVersion => 'เวอร์ชัน';
 
   @override
-  String get settingsVersionValue => '1.0.0 (build 1)';
+  String get settingsVersionValue => '—';
 
   @override
   String get settingsPrivacy => 'นโยบายความเป็นส่วนตัว';
+
+  @override
+  String get settingsPrivacyNotConfigured =>
+      'ยังไม่ได้ตั้งค่าลิงก์นโยบายความเป็นส่วนตัวแบบ HTTPS สาธารณะ';
 
   @override
   String get settingsLanguage => 'ภาษา';
@@ -575,6 +671,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ชุดเร่งรีบต้องการตู้เสื้อผ้าครบก่อน เพิ่มเสื้อด้านบน กางเกง/กระโปรง และรองเท้าอย่างละ 1 ชิ้น';
 
   @override
+  String get rushErrorUnavailable =>
+      'ไม่มีชุดเร่งรีบที่เข้ากันได้ เพิ่มรองเท้าและเสื้อด้านบนกับกางเกง/กระโปรง หรือเดรส';
+
+  @override
   String get rushErrorSignIn =>
       'ชุดเร่งรีบใช้ตู้เสื้อผ้าที่บันทึกไว้ในเซิร์ฟเวอร์ เข้าสู่ระบบเพื่อใช้งาน';
 
@@ -728,7 +828,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsPrivacyContent =>
-      'ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase เพื่อให้ฟีเจอร์ AI สร้างคำแนะนำได้ API keys และ secrets ไม่ถูกเก็บในแอป';
+      'ข้อมูลโปรไฟล์และตู้เสื้อผ้าของผู้เยี่ยมชมเก็บอยู่ในอุปกรณ์นี้ บัญชีที่เข้าสู่ระบบจะเก็บข้อมูลตู้เสื้อผ้า ชุด และความชอบใน Supabase แอปมีเพียงการตั้งค่า Supabase ที่เปิดเผยได้ ส่วนคีย์ API และข้อมูลลับที่มีสิทธิ์สูงจะอยู่บนเซิร์ฟเวอร์';
 
   @override
   String get dialogClose => 'ปิด';

@@ -1,0 +1,7 @@
+{
+  "SUPABASE_URL": "",
+  "SUPABASE_PUBLISHABLE_KEY": "",
+  "AUTH_REDIRECT_URL": "mmm://login-callback",
+  "PRIVACY_POLICY_URL": "",
+  "ENABLE_FACEBOOK_AUTH": "false"
+}

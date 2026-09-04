@@ -12,6 +12,7 @@ void main() {
     expect(notifier.state.luckyColorMethod, 'birth_profile');
     expect(notifier.state.weatherLocationMode, 'auto_detect');
     expect(notifier.state.dailyOutfitReminder, isFalse);
+    expect(notifier.state.dailyOutfitReminderMinutes, 8 * 60);
     expect(notifier.state.repetitionAlerts, isTrue);
     expect(notifier.state.learnPreferences, isTrue);
   });
@@ -23,6 +24,7 @@ void main() {
     await notifier.setLuckyColorMethod('random_daily');
     await notifier.setWeatherLocationMode('off');
     await notifier.setDailyOutfitReminder(true);
+    await notifier.setDailyOutfitReminderMinutes(9 * 60 + 15);
     await notifier.setRepetitionAlerts(false);
     await notifier.setLearnPreferences(false);
 
@@ -32,6 +34,7 @@ void main() {
     expect(reloaded.state.luckyColorMethod, 'random_daily');
     expect(reloaded.state.weatherLocationMode, 'off');
     expect(reloaded.state.dailyOutfitReminder, isTrue);
+    expect(reloaded.state.dailyOutfitReminderMinutes, 9 * 60 + 15);
     expect(reloaded.state.repetitionAlerts, isFalse);
     expect(reloaded.state.learnPreferences, isFalse);
   });

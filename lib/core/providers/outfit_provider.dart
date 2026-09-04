@@ -4,7 +4,12 @@ import '../../shared/models/outfit.dart';
 import '../services/outfit_repository.dart';
 import 'app_settings_provider.dart';
 import 'repetition_insight_provider.dart';
+import '../services/notification_service.dart';
+import '../services/outfit_recommendation_service.dart';
 import 'wardrobe_provider.dart';
+
+const rushOutfitUnavailableMessage =
+    'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.';
 
 final outfitsProvider = StateNotifierProvider<OutfitNotifier, List<Outfit>>((
   ref,
@@ -30,15 +35,27 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     } catch (_) {}
   }
 
-  Future<void> selectOutfit(Outfit outfit, WidgetRef ref) async {
-    ref.read(currentOutfitProvider.notifier).state = outfit;
+  Future<void> selectOutfit(
+    Outfit outfit,
+    WidgetRef ref, {
+    int? previousRepeatCount,
+  }) async {
+    final repeats =
+        previousRepeatCount ?? await _repository.repeatCountFor(outfit.itemIds);
     await ref
         .read(wardrobeProvider.notifier)
         .markOutfitWorn(
           outfitId: outfit.id,
           itemIds: outfit.itemIds,
           style: outfit.style,
+          source: _wearSourceFor(outfit),
         );
+    if (ref.read(appSettingsProvider).repetitionAlerts &&
+        repeats < repetitionAlertThreshold &&
+        repeats + 1 >= repetitionAlertThreshold) {
+      await notificationService.showRepetitionAlert(outfit.itemIds);
+    }
+    ref.read(currentOutfitProvider.notifier).state = outfit;
 
     if (ref.read(appSettingsProvider).learnPreferences) {
       await _recordPreferenceSelection(outfit, ref);
@@ -91,6 +108,11 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
     return 'generated';
   }
 
+  String _wearSourceFor(Outfit outfit) {
+    final style = (outfit.style ?? '').trim().toLowerCase();
+    return style == 'rush' ? 'in_a_rush' : 'recommended';
+  }
+
   Future<List<Outfit>> generateBackendOutfits(
     String style,
     WidgetRef ref, {
@@ -118,7 +140,7 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
   Future<Outfit> rushBackendOutfit(WidgetRef ref) async {
     final outfit = await _repository.rushOutfit();
     if (outfit == null) {
-      throw StateError('Rush outfit requires a signed-in account.');
+      throw StateError(rushOutfitUnavailableMessage);
     }
     state = [outfit, ...state];
     return outfit;

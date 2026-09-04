@@ -5,47 +5,15 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
+
+export '../../shared/models/clothing_analysis.dart';
 
 const _visionChannel = MethodChannel('mmm/clothing_analysis');
 
-class ImageLabelPrediction {
-  const ImageLabelPrediction({required this.text, required this.confidence});
-
-  final String text;
-  final double confidence;
-}
-
 typedef ImageClassifier =
     Future<List<ImageLabelPrediction>> Function(Uint8List bytes);
-
-class ClothingAnalysisResult {
-  const ClothingAnalysisResult({
-    this.category,
-    required this.colorHexes,
-    required this.colorNames,
-    this.styles = const [],
-    this.pattern = ClothingPattern.unknown,
-    this.silhouette = ClothingSilhouette.unknown,
-    this.confidence,
-    this.rawLabels = const [],
-    this.rawPredictions = const [],
-    this.classificationSource,
-    this.colorSource,
-  });
-
-  final ClothingCategory? category;
-  final List<String> colorHexes;
-  final List<String> colorNames;
-  final List<String> styles;
-  final ClothingPattern pattern;
-  final ClothingSilhouette silhouette;
-  final double? confidence;
-  final List<String> rawLabels;
-  final List<ImageLabelPrediction> rawPredictions;
-  final String? classificationSource;
-  final String? colorSource;
-}
 
 class ClothingAnalysisService {
   const ClothingAnalysisService({
@@ -67,6 +35,8 @@ class ClothingAnalysisService {
       codec = await ui.instantiateImageCodec(bytes, targetWidth: 64);
       frame = await codec.getNextFrame();
     }
+    final width = frame.image.width;
+    final height = frame.image.height;
     final data = await frame.image.toByteData(
       format: ui.ImageByteFormat.rawRgba,
     );
@@ -86,10 +56,17 @@ class ClothingAnalysisService {
       final green = pixels[i + 1];
       final blue = pixels[i + 2];
       final key = (red ~/ 32 << 16) | (green ~/ 32 << 8) | (blue ~/ 32);
-      (buckets[key] ??= _ColorBucket(i)).add(red, green, blue);
+      final pixel = i ~/ 4;
+      final x = ((pixel % width) + .5) / width;
+      final y = ((pixel ~/ width) + .5) / height;
+      (buckets[key] ??= _ColorBucket(
+        i,
+      )).add(red, green, blue, _centerWeight(x, y));
     }
     final ranked = buckets.values.toList()
       ..sort((a, b) {
+        final byWeight = b.weight.compareTo(a.weight);
+        if (byWeight != 0) return byWeight;
         final byCount = b.count.compareTo(a.count);
         return byCount != 0 ? byCount : a.firstPixel.compareTo(b.firstPixel);
       });
@@ -98,9 +75,17 @@ class ClothingAnalysisService {
     final labelResult = mapClothingLabels(predictions);
     return ClothingAnalysisResult(
       category: labelResult.category,
+      primaryColor: hexes.firstOrNull == null
+          ? null
+          : coarseColorName(hexes.first),
       colorHexes: hexes,
       colorNames: hexes.map(coarseColorName).toList(),
       styles: labelResult.styles,
+      clothingStyles: labelResult.styles
+          .map(clothingStyleFromString)
+          .where((style) => style != ClothingStyle.unknown)
+          .toSet()
+          .toList(),
       pattern: labelResult.pattern,
       silhouette: labelResult.silhouette,
       confidence: labelResult.confidence,
@@ -110,8 +95,21 @@ class ClothingAnalysisService {
           ? null
           : (_classificationSource ?? _platformClassificationSource),
       colorSource: 'pixel_palette',
+      source: predictions.isEmpty
+          ? AnalysisSource.unknown
+          : AnalysisSource.localVision,
+      status: predictions.isEmpty
+          ? AnalysisStatus.partial
+          : AnalysisStatus.complete,
     );
   }
+}
+
+double _centerWeight(double x, double y) {
+  final distance = math.max((x - .5).abs(), (y - .5).abs());
+  if (distance <= .3) return 1;
+  if (distance >= .5) return .05;
+  return 1 - ((distance - .3) / .2 * .95);
 }
 
 Future<List<ImageLabelPrediction>> _classifyOnDevice(Uint8List bytes) async {
@@ -159,13 +157,17 @@ ClothingAnalysisResult mapClothingLabels(
       't-shirt',
       'blouse',
       'sweater',
-      'jacket',
       'hoodie',
+      'top',
+      'jersey',
+    },
+    ClothingCategory.outerwear: {
+      'jacket',
       'blazer',
       'cardigan',
       'coat',
-      'top',
-      'jersey',
+      'outerwear',
+      'overcoat',
     },
     ClothingCategory.pants: {
       'pants',
@@ -180,6 +182,7 @@ ClothingAnalysisResult mapClothingLabels(
       'shoe',
       'shoes',
       'footwear',
+      'dress shoe',
       'sneaker',
       'sneakers',
       'boot',
@@ -189,12 +192,12 @@ ClothingAnalysisResult mapClothingLabels(
       'sandal',
       'sandals',
     },
+    ClothingCategory.dress: {'dress', 'gown', 'one piece', 'one-piece'},
     ClothingCategory.hat: {'hat', 'cap', 'baseball cap', 'beanie', 'headwear'},
+    ClothingCategory.bag: {'bag', 'handbag', 'backpack', 'tote', 'purse'},
     ClothingCategory.accessory: {
       'accessory',
       'fashion accessory',
-      'bag',
-      'handbag',
       'belt',
       'watch',
       'scarf',
@@ -330,12 +333,14 @@ class _ColorBucket {
 
   final int firstPixel;
   var count = 0;
+  var weight = 0.0;
   var red = 0;
   var green = 0;
   var blue = 0;
 
-  void add(int r, int g, int b) {
+  void add(int r, int g, int b, double pixelWeight) {
     count++;
+    weight += pixelWeight;
     red += r;
     green += g;
     blue += b;

@@ -167,6 +167,41 @@ class ItemDetailScreen extends ConsumerWidget {
                         )
                         .toList(),
                   ),
+                if (item.analysisStatus == AnalysisStatus.failed ||
+                    item.analysisStatus == AnalysisStatus.partial) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    item.analysisStatus == AnalysisStatus.failed
+                        ? 'Analysis failed. Your item is still saved.'
+                        : 'Some details may be incomplete.',
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const Key('item-retry-analysis'),
+                    onPressed: () async {
+                      try {
+                        await ref
+                            .read(wardrobeProvider.notifier)
+                            .reanalyzeItem(item.id);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Analysis updated.')),
+                        );
+                      } catch (error) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Retry failed: $error')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry analysis'),
+                  ),
+                ],
                 if (item.colorHexes.isNotEmpty ||
                     item.pattern != ClothingPattern.unknown ||
                     item.silhouette != ClothingSilhouette.unknown) ...[

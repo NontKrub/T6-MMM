@@ -3,11 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/config/app_config.dart';
+import '../../core/providers/ai_consent_provider.dart';
+import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/local_account_repository.dart';
+import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../l10n/app_localizations.dart';
@@ -21,6 +24,8 @@ class ProfileScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final profile = ref.watch(userProfileProvider);
     final wardrobe = ref.watch(wardrobeProvider);
+    final outfits = ref.watch(outfitsProvider);
+    final uniqueOutfitIds = outfits.map((outfit) => outfit.id).toSet();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.profileTitle ?? 'Profile')),
@@ -85,7 +90,10 @@ class ProfileScreen extends ConsumerWidget {
                   label: l10n?.profileItems ?? 'Items',
                 ),
                 const SizedBox(width: 12),
-                _StatCard(value: '5', label: l10n?.profileOutfits ?? 'Outfits'),
+                _StatCard(
+                  value: '${uniqueOutfitIds.length}',
+                  label: l10n?.profileOutfits ?? 'Outfits',
+                ),
                 const SizedBox(width: 12),
                 _StatCard(
                   value: wardrobe.isNotEmpty
@@ -209,6 +217,22 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            if (SupabaseService.isSignedIn) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _deleteAccount(context, ref, l10n),
+                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                  label: Text(l10n?.profileDeleteAccount ?? 'Delete Account'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -216,12 +240,60 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+Future<void> _deleteAccount(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations? l10n,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n?.profileDeleteAccountTitle ?? 'Delete your account?'),
+      content: Text(
+        l10n?.profileDeleteAccountMessage ??
+            'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n?.profileDeleteAccountConfirm ?? 'Delete Account'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+
+  try {
+    await AuthService().deleteAccount();
+    await LocalAccountRepository().clearGuestAccount();
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(aiConsentProvider);
+    ref.invalidate(sessionProvider);
+    ref.invalidate(wardrobeProvider);
+    if (!context.mounted) return;
+    context.go('/auth');
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${l10n?.profileDeleteAccountFailed ?? 'Account deletion failed'}: $error',
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-  await LocalAccountRepository().clearGuestAccount();
   if (AppConfig.isSupabaseConfigured) {
     await AuthService().signOut();
   }
   ref.invalidate(userProfileProvider);
+  ref.invalidate(aiConsentProvider);
   ref.invalidate(sessionProvider);
   ref.invalidate(wardrobeProvider);
   if (!context.mounted) return;

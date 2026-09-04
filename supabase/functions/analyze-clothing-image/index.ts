@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { hasAiConsent } from "../_shared/ai_consent.ts";
 import { requireUser, serviceClient } from "../_shared/supabase.ts";
 import { clothingAnalysisSchema, openAiJson } from "../_shared/openai.ts";
 
@@ -10,24 +11,56 @@ type Body = {
 };
 
 type ClothingAnalysis = {
-  category: "hat" | "top" | "pants" | "shoes" | "accessory";
+  category: ClothingCategory;
   suggested_name: string;
   dominant_colors: string[];
   primary_color: string;
+  subtype: string | null;
+  pattern: string;
+  material: string;
+  fit: string;
+  silhouette: string;
+  styles: string[];
+  formality: string;
+  seasons: string[];
+  weather_suitability: string[];
+  warmth_level: number | null;
   tags: string[];
-  attributes: Record<string, unknown>;
   confidence: number;
 };
+
+type ClothingCategory =
+  | "hat"
+  | "top"
+  | "pants"
+  | "shoes"
+  | "outerwear"
+  | "dress"
+  | "bag"
+  | "accessory"
+  | "unknown";
 
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
 
   try {
-    const { userId } = await requireUser(req);
+    const { supabase, userId } = await requireUser(req);
+    if (!await hasAiConsent(supabase, userId)) {
+      return jsonResponse({
+        error: "Third-party AI consent is required for server image analysis.",
+        code: "ai_consent_required",
+      }, 403);
+    }
     const body = await readJson<Body>(req);
-    if (!body.image_path) {
+    if (typeof body.image_path !== "string" || !body.image_path.trim()) {
       return jsonResponse({ error: "image_path is required." }, 400);
+    }
+    if (body.image_path.split("/")[0] !== userId) {
+      return jsonResponse(
+        { error: "Image path is outside the user scope." },
+        403,
+      );
     }
 
     const admin = serviceClient();
@@ -44,7 +77,7 @@ Deno.serve(async (req) => {
     try {
       analysis = await openAiJson<ClothingAnalysis>({
         instructions:
-          "Analyze this single clothing item for outfit generation. Return practical metadata only: category, primary and dominant colors, concise lowercase tags, confidence 0..1, and detected attributes helpful for style/weather matching (material, fit, formality, seasonality, weather suitability, details).",
+          "Analyze this single clothing item for outfit generation. Return practical metadata only: category, primary and dominant colors, concise lowercase tags, confidence 0..1, and the explicit structured fields for subtype, pattern, material, fit, silhouette, styles, formality, seasons, weather suitability, and warmth.",
         input: [{
           role: "user",
           content: [
@@ -76,15 +109,18 @@ Deno.serve(async (req) => {
     return jsonResponse({
       user_id: userId,
       ...analysis,
-      suggested_name: body.name?.trim() || analysis.suggested_name,
+      suggested_name: normalizeWord(body.name) || analysis.suggested_name,
       tags: [
         ...new Set(
-          [...(body.tags ?? []), ...analysis.tags]
+          [...normalizeStringArray(body.tags), ...analysis.tags]
             .map((tag) => normalizeWord(tag))
             .filter(Boolean),
         ),
       ].slice(0, 8),
-      brand: body.brand ?? null,
+      brand: typeof body.brand === "string" ? body.brand.trim() || null : null,
+      analysis_source: "serverAI",
+      analysis_status: "complete",
+      analysis_version: "visual-v3",
     });
   } catch (error) {
     return jsonResponse({
@@ -94,43 +130,174 @@ Deno.serve(async (req) => {
 });
 
 function normalizeAnalysis(analysis: ClothingAnalysis): ClothingAnalysis {
-  const normalizedPrimary = normalizeWord(analysis.primary_color) || "unknown";
+  const normalizedPrimary = normalizeColor(analysis.primary_color);
   const normalizedDominant = [
     ...new Set(
-      analysis.dominant_colors
-        .map(normalizeWord)
-        .filter(Boolean),
+      normalizeStringArray(analysis.dominant_colors)
+        .map(normalizeColor)
+        .filter((value) => value !== "unknown"),
     ),
   ].slice(0, 5);
   const tags = [
-    ...new Set(analysis.tags.map(normalizeWord).filter(Boolean)),
+    ...new Set(
+      normalizeStringArray(analysis.tags).map(normalizeWord).filter(Boolean),
+    ),
   ].slice(0, 8);
-  const attributes = analysis.attributes &&
-      typeof analysis.attributes === "object" &&
-      !Array.isArray(analysis.attributes)
-    ? analysis.attributes
-    : {};
-  const confidence = Math.max(
-    0,
-    Math.min(1, Number.isFinite(analysis.confidence) ? analysis.confidence : 0),
-  );
-
   return {
     ...analysis,
-    category: analysis.category,
-    suggested_name: analysis.suggested_name.trim() || "Wardrobe item",
+    category: oneOf(analysis.category, clothingCategories),
+    suggested_name: normalizeWord(analysis.suggested_name) || "Wardrobe item",
     primary_color: normalizedPrimary,
     dominant_colors: normalizedDominant.length > 0
       ? normalizedDominant
       : normalizedPrimary === "unknown"
       ? []
       : [normalizedPrimary],
+    subtype: normalizeWord(analysis.subtype) || null,
+    pattern: oneOf(analysis.pattern, patterns),
+    material: oneOf(analysis.material, materials),
+    fit: oneOf(analysis.fit, fits),
+    silhouette: oneOf(analysis.silhouette, silhouettes),
+    styles: normalizeEnumArray(analysis.styles, styles, 5),
+    formality: oneOf(analysis.formality, formalities),
+    seasons: normalizeEnumArray(analysis.seasons, seasons, 4),
+    weather_suitability: normalizeEnumArray(
+      analysis.weather_suitability,
+      weatherSuitability,
+      6,
+    ),
+    warmth_level: boundedNumber(analysis.warmth_level),
     tags,
-    attributes,
-    confidence,
+    confidence: boundedNumber(analysis.confidence) ?? 0,
   };
 }
 
-function normalizeWord(value: string) {
-  return value.trim().toLowerCase();
+const clothingCategories = [
+  "hat",
+  "top",
+  "pants",
+  "shoes",
+  "outerwear",
+  "dress",
+  "bag",
+  "accessory",
+  "unknown",
+] as const;
+const patterns = [
+  "solid",
+  "striped",
+  "checked",
+  "floral",
+  "graphic",
+  "textured",
+  "other",
+  "unknown",
+] as const;
+const materials = [
+  "cotton",
+  "linen",
+  "denim",
+  "wool",
+  "leather",
+  "synthetic",
+  "knit",
+  "silk",
+  "other",
+  "unknown",
+] as const;
+const fits = [
+  "slim",
+  "regular",
+  "relaxed",
+  "oversized",
+  "cropped",
+  "wide",
+  "unknown",
+] as const;
+const silhouettes = [
+  "fitted",
+  "regular",
+  "relaxed",
+  "oversized",
+  "cropped",
+  "wide-leg",
+  "slim",
+  "a-line",
+  "straight",
+  "unknown",
+] as const;
+const styles = [
+  "casual",
+  "streetwear",
+  "formal",
+  "business",
+  "sport",
+  "minimal",
+  "vintage",
+  "preppy",
+  "smartCasual",
+  "unknown",
+] as const;
+const formalities = [
+  "veryCasual",
+  "casual",
+  "smartCasual",
+  "business",
+  "formal",
+  "unknown",
+] as const;
+const seasons = ["spring", "summer", "autumn", "winter", "unknown"] as const;
+const weatherSuitability = [
+  "veryHot",
+  "hot",
+  "warm",
+  "mild",
+  "cool",
+  "cold",
+  "dry",
+  "rainy",
+  "unknown",
+] as const;
+
+function normalizeWord(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function normalizeColor(value: unknown) {
+  if (typeof value !== "string") return "unknown";
+  const normalized = value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(normalized)) return normalized.toUpperCase();
+  return /^[a-z][a-z -]{0,31}$/i.test(normalized)
+    ? normalized.toLowerCase()
+    : "unknown";
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function normalizeEnumArray<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  max: number,
+) {
+  return [
+    ...new Set(
+      normalizeStringArray(value).map((entry) => oneOf(entry, allowed)),
+    ),
+  ].slice(0, max);
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
+  return typeof value === "string" &&
+      (allowed as readonly string[]).includes(value)
+    ? value as T
+    : "unknown" as T;
+}
+
+function boundedNumber(value: unknown) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return Math.max(0, Math.min(1, value));
 }

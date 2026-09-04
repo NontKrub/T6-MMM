@@ -44,9 +44,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/key.properties
+*.jks
 
 # Supabase local CLI state
 /supabase/.temp/
+/supabase/.branches/
 
 # Local environment/config values
 .env
@@ -54,5 +57,6 @@ app.*.map.json
 *.env
 /config/*.local.json
 /config/*.secrets.json
+/config/*.production.json
 /supabase/.env
 /supabase/.env.*

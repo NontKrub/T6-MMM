@@ -1,0 +1,8 @@
+{
+  "vision_test_white_shirt.jpg": {
+    "path": "assets/images/vision_test_white_shirt.jpg",
+    "category": "top",
+    "primaryColor": "white",
+    "conditions": ["plain_background", "light_garment"]
+  }
+}

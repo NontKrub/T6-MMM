@@ -2,10 +2,32 @@ export type ClothingItemRow = {
   id: string;
   name: string;
   brand: string | null;
-  category: "hat" | "top" | "pants" | "shoes" | "accessory";
+  category:
+    | "hat"
+    | "top"
+    | "pants"
+    | "shoes"
+    | "outerwear"
+    | "dress"
+    | "bag"
+    | "accessory"
+    | "unknown";
   tags: string[];
   dominant_colors: string[];
   primary_color: string | null;
+  subtype?: string | null;
+  pattern?: string | null;
+  material?: string | null;
+  fit?: string | null;
+  silhouette?: string | null;
+  styles?: string[] | null;
+  formality?: string | null;
+  seasons?: string[] | null;
+  weather_suitability?: string[] | null;
+  warmth_level?: number | null;
+  analysis_confidence?: number | null;
+  analysis_status?: string | null;
+  user_corrected?: boolean | null;
   detected_attributes?: Record<string, unknown> | null;
   ai_confidence?: number | null;
   wear_count: number;
@@ -71,12 +93,12 @@ export function normalizeMissingPieceItems(
       tags: item.tags,
       colors: item.dominant_colors,
       primary_color: item.primary_color,
-      pattern: typeof attributes.pattern === "string"
-        ? attributes.pattern
-        : null,
-      silhouette: typeof attributes.silhouette === "string"
-        ? attributes.silhouette
-        : null,
+      pattern: item.pattern ??
+        (typeof attributes.pattern === "string" ? attributes.pattern : null),
+      silhouette: item.silhouette ??
+        (typeof attributes.silhouette === "string"
+          ? attributes.silhouette
+          : null),
       wear_count: item.wear_count,
       last_worn: item.last_worn,
     };
@@ -115,6 +137,13 @@ export function groupWardrobeItems(items: ClothingItemRow[]) {
     shoes: sortedByPracticality(
       items.filter((item) => item.category === "shoes"),
     ),
+    outerwear: sortedByPracticality(
+      items.filter((item) => item.category === "outerwear"),
+    ),
+    dress: sortedByPracticality(
+      items.filter((item) => item.category === "dress"),
+    ),
+    bag: sortedByPracticality(items.filter((item) => item.category === "bag")),
     accessory: sortedByPracticality(
       items.filter((item) => item.category === "accessory"),
     ),
@@ -127,38 +156,70 @@ export function buildValidOutfitCandidates(
 ): OutfitCandidate[] {
   const groups = groupWardrobeItems(items);
 
-  if (
-    groups.top.length === 0 || groups.pants.length === 0 ||
-    groups.shoes.length === 0
-  ) {
+  if (groups.shoes.length === 0) {
     return [];
   }
 
   const tops = groups.top.slice(0, options.rush ? 4 : 8);
   const pants = groups.pants.slice(0, options.rush ? 4 : 8);
   const shoes = groups.shoes.slice(0, options.rush ? 4 : 8);
+  const outerwear = [null, ...groups.outerwear.slice(0, 2)] as Array<
+    ClothingItemRow | null
+  >;
+  const dresses = groups.dress.slice(0, options.rush ? 4 : 8);
   const hats = [null, ...groups.hat.slice(0, 2)] as Array<
     ClothingItemRow | null
   >;
-  const accessories = [null, ...groups.accessory.slice(0, 2)] as Array<
+  const extras = [
+    null,
+    ...groups.bag.slice(0, 1),
+    ...groups.accessory.slice(0, 1),
+  ] as Array<
     ClothingItemRow | null
   >;
   const candidateItemSets: ClothingItemRow[][] = [];
 
-  for (const top of tops) {
-    for (const bottom of pants) {
-      for (const shoe of shoes) {
-        for (const hat of hats) {
-          for (const accessory of accessories) {
-            const candidateItems = [top, bottom, shoe, hat, accessory].filter(
-              Boolean,
-            ) as ClothingItemRow[];
-            candidateItemSets.push(candidateItems);
+  if (tops.length > 0 && pants.length > 0) {
+    for (const top of tops) {
+      for (const bottom of pants) {
+        for (const shoe of shoes) {
+          for (const layer of outerwear) {
+            for (const hat of hats) {
+              for (const extra of extras) {
+                const candidateItems = [
+                  top,
+                  bottom,
+                  shoe,
+                  layer,
+                  hat,
+                  extra,
+                ].filter(Boolean) as ClothingItemRow[];
+                candidateItemSets.push(candidateItems);
+              }
+            }
           }
         }
       }
     }
   }
+
+  for (const onePiece of dresses) {
+    for (const shoe of shoes) {
+      for (const layer of outerwear) {
+        for (const hat of hats) {
+          for (const extra of extras) {
+            candidateItemSets.push(
+              [onePiece, shoe, layer, hat, extra].filter(
+                Boolean,
+              ) as ClothingItemRow[],
+            );
+          }
+        }
+      }
+    }
+  }
+
+  if (candidateItemSets.length === 0) return [];
 
   const metadataQualityBaseline = candidateItemSets.reduce(
     (best, candidate) => Math.max(best, metadataQualityScore(candidate)),
@@ -273,7 +334,7 @@ export function scoreOutfitCandidate(
 
   const loudPatterns = items.filter((item) => {
     const pattern = normalizeToken(
-      String(item.detected_attributes?.pattern ?? ""),
+      item.pattern ?? String(item.detected_attributes?.pattern ?? ""),
     );
     return pattern !== "" && pattern !== "solid" && pattern !== "unknown";
   }).length;
@@ -283,7 +344,9 @@ export function scoreOutfitCandidate(
   }
 
   const silhouettes = items.map((item) =>
-    normalizeToken(String(item.detected_attributes?.silhouette ?? ""))
+    normalizeToken(
+      item.silhouette ?? String(item.detected_attributes?.silhouette ?? ""),
+    )
   ).filter((value) => value && value !== "unknown");
   if (silhouettes.length > 1 && new Set(silhouettes).size > 1) {
     score += 2;
@@ -541,10 +604,11 @@ export function selectUsableOutfitsFromGenerated(
         .map((id) => wardrobeById.get(id)?.category)
         .filter(Boolean),
     );
-    if (
-      !categorySet.has("top") || !categorySet.has("pants") ||
-      !categorySet.has("shoes")
-    ) continue;
+    const isBasicOutfit = categorySet.has("top") &&
+      categorySet.has("pants") && categorySet.has("shoes");
+    const isOnePieceOutfit = categorySet.has("dress") &&
+      categorySet.has("shoes");
+    if (!isBasicOutfit && !isOnePieceOutfit) continue;
 
     selected.push({
       ...exact,
@@ -658,12 +722,14 @@ function metadataQualityScore(items: ClothingItemRow[]) {
 
   let total = 0;
   for (const item of items) {
-    const confidence = boundedConfidence(item.ai_confidence);
+    const confidence = boundedConfidence(
+      item.analysis_confidence ?? item.ai_confidence,
+    );
     const tags = item.tags.length > 0 ? 0.15 : 0;
     const colors = item.primary_color || item.dominant_colors.length > 0
       ? 0.15
       : 0;
-    const attributes = hasUsableAttributes(item.detected_attributes) ? 0.2 : 0;
+    const attributes = hasStructuredMetadata(item) ? 0.2 : 0;
     const reviewPenalty = hasNeedsReview([item]) ? 0.2 : 0;
     total += Math.max(
       0,
@@ -681,12 +747,19 @@ function boundedConfidence(value: number | null | undefined) {
 }
 
 function isLowConfidence(item: ClothingItemRow) {
-  return boundedConfidence(item.ai_confidence) > 0 &&
-    boundedConfidence(item.ai_confidence) < 0.55;
+  const confidence = boundedConfidence(
+    item.analysis_confidence ?? item.ai_confidence,
+  );
+  return confidence > 0 && confidence < 0.55;
 }
 
 function hasNeedsReview(items: ClothingItemRow[]) {
   return items.some((item) => {
+    if (
+      item.analysis_status === "partial" || item.analysis_status === "failed"
+    ) {
+      return true;
+    }
     if (item.tags.some((tag) => normalizeToken(tag) === "needs-review")) {
       return true;
     }
@@ -703,13 +776,33 @@ function hasUsableAttributes(
   return flattenAttributeValues(attributes).length > 0;
 }
 
+function hasStructuredMetadata(item: ClothingItemRow) {
+  return Boolean(
+    item.subtype || item.pattern || item.material || item.fit ||
+      item.silhouette || item.formality || (item.styles?.length ?? 0) > 0 ||
+      (item.seasons?.length ?? 0) > 0 ||
+      (item.weather_suitability?.length ?? 0) > 0 ||
+      item.warmth_level !== null && item.warmth_level !== undefined ||
+      hasUsableAttributes(item.detected_attributes),
+  );
+}
+
 function itemMetadataTokens(item: ClothingItemRow) {
   return [
     normalizeToken(item.name),
     normalizeToken(item.brand ?? ""),
+    normalizeToken(item.subtype ?? ""),
     normalizeToken(item.primary_color ?? ""),
     ...item.dominant_colors.map(normalizeToken),
     ...item.tags.map(normalizeToken),
+    normalizeToken(item.pattern ?? ""),
+    normalizeToken(item.material ?? ""),
+    normalizeToken(item.fit ?? ""),
+    normalizeToken(item.silhouette ?? ""),
+    ...(item.styles ?? []).map(normalizeToken),
+    normalizeToken(item.formality ?? ""),
+    ...(item.seasons ?? []).map(normalizeToken),
+    ...(item.weather_suitability ?? []).map(normalizeToken),
     ...flattenAttributeValues(item.detected_attributes),
   ].filter(Boolean);
 }

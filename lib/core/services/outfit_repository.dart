@@ -1,4 +1,6 @@
 import '../../shared/models/outfit.dart';
+import '../../shared/models/outfit_intelligence.dart';
+import '../../shared/models/recommendation_event.dart';
 import 'local_account_repository.dart';
 import 'outfit_recommendation_service.dart';
 import 'recommendation_repository.dart';
@@ -61,13 +63,27 @@ class OutfitRepository {
   }) async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) {
-      return _localRecommendations.generate(
-        await _local.fetchItems(),
+      final items = await _local.fetchItems();
+      final history = await _local.fetchWearEvents();
+      final behavioralWeights = await _local.fetchBehavioralWeights();
+      final profile = await _local.fetchProfile();
+      final generated = _localRecommendations.generate(
+        items,
         style: style,
         history: await _local.fetchWearCombinations(),
         targetHex: targetHex,
-        preferences: await _local.fetchPreferenceEvents(),
+        context: OutfitContext(
+          desiredStyle: style,
+          targetHex: targetHex,
+          history: history,
+          styleProfile: UserStyleProfile(
+            explicitStyles: {...?profile?.stylePreferences, style}.toList(),
+            behavioralWeights: learnPreferences ? behavioralWeights : const {},
+          ),
+        ),
       );
+      await _recordRecommendationEvents(generated);
+      return generated;
     }
 
     final shouldMatchWeather =
@@ -95,9 +111,11 @@ class OutfitRepository {
       },
     );
     final data = Map<String, dynamic>.from(response.data as Map);
-    return (data['outfits'] as List? ?? const [])
+    final generated = (data['outfits'] as List? ?? const [])
         .map((row) => Outfit.fromJson(Map<String, dynamic>.from(row as Map)))
         .toList();
+    await _recordRecommendationEvents(generated);
+    return generated;
   }
 
   Future<void> recordPreferenceEvent({
@@ -120,6 +138,32 @@ class OutfitRepository {
           selectedAt: DateTime.now(),
         ),
       );
+      await recordRecommendationEvent(
+        RecommendationEvent(
+          eventType: RecommendationEventType.accepted,
+          outfitId: outfit.id,
+          itemIds: itemIds,
+          metadata: _feedbackMetadata(
+            outfit: outfit,
+            tags: tags,
+            colors: colors,
+          ),
+          createdAt: DateTime.now(),
+        ),
+      );
+      await recordRecommendationEvent(
+        RecommendationEvent(
+          eventType: RecommendationEventType.worn,
+          outfitId: outfit.id,
+          itemIds: itemIds,
+          metadata: _feedbackMetadata(
+            outfit: outfit,
+            tags: tags,
+            colors: colors,
+          ),
+          createdAt: DateTime.now(),
+        ),
+      );
       return;
     }
 
@@ -134,20 +178,53 @@ class OutfitRepository {
       'score': outfit.score,
       'source': source,
     });
+    await recordRecommendationEvent(
+      RecommendationEvent(
+        eventType: RecommendationEventType.accepted,
+        outfitId: outfit.id,
+        itemIds: itemIds,
+        metadata: _feedbackMetadata(outfit: outfit, tags: tags, colors: colors),
+        createdAt: DateTime.now(),
+      ),
+    );
+    await recordRecommendationEvent(
+      RecommendationEvent(
+        eventType: RecommendationEventType.worn,
+        outfitId: outfit.id,
+        itemIds: itemIds,
+        metadata: _feedbackMetadata(outfit: outfit, tags: tags, colors: colors),
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> recordRecommendationEvent(RecommendationEvent event) async {
+    final client = SupabaseService.client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      await _local.recordRecommendationEvent(event);
+      return;
+    }
+    await client.from('recommendation_events').insert({
+      'user_id': user.id,
+      'outfit_id': event.outfitId,
+      'event_type': event.eventType.name,
+      'clothing_item_ids': event.itemIds,
+      'metadata': event.metadata,
+    });
   }
 
   Future<Outfit?> rushOutfit({String style = 'rush'}) async {
     final client = SupabaseService.client;
     if (client == null || client.auth.currentUser == null) {
-      return _localRecommendations
-          .generate(
-            await _local.fetchItems(),
-            style: style,
-            history: await _local.fetchWearCombinations(),
-            rush: true,
-            preferences: await _local.fetchPreferenceEvents(),
-          )
-          .first;
+      final outfits = _localRecommendations.generate(
+        await _local.fetchItems(),
+        style: style,
+        history: await _local.fetchWearCombinations(),
+        rush: true,
+        preferences: await _local.fetchPreferenceEvents(),
+      );
+      return outfits.firstOrNull;
     }
 
     final response = await client.functions.invoke(
@@ -174,5 +251,42 @@ class OutfitRepository {
         )
         .toList();
     return repeatCount(itemIds, history);
+  }
+
+  Map<String, dynamic> _feedbackMetadata({
+    required Outfit outfit,
+    required List<String> tags,
+    required List<String> colors,
+  }) => {
+    'styles': outfit.style == null ? const [] : [outfit.style!],
+    'tags': tags,
+    'colors': colors,
+    'selection_factors': outfit.selectionFactors,
+  };
+
+  Future<void> _recordRecommendationEvents(List<Outfit> outfits) async {
+    for (final outfit in outfits) {
+      for (final eventType in [
+        RecommendationEventType.generated,
+        RecommendationEventType.shown,
+      ]) {
+        try {
+          await recordRecommendationEvent(
+            RecommendationEvent(
+              eventType: eventType,
+              outfitId: outfit.id,
+              itemIds: outfit.itemIds,
+              metadata: {
+                'styles': outfit.style == null ? const [] : [outfit.style!],
+                'selection_factors': outfit.selectionFactors,
+              },
+              createdAt: DateTime.now(),
+            ),
+          );
+        } catch (_) {
+          // Recommendation telemetry must not block a usable outfit response.
+        }
+      }
+    }
   }
 }

@@ -1,21 +1,37 @@
-import 'dart:typed_data';
-
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
+import '../../shared/models/outfit_intelligence.dart';
+import 'clothing_intelligence_service.dart';
 import 'local_account_repository.dart';
 import 'image_storage_service.dart';
 import 'supabase_service.dart';
 
 const _uuid = Uuid();
+const _serverAnalysisTimeout = Duration(seconds: 20);
 
 class WardrobeRepository {
   static const bucket = 'wardrobe-images';
 
-  SupabaseClient? get _client => SupabaseService.client;
-  final _local = LocalAccountRepository();
-  final _imageStorage = ImageStorageService();
+  WardrobeRepository({
+    LocalAccountRepository? local,
+    ImageStorageService? imageStorage,
+    ClothingIntelligenceService? intelligence,
+    SupabaseClient? client,
+  }) : _local = local ?? LocalAccountRepository(),
+       _imageStorage = imageStorage ?? ImageStorageService(),
+       _intelligence = intelligence ?? ClothingIntelligenceService(),
+       _clientOverride = client;
+
+  SupabaseClient? get _client => _clientOverride ?? SupabaseService.client;
+  final LocalAccountRepository _local;
+  final ImageStorageService _imageStorage;
+  final ClothingIntelligenceService _intelligence;
+  final SupabaseClient? _clientOverride;
 
   Future<List<ClothingItem>> fetchItems() async {
     final client = _client;
@@ -61,27 +77,55 @@ class WardrobeRepository {
     double? analysisConfidence,
     String? classificationSource,
     String? colorSource,
+    Set<String> correctedFields = const {},
+    ClothingAnalysisResult? localAnalysis,
   }) async {
     final client = _client;
     final user = client?.auth.currentUser;
     final itemId = _uuid.v4();
+    final manualTags = correctedFields.contains('tags')
+        ? tags
+        : const <String>[];
+    final localResult =
+        localAnalysis ??
+        _fallbackAnalysis(
+          category: fallbackCategory,
+          color: color,
+          colorHexes: colorHexes,
+          tags: manualTags,
+          pattern: pattern,
+          silhouette: silhouette,
+          confidence: analysisConfidence,
+          classificationSource: classificationSource,
+          colorSource: colorSource,
+        );
+    final corrections = _correctionsForInput(
+      fallbackCategory: fallbackCategory,
+      color: color,
+      colorHexes: colorHexes,
+      tags: manualTags,
+      pattern: pattern,
+      silhouette: silhouette,
+      correctedFields: correctedFields,
+    );
+    final localMerged = _intelligence.merge(
+      local: localResult,
+      corrections: corrections,
+    );
     if (client == null || user == null) {
-      final item = ClothingItem(
-        id: itemId,
-        name: name.isNotEmpty ? name : 'Wardrobe item',
-        brand: brand,
-        category: fallbackCategory,
-        imageUrl: fileName,
-        tags: tags,
-        color: color,
-        colorHexes: colorHexes,
-        pattern: pattern,
-        silhouette: silhouette,
-        analysisConfidence: analysisConfidence,
-        classificationSource: classificationSource,
-        colorSource: colorSource,
+      return _local.insertItem(
+        _itemFromAnalysis(
+          id: itemId,
+          name: name,
+          brand: brand,
+          imageUrl: fileName,
+          imagePath: fileName,
+          fallbackCategory: fallbackCategory,
+          requestedTags: manualTags,
+          analysis: localMerged,
+          correctedFields: correctedFields,
+        ),
       );
-      return _local.insertItem(item);
     }
 
     final extension = fileName.split('.').last.toLowerCase();
@@ -98,49 +142,158 @@ class WardrobeRepository {
           fileOptions: const FileOptions(upsert: true),
         );
 
-    final imageUrl = await client.storage
-        .from(bucket)
-        .createSignedUrl(imagePath, 60 * 60);
-    final row = await client
-        .from('clothing_items')
-        .insert({
-          'id': itemId,
-          'user_id': user.id,
-          'name': name.isNotEmpty ? name : 'Wardrobe item',
-          'brand': brand,
-          'category': fallbackCategory.value,
-          'image_path': imagePath,
-          'image_url': imageUrl,
-          'tags': tags,
-          'dominant_colors': colorHexes,
-          'primary_color': color,
-          'detected_attributes': {
-            'pattern': pattern.name,
-            'silhouette': silhouette.value,
-            'classification_source': classificationSource,
-            'color_source': colorSource,
-          },
-          'ai_confidence': analysisConfidence,
-        })
-        .select()
-        .single();
+    var imageUrl = '';
+    try {
+      imageUrl = await client.storage
+          .from(bucket)
+          .createSignedUrl(imagePath, 60 * 60);
+    } catch (error) {
+      _log('Unable to create wardrobe image URL: $error');
+    }
 
-    final data = Map<String, dynamic>.from(row);
-    data['image_url'] = imageUrl;
-    return ClothingItem.fromJson(data);
+    ClothingItem finalItem;
+    try {
+      final serverResult = await _requestServerAnalysis(
+        client: client,
+        imagePath: imagePath,
+        name: name,
+        brand: brand,
+        tags: manualTags,
+      );
+      _log('Server clothing analysis completed for $itemId');
+      final merged = _intelligence.merge(
+        local: localResult,
+        server: serverResult,
+        corrections: corrections,
+      );
+      finalItem = _itemFromAnalysis(
+        id: itemId,
+        name: name,
+        brand: brand,
+        imageUrl: imageUrl,
+        imagePath: imagePath,
+        fallbackCategory: fallbackCategory,
+        requestedTags: manualTags,
+        analysis: merged,
+        correctedFields: correctedFields,
+      );
+    } catch (error) {
+      _log('Server clothing analysis failed for $itemId: $error');
+      finalItem =
+          _itemFromAnalysis(
+            id: itemId,
+            name: name,
+            brand: brand,
+            imageUrl: imageUrl,
+            imagePath: imagePath,
+            fallbackCategory: fallbackCategory,
+            requestedTags: manualTags,
+            analysis: localMerged,
+            correctedFields: correctedFields,
+          ).copyWith(
+            analysisStatus: AnalysisStatus.failed,
+            analyzedAt: DateTime.now(),
+            analysisVersion: currentAnalysisVersion,
+          );
+    }
+
+    try {
+      final payload = finalItem.toInsertJson(
+        userId: user.id,
+        imagePath: imagePath,
+      )..['id'] = itemId;
+      final row = await client
+          .from('clothing_items')
+          .insert(payload)
+          .select()
+          .single();
+
+      final data = Map<String, dynamic>.from(row);
+      data['image_url'] = imageUrl;
+      return ClothingItem.fromJson(data);
+    } catch (error) {
+      try {
+        await client.storage.from(bucket).remove([imagePath]);
+      } catch (cleanupError) {
+        _log('Could not clean failed wardrobe upload: $cleanupError');
+      }
+      rethrow;
+    }
   }
 
-  Future<void> insertItem(ClothingItem item) async {
+  Future<ClothingItem> insertItem(ClothingItem item) async {
     final client = _client;
     final user = client?.auth.currentUser;
     if (client == null || user == null) {
-      await _local.insertItem(item);
-      return;
+      return _local.insertItem(item);
     }
 
-    await client
+    final row = await client
         .from('clothing_items')
-        .insert(item.toInsertJson(userId: user.id, imagePath: item.imageUrl));
+        .insert(
+          item.toInsertJson(
+            userId: user.id,
+            imagePath: item.imagePath ?? item.imageUrl,
+          )..['id'] = item.id,
+        )
+        .select()
+        .single();
+    return ClothingItem.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<ClothingItem> migrateLocalItem({
+    required ClothingItem item,
+    required String targetId,
+    required Uint8List bytes,
+  }) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError('A signed-in account is required to import a wardrobe.');
+    }
+
+    final extension = _safeImageExtension(item.imagePath ?? item.imageUrl);
+    final imagePath = '${user.id}/$targetId/original.$extension';
+    await client.storage
+        .from(bucket)
+        .uploadBinary(
+          imagePath,
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+    try {
+      final payload = item.toInsertJson(userId: user.id, imagePath: imagePath)
+        ..['id'] = targetId
+        ..['image_url'] = null;
+      final row = await client
+          .from('clothing_items')
+          .upsert(payload, onConflict: 'id')
+          .select()
+          .single();
+      return ClothingItem.fromJson(Map<String, dynamic>.from(row));
+    } catch (error) {
+      try {
+        await client.storage.from(bucket).remove([imagePath]);
+      } catch (cleanupError) {
+        _log('Could not clean failed migration upload: $cleanupError');
+      }
+      rethrow;
+    }
+  }
+
+  Future<bool> hasCloudItem(String id) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      throw StateError('A signed-in account is required to import a wardrobe.');
+    }
+    final row = await client
+        .from('clothing_items')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+    return row != null;
   }
 
   Future<void> archiveItem(String id) async {
@@ -159,10 +312,61 @@ class WardrobeRepository {
         .eq('id', id);
   }
 
+  Future<ClothingItem?> reanalyzeItem(String id) async {
+    final client = _client;
+    final user = client?.auth.currentUser;
+    if (client == null || user == null) {
+      final items = await _local.fetchItems();
+      final item = items.where((entry) => entry.id == id).firstOrNull;
+      if (item == null) return null;
+      final path = item.imagePath ?? item.imageUrl;
+      if (path.isEmpty || !await File(path).exists()) {
+        throw StateError('The original clothing image is unavailable.');
+      }
+      final local = await _intelligence.runLocal(
+        await File(path).readAsBytes(),
+      );
+      final updated = _intelligence.mergeIntoItem(item, local: local);
+      await _local.updateItems(
+        items.map((entry) => entry.id == id ? updated : entry).toList(),
+      );
+      return updated;
+    }
+
+    final row = await client
+        .from('clothing_items')
+        .select()
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+    if (row == null) return null;
+    final data = Map<String, dynamic>.from(row);
+    final item = ClothingItem.fromJson(data);
+    final imagePath = item.imagePath ?? data['image_path'] as String?;
+    if (imagePath == null || imagePath.isEmpty) {
+      throw StateError('The original clothing image is unavailable.');
+    }
+    final server = await _requestServerAnalysis(
+      client: client,
+      imagePath: imagePath,
+      name: item.name,
+      brand: item.brand,
+      tags: item.correctedFields.contains('tags') ? item.tags : const [],
+    );
+    final updated = _intelligence.mergeIntoItem(item, server: server);
+    await client
+        .from('clothing_items')
+        .update(analysisUpdatePayload(updated))
+        .eq('id', id)
+        .eq('user_id', user.id);
+    return updated;
+  }
+
   Future<void> recordWear({
     String? outfitId,
     required List<String> itemIds,
     String? style,
+    String source = 'manual',
   }) async {
     final client = _client;
     if (client == null || client.auth.currentUser == null) {
@@ -174,10 +378,17 @@ class WardrobeRepository {
           return item.copyWith(wearCount: item.wearCount + 1, lastWorn: now);
         }).toList(),
       );
-      await _local.recordWearCombination(itemIds);
+      await _local.recordWearEvent(
+        WearEvent(
+          outfitId: outfitId,
+          itemIds: itemIds,
+          wornAt: now,
+          source: _wearSource(source),
+        ),
+      );
       return;
     }
-    await client.rpc(
+    final response = await client.rpc(
       'record_wear_event',
       params: {
         'p_outfit_id': outfitId,
@@ -185,5 +396,183 @@ class WardrobeRepository {
         'p_style': style,
       },
     );
+    if (source != 'manual' && response is Map && response['id'] is String) {
+      try {
+        await client
+            .from('wear_events')
+            .update({'source': _wearSource(source)})
+            .eq('id', response['id'] as String)
+            .eq('user_id', client.auth.currentUser!.id);
+      } catch (error) {
+        _log('Unable to label wear event source: $error');
+      }
+    }
   }
+
+  Future<ClothingAnalysisResult> _requestServerAnalysis({
+    required SupabaseClient client,
+    required String imagePath,
+    required String name,
+    required String? brand,
+    required List<String> tags,
+  }) {
+    return _intelligence.runServer(() async {
+      final response = await client.functions
+          .invoke(
+            'analyze-clothing-image',
+            body: {
+              'image_path': imagePath,
+              'name': name,
+              'brand': brand,
+              'tags': tags,
+            },
+          )
+          .timeout(_serverAnalysisTimeout);
+      if (response.status < 200 || response.status >= 300) {
+        throw StateError(
+          'Clothing analysis failed with status ${response.status}.',
+        );
+      }
+      final data = response.data;
+      if (data is! Map) {
+        throw StateError('Clothing analysis returned an invalid payload.');
+      }
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  ClothingAnalysisResult _fallbackAnalysis({
+    required ClothingCategory category,
+    required String? color,
+    required List<String> colorHexes,
+    required List<String> tags,
+    required ClothingPattern pattern,
+    required ClothingSilhouette silhouette,
+    required double? confidence,
+    required String? classificationSource,
+    required String? colorSource,
+  }) => ClothingAnalysisResult(
+    category: category,
+    colorHexes: colorHexes,
+    colorNames: color == null ? const [] : [color],
+    primaryColor: color,
+    styles: tags,
+    tags: tags,
+    pattern: pattern,
+    silhouette: silhouette,
+    confidence: confidence,
+    classificationSource: classificationSource,
+    colorSource: colorSource,
+    source: classificationSource == 'manual'
+        ? AnalysisSource.manual
+        : AnalysisSource.localVision,
+    status: AnalysisStatus.partial,
+  );
+
+  ClothingAnalysisCorrections? _correctionsForInput({
+    required ClothingCategory fallbackCategory,
+    required String? color,
+    required List<String> colorHexes,
+    required List<String> tags,
+    required ClothingPattern pattern,
+    required ClothingSilhouette silhouette,
+    required Set<String> correctedFields,
+  }) {
+    if (correctedFields.isEmpty) return null;
+    return ClothingAnalysisCorrections(
+      correctedFields: correctedFields,
+      category: correctedFields.contains('category') ? fallbackCategory : null,
+      primaryColor: correctedFields.contains('primary_color') ? color : null,
+      colorHexes: correctedFields.contains('dominant_colors')
+          ? colorHexes
+          : null,
+      pattern: correctedFields.contains('pattern') ? pattern : null,
+      silhouette: correctedFields.contains('silhouette') ? silhouette : null,
+      tags: correctedFields.contains('tags') ? tags : null,
+    );
+  }
+
+  ClothingItem _itemFromAnalysis({
+    required String id,
+    required String name,
+    required String? brand,
+    required String imageUrl,
+    required String imagePath,
+    required ClothingCategory fallbackCategory,
+    required List<String> requestedTags,
+    required ClothingAnalysisResult analysis,
+    required Set<String> correctedFields,
+  }) {
+    final now = DateTime.now();
+    final colors = analysis.colorHexes.isEmpty
+        ? const <String>[]
+        : analysis.colorHexes;
+    return ClothingItem(
+      id: id,
+      name: name.isNotEmpty ? name : 'Wardrobe item',
+      brand: brand,
+      category: analysis.category ?? fallbackCategory,
+      subtype: analysis.subtype,
+      imageUrl: imageUrl,
+      imagePath: imagePath,
+      tags: {...requestedTags, ...analysis.tags}.toList(),
+      color: analysis.primaryColor,
+      colorHexes: colors,
+      pattern: analysis.pattern,
+      material: analysis.material,
+      fit: analysis.fit,
+      silhouette: analysis.silhouette,
+      styles: analysis.resolvedStyles,
+      formality: analysis.formality,
+      seasons: analysis.seasons,
+      weatherSuitability: analysis.weatherSuitability,
+      warmthLevel: analysis.warmthLevel,
+      analysisConfidence: analysis.confidence,
+      classificationSource: analysis.classificationSource,
+      colorSource: analysis.colorSource,
+      analysisSource: analysis.source,
+      analysisStatus: analysis.status,
+      analysisVersion: analysis.analysisVersion,
+      correctedFields: correctedFields,
+      userCorrected: correctedFields.isNotEmpty,
+      analyzedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  void _log(String message) {
+    if (kDebugMode) debugPrint('Clothing intelligence: $message');
+  }
+
+  String _wearSource(String value) =>
+      const {'recommended', 'manual', 'in_a_rush'}.contains(value)
+      ? value
+      : 'manual';
+
+  String _safeImageExtension(String name) {
+    final extension = name.split('.').last.toLowerCase();
+    return const {'jpg', 'jpeg', 'png', 'webp', 'heic'}.contains(extension)
+        ? extension
+        : 'jpg';
+  }
+}
+
+Map<String, dynamic> analysisUpdatePayload(ClothingItem item) {
+  final json = item.toJson();
+  for (final key in const [
+    'id',
+    'user_id',
+    'name',
+    'brand',
+    'image_url',
+    'image_path',
+    'wear_count',
+    'last_worn',
+    'created_at',
+    'updated_at',
+  ]) {
+    json.remove(key);
+  }
+  return json;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -31,7 +32,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
     final msg = text ?? _controller.text.trim();
     if (msg.isEmpty) return;
     _controller.clear();
-    ref.read(chatProvider.notifier).sendMessage(msg, ref);
+    ref.read(chatProvider.notifier).sendMessage(msg);
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -49,12 +50,16 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
     final prompts = _quickPrompts(l10n);
     final messages = ref.watch(chatProvider);
     final isTyping = ref.watch(chatTypingProvider);
-    final locked = ref
+    final pendingTurn = ref.watch(chatPendingRetryProvider);
+    final session = ref
         .watch(sessionProvider)
-        .maybeWhen(
-          data: (session) => session.requiresLoginForAi,
-          orElse: () => true,
-        );
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final signedIn = session?.isSupabaseAuthenticated ?? false;
+    final consentGranted = ref
+        .watch(aiConsentProvider)
+        .maybeWhen(data: (value) => value, orElse: () => false);
+    final consentLocked = signedIn && !consentGranted;
+    final locked = !signedIn || consentLocked;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -97,8 +102,11 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                         ),
                       ),
                       Text(
-                        locked
+                        !signedIn
                             ? (l10n?.chatStatusLocked ?? 'Sign in required')
+                            : consentLocked
+                            ? (l10n?.chatStatusConsentRequired ??
+                                  'Consent required')
                             : (l10n?.chatStatusUnlocked ?? 'Always styled'),
                         style: TextStyle(
                           color: Colors.grey.withValues(alpha: 0.6),
@@ -114,10 +122,15 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
             if (locked)
               Expanded(
                 child: _LockedAiState(
-                  title: l10n?.chatLockedTitle ?? 'Fashion AI needs a login',
-                  message:
-                      l10n?.chatLockedMessage ??
-                      'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.',
+                  title: consentLocked
+                      ? (l10n?.chatConsentTitle ??
+                            'Fashion AI needs your consent')
+                      : (l10n?.chatLockedTitle ?? 'Fashion AI needs a login'),
+                  message: consentLocked
+                      ? (l10n?.chatConsentMessage ??
+                            'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.')
+                      : (l10n?.chatLockedMessage ??
+                            'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.'),
                 ),
               )
             else if (messages.length <= 1) ...[
@@ -174,6 +187,12 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   },
                 ),
               ),
+            if (!locked && pendingTurn != null)
+              _RetryChatTurn(
+                message: pendingTurn.userMessage,
+                onRetry: () =>
+                    ref.read(chatProvider.notifier).retryPendingTurn(),
+              ),
             // Input bar
             if (!locked)
               Container(
@@ -221,6 +240,26 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RetryChatTurn extends StatelessWidget {
+  const _RetryChatTurn({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: [
+          Expanded(child: Text(message)),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
       ),
     );
   }

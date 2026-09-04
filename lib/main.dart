@@ -7,16 +7,24 @@ import 'core/config/app_config.dart';
 import 'core/navigation/router.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await notificationService.initialize();
+    await notificationService.restoreDailyReminder();
+  } catch (error) {
+    debugPrint('Notifications are unavailable: $error');
+  }
+
   if (AppConfig.isSupabaseConfigured) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
-      publishableKey: AppConfig.supabaseAnonKey,
+      publishableKey: AppConfig.supabasePublishableKey,
     );
   }
 

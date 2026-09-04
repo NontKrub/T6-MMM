@@ -30,6 +30,176 @@ Deno.test("buildValidOutfitCandidates requires top pants and shoes", () => {
   assertEquals(candidates.length, 0);
 });
 
+Deno.test("signed-in outfit contract keeps dress and ranking directions", () => {
+  const casual = [
+    baseItem({
+      id: "black-tee",
+      category: "top",
+      name: "Black cotton tee",
+      primary_color: "#111111",
+      tags: ["casual", "streetwear"],
+    }),
+    baseItem({
+      id: "blue-jeans",
+      category: "pants",
+      name: "Blue jeans",
+      primary_color: "#3366FF",
+      tags: ["casual", "streetwear"],
+    }),
+    baseItem({
+      id: "white-sneakers",
+      category: "shoes",
+      name: "White sneakers",
+      primary_color: "#FFFFFF",
+      tags: ["casual", "streetwear"],
+    }),
+  ];
+  const formal = [
+    baseItem({ id: "formal-shirt", category: "top", tags: ["formal"] }),
+    baseItem({ id: "formal-trousers", category: "pants", tags: ["formal"] }),
+    baseItem({ id: "formal-shoes", category: "shoes", tags: ["formal"] }),
+  ];
+
+  const casualScore = scoreOutfitCandidate(casual, {
+    style: "streetwear",
+    weather: { temperature_band: "hot" },
+  });
+  const formalScore = scoreOutfitCandidate(formal, {
+    style: "streetwear",
+    weather: { temperature_band: "hot" },
+  });
+  assert(casualScore.score > formalScore.score);
+
+  const candidates = buildValidOutfitCandidates([
+    ...casual,
+    baseItem({ id: "dress", category: "dress", tags: ["casual"] }),
+  ]);
+  assert(
+    candidates.some((candidate) =>
+      candidate.item_ids.includes("dress") &&
+      !candidate.item_ids.includes("black-tee") &&
+      !candidate.item_ids.includes("blue-jeans")
+    ),
+  );
+
+  const repeated = scoreOutfitCandidate(casual, {
+    recentEvents: [{
+      style: "streetwear",
+      colors: [],
+      worn_at: new Date().toISOString(),
+      clothing_item_ids: casual.map((item) => item.id),
+    }],
+  });
+  assert(casualScore.score > repeated.score);
+
+  const rainFriendly = scoreOutfitCandidate([
+    ...casual.slice(0, 2),
+    baseItem({ id: "boots", category: "shoes", name: "Rain boots" }),
+  ], { weather: { rain: true } });
+  const sandals = scoreOutfitCandidate([
+    ...casual.slice(0, 2),
+    baseItem({ id: "sandals", category: "shoes", name: "Open sandals" }),
+  ], { weather: { rain: true } });
+  assert(rainFriendly.score > sandals.score);
+
+  const target = scoreOutfitCandidate(casual, { targetHex: "#111111" });
+  const noTarget = scoreOutfitCandidate(formal, { targetHex: "#FF00FF" });
+  assert(target.score > noTarget.score);
+});
+
+Deno.test("generated outfit selection accepts dress and shoes", () => {
+  const wardrobe = [
+    baseItem({ id: "dress", category: "dress" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+  ];
+  const candidates = buildValidOutfitCandidates(wardrobe);
+  const selected = selectUsableOutfitsFromGenerated(
+    [{
+      name: "Dress outfit",
+      item_ids: ["dress", "shoes"],
+      style: "casual",
+      reason: "A complete one-piece outfit.",
+      score: 80,
+    }],
+    candidates,
+    wardrobe,
+  );
+
+  assertEquals(selected.length, 1);
+  assertEquals(selected[0].item_ids.slice().sort(), ["dress", "shoes"]);
+});
+
+Deno.test("basic outfits can include bags", () => {
+  const candidates = buildValidOutfitCandidates([
+    baseItem({ id: "top", category: "top" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+    baseItem({ id: "bag", category: "bag" }),
+  ]);
+
+  assert(
+    candidates.some((candidate) => candidate.item_ids.includes("bag")),
+  );
+});
+
+Deno.test("signed-in extras do not starve bags", () => {
+  const wardrobe = [
+    baseItem({ id: "top", category: "top" }),
+    baseItem({ id: "pants", category: "pants" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+    baseItem({ id: "bag", category: "bag", wear_count: 5 }),
+    baseItem({ id: "accessory-a", category: "accessory", wear_count: 0 }),
+    baseItem({ id: "accessory-b", category: "accessory", wear_count: 1 }),
+  ];
+  const candidates = buildValidOutfitCandidates(wardrobe);
+
+  assert(
+    candidates.some((candidate) => candidate.item_ids.includes("bag")),
+  );
+  assert(
+    candidates.some((candidate) =>
+      candidate.item_ids.includes("accessory-a")
+    ),
+  );
+});
+
+Deno.test("dress outfits can include bags and outerwear", () => {
+  const wardrobe = [
+    baseItem({ id: "dress", category: "dress" }),
+    baseItem({ id: "shoes", category: "shoes" }),
+    baseItem({ id: "bag", category: "bag" }),
+    baseItem({ id: "jacket", category: "outerwear" }),
+  ];
+  const candidates = buildValidOutfitCandidates(wardrobe);
+
+  assert(
+    candidates.some((candidate) =>
+      candidate.item_ids.includes("dress") &&
+      candidate.item_ids.includes("shoes") &&
+      candidate.item_ids.includes("bag")
+    ),
+  );
+  assert(
+    candidates.some((candidate) =>
+      candidate.item_ids.includes("dress") &&
+      candidate.item_ids.includes("shoes") &&
+      candidate.item_ids.includes("jacket")
+    ),
+  );
+  assert(
+    candidates.every((candidate) => {
+      const categories = new Set(
+        candidate.item_ids.map((id) =>
+          wardrobe.find((item) => item.id === id)?.category
+        ),
+      );
+      return (categories.has("top") && categories.has("pants") &&
+        categories.has("shoes")) ||
+        (categories.has("dress") && categories.has("shoes"));
+    }),
+  );
+});
+
 Deno.test("normalizeMissingPieceItems preserves selected visual context", () => {
   const selected = normalizeMissingPieceItems([
     baseItem({

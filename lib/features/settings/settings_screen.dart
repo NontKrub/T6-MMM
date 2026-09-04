@@ -2,9 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
+import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/locale_provider.dart';
+import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/theme_provider.dart';
+import '../../core/providers/user_profile_provider.dart';
+import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/guest_account_migration_service.dart';
+import '../../core/services/ai_consent_repository.dart';
+import '../../core/services/notification_service.dart';
+import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_container.dart';
 import '../../l10n/app_localizations.dart';
@@ -19,6 +31,8 @@ class SettingsScreen extends ConsumerWidget {
     final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
     final appSettings = ref.watch(appSettingsProvider);
+    final pendingMigration = ref.watch(guestMigrationPendingProvider);
+    final aiConsent = ref.watch(aiConsentProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.settingsTitle ?? 'Settings')),
@@ -76,6 +90,24 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showWeatherLocationSheet(context, ref, l10n),
           ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
 
+          if (SupabaseService.isSignedIn)
+            pendingMigration.when(
+              data: (pending) => pending
+                  ? _SettingsTile(
+                      icon: Icons.cloud_upload_outlined,
+                      iconColor: AppColors.seedColor,
+                      title:
+                          l10n?.settingsImportLocal ?? 'Import local wardrobe',
+                      subtitle:
+                          l10n?.settingsImportLocalSubtitle ??
+                          'Resume importing your guest wardrobe',
+                      onTap: () => _importLocalWardrobe(context, ref, l10n),
+                    ).animate(delay: 175.ms).fadeIn(duration: 300.ms)
+                  : const SizedBox.shrink(),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+
           // Notifications
           _SectionHeader(title: l10n?.settingsNotifications ?? 'Notifications'),
           _SettingsTile(
@@ -83,13 +115,17 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: const Color(0xFF34D399),
             title: l10n?.settingsDailyReminder ?? 'Daily outfit reminder',
             subtitle: appSettings.dailyOutfitReminder
-                ? (l10n?.settingsDarkModeOn ?? 'On')
+                ? '${l10n?.settingsDarkModeOn ?? 'On'} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay(hour: appSettings.dailyOutfitReminderMinutes ~/ 60, minute: appSettings.dailyOutfitReminderMinutes % 60))}'
                 : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
               value: appSettings.dailyOutfitReminder,
-              onChanged: (value) => ref
-                  .read(appSettingsProvider.notifier)
-                  .setDailyOutfitReminder(value),
+              onChanged: (value) => _setDailyOutfitReminder(
+                context,
+                ref,
+                appSettings,
+                l10n,
+                value,
+              ),
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
@@ -102,9 +138,8 @@ class SettingsScreen extends ConsumerWidget {
                 : (l10n?.settingsDarkModeOff ?? 'Off'),
             trailing: Switch(
               value: appSettings.repetitionAlerts,
-              onChanged: (value) => ref
-                  .read(appSettingsProvider.notifier)
-                  .setRepetitionAlerts(value),
+              onChanged: (value) =>
+                  _setRepetitionAlerts(context, ref, l10n, value),
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
@@ -126,21 +161,35 @@ class SettingsScreen extends ConsumerWidget {
               activeThumbColor: AppColors.seedColor,
             ),
           ).animate(delay: 300.ms).fadeIn(duration: 300.ms),
+          _aiConsentTile(
+            context,
+            ref,
+            l10n,
+            aiConsent,
+          ).animate(delay: 325.ms).fadeIn(duration: 300.ms),
 
           // About
           _SectionHeader(title: l10n?.settingsAbout ?? 'About'),
-          _SettingsTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.grey,
-            title: l10n?.settingsVersion ?? 'Version',
-            subtitle: l10n?.settingsVersionValue ?? '1.0.0 (build 1)',
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) => _SettingsTile(
+              icon: Icons.info_outline_rounded,
+              iconColor: Colors.grey,
+              title: l10n?.settingsVersion ?? 'Version',
+              subtitle: snapshot.data == null
+                  ? '—'
+                  : formatApplicationVersion(
+                      snapshot.data!.version,
+                      snapshot.data!.buildNumber,
+                    ),
+            ),
           ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             iconColor: Colors.grey,
             title: l10n?.settingsPrivacy ?? 'Privacy Policy',
             subtitle: l10n?.settingsPrivacy ?? 'Privacy Policy',
-            onTap: () => _showPrivacyDialog(context, l10n),
+            onTap: () => _openPrivacyPolicy(context, l10n),
           ).animate(delay: 400.ms).fadeIn(duration: 300.ms),
         ],
       ),
@@ -282,27 +331,216 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showPrivacyDialog(BuildContext context, AppLocalizations? l10n) {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        final innerL10n = AppLocalizations.of(context);
-        return AlertDialog(
-          title: Text(innerL10n?.settingsPrivacy ?? 'Privacy Policy'),
+  Future<void> _openPrivacyPolicy(
+    BuildContext context,
+    AppLocalizations? l10n,
+  ) async {
+    final uri = Uri.tryParse(AppConfig.privacyPolicyUrl.trim());
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
           content: Text(
-            innerL10n?.settingsPrivacyContent ??
-                'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.',
+            l10n?.settingsPrivacyNotConfigured ??
+                'A public HTTPS privacy-policy URL has not been configured yet.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(innerL10n?.dialogClose ?? 'Close'),
+              child: Text(l10n?.dialogClose ?? 'Close'),
             ),
           ],
-        );
-      },
+        ),
+      );
+      return;
+    }
+
+    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n?.settingsPrivacy ?? 'Privacy Policy')),
     );
   }
+
+  Future<void> _importLocalWardrobe(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    final result = await GuestAccountMigrationService().migrate();
+    ref.invalidate(guestMigrationPendingProvider);
+    if (result.completed) {
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+    }
+    if (!context.mounted) return;
+    final message = result.completed
+        ? result.warnings.isEmpty
+              ? (l10n?.settingsImportLocalComplete ??
+                    'Local wardrobe imported.')
+              : 'Local wardrobe imported with ${result.warnings.length} warning${result.warnings.length == 1 ? '' : 's'}.'
+        : '${l10n?.settingsImportLocalFailed ?? 'Import failed'}: ${result.error}';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Widget _aiConsentTile(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    AsyncValue<bool> consent,
+  ) {
+    final signedIn = SupabaseService.isSignedIn;
+    final granted = consent.maybeWhen(
+      data: (value) => value,
+      orElse: () => false,
+    );
+    return _SettingsTile(
+      icon: Icons.privacy_tip_outlined,
+      iconColor: AppColors.seedColor,
+      title: l10n?.settingsAIConsent ?? 'Third-party AI analysis',
+      subtitle: !signedIn
+          ? (l10n?.settingsAIConsentSignIn ??
+                'Sign in to manage third-party AI consent')
+          : granted
+          ? (l10n?.settingsAIConsentGranted ?? 'Allowed — revoke anytime')
+          : (l10n?.settingsAIConsentOff ??
+                'Off — local and deterministic fallbacks stay available'),
+      trailing: Switch(
+        value: granted,
+        onChanged: signedIn
+            ? (value) => _setAiConsent(context, ref, l10n, value)
+            : null,
+        activeThumbColor: AppColors.seedColor,
+      ),
+    );
+  }
+
+  Future<void> _setAiConsent(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    if (value) {
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
+          content: Text(
+            l10n?.settingsAIConsentMessage ??
+                'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
+            ),
+          ],
+        ),
+      );
+      if (accepted != true) return;
+    }
+
+    try {
+      final repository = AiConsentRepository();
+      if (value) {
+        await repository.grantCurrentConsent();
+      } else {
+        await repository.revokeCurrentConsent();
+      }
+      ref.invalidate(aiConsentProvider);
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  Future<void> _setDailyOutfitReminder(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    final notifier = ref.read(appSettingsProvider.notifier);
+    if (!value) {
+      await notificationService.disableDailyReminder();
+      await notifier.setDailyOutfitReminder(false);
+      return;
+    }
+
+    final current = TimeOfDay(
+      hour: settings.dailyOutfitReminderMinutes ~/ 60,
+      minute: settings.dailyOutfitReminderMinutes % 60,
+    );
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: current,
+    );
+    if (selected == null) return;
+    await notifier.setDailyOutfitReminderMinutes(
+      selected.hour * 60 + selected.minute,
+    );
+    final scheduled = await notificationService.enableDailyReminder(selected);
+    if (!scheduled) {
+      await notifier.setDailyOutfitReminder(false);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsNotificationsPermissionDenied ??
+                'Notifications are disabled. MMM will continue without reminders.',
+          ),
+        ),
+      );
+      return;
+    }
+    await notifier.setDailyOutfitReminder(true);
+  }
+
+  Future<void> _setRepetitionAlerts(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    bool value,
+  ) async {
+    if (value) {
+      final permission = await notificationService.requestPermission();
+      if (!permission) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n?.settingsNotificationsPermissionDenied ??
+                  'Notifications are disabled. MMM will continue without reminders.',
+            ),
+          ),
+        );
+        return;
+      }
+    } else {
+      await notificationService.disableRepetitionAlerts();
+    }
+    await ref.read(appSettingsProvider.notifier).setRepetitionAlerts(value);
+  }
+}
+
+String formatApplicationVersion(String version, String buildNumber) {
+  final normalizedVersion = version.trim();
+  final normalizedBuild = buildNumber.trim();
+  if (normalizedVersion.isEmpty || normalizedBuild.isEmpty) return '—';
+  return '$normalizedVersion (build $normalizedBuild)';
 }
 
 class _SettingsChoice {

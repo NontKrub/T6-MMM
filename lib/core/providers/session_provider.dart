@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
+import '../services/guest_account_migration_service.dart';
 import '../services/local_account_repository.dart';
 import '../services/supabase_service.dart';
 
@@ -22,6 +23,10 @@ final sessionProvider = FutureProvider<AppSession>((ref) async {
     hasGuestAccount: await LocalAccountRepository().hasGuestAccount(),
     isSupabaseAuthenticated: SupabaseService.isSignedIn,
   );
+});
+
+final guestMigrationPendingProvider = FutureProvider<bool>((ref) async {
+  return GuestAccountMigrationService().hasPendingMigration();
 });
 
 final authUnavailableMessageProvider = Provider<String?>((ref) {

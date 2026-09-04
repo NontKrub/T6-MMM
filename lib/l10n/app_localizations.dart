@@ -158,11 +158,23 @@ abstract class AppLocalizations {
   /// **'Get started'**
   String get authGetStarted;
 
+  /// No description provided for @authContinueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get authContinueWithApple;
+
   /// No description provided for @authContinueWithGoogle.
   ///
   /// In en, this message translates to:
   /// **'Continue with Google'**
   String get authContinueWithGoogle;
+
+  /// No description provided for @authContinueWithFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook'**
+  String get authContinueWithFacebook;
 
   /// No description provided for @authContinueAsGuest.
   ///
@@ -175,6 +187,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in is unavailable until Supabase is configured.'**
   String get authUnavailable;
+
+  /// No description provided for @authImportGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import your guest wardrobe?'**
+  String get authImportGuestTitle;
+
+  /// No description provided for @authImportGuestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM found a local guest wardrobe. Import it into this signed-in account?'**
+  String get authImportGuestMessage;
+
+  /// No description provided for @authImportGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Import wardrobe'**
+  String get authImportGuest;
+
+  /// No description provided for @authContinueWithoutImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get authContinueWithoutImport;
+
+  /// No description provided for @authImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local wardrobe import failed'**
+  String get authImportFailed;
 
   /// No description provided for @onboardingStep.
   ///
@@ -596,6 +638,12 @@ abstract class AppLocalizations {
   /// **'Sign in required'**
   String get chatStatusLocked;
 
+  /// No description provided for @chatStatusConsentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Consent required'**
+  String get chatStatusConsentRequired;
+
   /// No description provided for @chatStatusUnlocked.
   ///
   /// In en, this message translates to:
@@ -619,6 +667,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.'**
   String get chatLockedMessage;
+
+  /// No description provided for @authImportingGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing local wardrobe…'**
+  String get authImportingGuest;
+
+  /// No description provided for @chatConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fashion AI needs your consent'**
+  String get chatConsentTitle;
+
+  /// No description provided for @chatConsentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow MMM to send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to its configured AI provider. You can revoke this permission in Settings.'**
+  String get chatConsentMessage;
 
   /// No description provided for @chatPrompt1.
   ///
@@ -692,6 +758,36 @@ abstract class AppLocalizations {
   /// **'Sign Out'**
   String get profileSignOut;
 
+  /// No description provided for @profileDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get profileDeleteAccount;
+
+  /// No description provided for @profileDeleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get profileDeleteAccountTitle;
+
+  /// No description provided for @profileDeleteAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.'**
+  String get profileDeleteAccountMessage;
+
+  /// No description provided for @profileDeleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get profileDeleteAccountConfirm;
+
+  /// No description provided for @profileDeleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion failed'**
+  String get profileDeleteAccountFailed;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -764,11 +860,41 @@ abstract class AppLocalizations {
   /// **'Daily outfit reminder'**
   String get settingsDailyReminder;
 
+  /// No description provided for @settingsNotificationsPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are disabled. MMM will continue without reminders.'**
+  String get settingsNotificationsPermissionDenied;
+
   /// No description provided for @settingsRepetitionAlerts.
   ///
   /// In en, this message translates to:
   /// **'Repetition alerts'**
   String get settingsRepetitionAlerts;
+
+  /// No description provided for @settingsImportLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Import local wardrobe'**
+  String get settingsImportLocal;
+
+  /// No description provided for @settingsImportLocalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume importing your guest wardrobe'**
+  String get settingsImportLocalSubtitle;
+
+  /// No description provided for @settingsImportLocalComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Local wardrobe imported.'**
+  String get settingsImportLocalComplete;
+
+  /// No description provided for @settingsImportLocalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed'**
+  String get settingsImportLocalFailed;
 
   /// No description provided for @settingsAI.
   ///
@@ -788,6 +914,48 @@ abstract class AppLocalizations {
   /// **'AI tracks your choices to improve suggestions'**
   String get settingsLearnPreferencesSubtitle;
 
+  /// No description provided for @settingsAIConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party AI analysis'**
+  String get settingsAIConsent;
+
+  /// No description provided for @settingsAIConsentGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed — revoke anytime'**
+  String get settingsAIConsentGranted;
+
+  /// No description provided for @settingsAIConsentOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off — local and deterministic fallbacks stay available'**
+  String get settingsAIConsentOff;
+
+  /// No description provided for @settingsAIConsentSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to manage third-party AI consent'**
+  String get settingsAIConsentSignIn;
+
+  /// No description provided for @settingsAIConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow third-party AI?'**
+  String get settingsAIConsentTitle;
+
+  /// No description provided for @settingsAIConsentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.'**
+  String get settingsAIConsentMessage;
+
+  /// No description provided for @settingsAIConsentAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow AI analysis'**
+  String get settingsAIConsentAccept;
+
   /// No description provided for @settingsAbout.
   ///
   /// In en, this message translates to:
@@ -803,7 +971,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsVersionValue.
   ///
   /// In en, this message translates to:
-  /// **'1.0.0 (build 1)'**
+  /// **'—'**
   String get settingsVersionValue;
 
   /// No description provided for @settingsPrivacy.
@@ -811,6 +979,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy Policy'**
   String get settingsPrivacy;
+
+  /// No description provided for @settingsPrivacyNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'A public HTTPS privacy-policy URL has not been configured yet.'**
+  String get settingsPrivacyNotConfigured;
 
   /// No description provided for @settingsLanguage.
   ///
@@ -1184,6 +1358,12 @@ abstract class AppLocalizations {
   /// **'Rush outfits need a complete wardrobe first. Add at least one top, one bottom, and one pair of shoes.'**
   String get rushErrorNeedWardrobe;
 
+  /// No description provided for @rushErrorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible rush outfit is available. Add shoes and a top + bottom or a dress.'**
+  String get rushErrorUnavailable;
+
   /// No description provided for @rushErrorSignIn.
   ///
   /// In en, this message translates to:
@@ -1457,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyContent.
   ///
   /// In en, this message translates to:
-  /// **'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase so backend AI features can generate recommendations. API keys and secrets are not stored in the app.'**
+  /// **'Guest profile and wardrobe data stay on this device. Signed-in accounts store wardrobe, outfit, and preference data in Supabase. The app contains public Supabase configuration, while privileged API keys and secrets remain server-side.'**
   String get settingsPrivacyContent;
 
   /// No description provided for @dialogClose.
