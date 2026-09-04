@@ -280,7 +280,14 @@ class GuestAccountMigrationService {
       }
 
       state = await _save(state.copyWith(phase: GuestMigrationPhase.events));
-      eventResult = await _migrateEvents(snapshot, state, user.id);
+      eventResult = await _migrateEvents(
+        snapshot,
+        state,
+        user.id,
+        onWarnings: (warnings) async {
+          state = await _save(state.copyWith(warnings: warnings));
+        },
+      );
       wearEventsMigrated = eventResult.wearIds.length;
       preferenceEventsMigrated = eventResult.preferenceIds.length;
       recommendationEventsMigrated = eventResult.recommendationIds.length;
@@ -369,8 +376,9 @@ class GuestAccountMigrationService {
   Future<_MigrationEventResult> _migrateEvents(
     GuestAccountSnapshot snapshot,
     GuestMigrationState state,
-    String userId,
-  ) async {
+    String userId, {
+    required Future<void> Function(List<String>) onWarnings,
+  }) async {
     final client = _client!;
     final itemById = {for (final item in snapshot.items) item.id: item};
     final wearIds = <String>[];
@@ -381,11 +389,18 @@ class GuestAccountMigrationService {
     var skippedPreferenceEvents = 0;
     var skippedRecommendationEvents = 0;
 
+    Future<void> addWarning(String warning) async {
+      warnings.add(warning);
+      await onWarnings(List.unmodifiable(warnings));
+    }
+
     for (final event in snapshot.wearEvents) {
       final itemIds = tryMapGuestItemIds(event.itemIds, state);
       if (itemIds == null) {
         skippedWearEvents++;
-        warnings.add(_eventWarning('wear', event.itemIds, snapshot.tombstones));
+        await addWarning(
+          _eventWarning('wear', event.itemIds, snapshot.tombstones),
+        );
         continue;
       }
       final colors = event.itemIds
@@ -411,7 +426,7 @@ class GuestAccountMigrationService {
       final itemIds = tryMapGuestItemIds(event.itemIds, state);
       if (itemIds == null) {
         skippedPreferenceEvents++;
-        warnings.add(
+        await addWarning(
           _eventWarning('preference', event.itemIds, snapshot.tombstones),
         );
         continue;
@@ -438,11 +453,16 @@ class GuestAccountMigrationService {
     }
 
     for (final event in snapshot.recommendationEvents) {
-      if (event.eventType == RecommendationEventType.unknown) continue;
+      final unknownWarning = recommendationMigrationWarning(event.eventType);
+      if (unknownWarning != null) {
+        skippedRecommendationEvents++;
+        await addWarning(unknownWarning);
+        continue;
+      }
       final itemIds = tryMapGuestItemIds(event.itemIds, state);
       if (itemIds == null) {
         skippedRecommendationEvents++;
-        warnings.add(
+        await addWarning(
           _eventWarning('recommendation', event.itemIds, snapshot.tombstones),
         );
         continue;
@@ -570,6 +590,11 @@ class GuestAccountMigrationService {
       const {'recommended', 'manual', 'in_a_rush'}.contains(value)
       ? value
       : 'manual';
+}
+
+String? recommendationMigrationWarning(RecommendationEventType eventType) {
+  if (eventType != RecommendationEventType.unknown) return null;
+  return 'Skipped recommendation history because its event type is no longer recognized.';
 }
 
 List<String> mapGuestItemIds(List<String> itemIds, GuestMigrationState state) {

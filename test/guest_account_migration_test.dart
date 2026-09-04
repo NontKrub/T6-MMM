@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/guest_account_migration_service.dart';
 import 'package:mix_match_mood/core/services/local_account_repository.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
+import 'package:mix_match_mood/shared/models/recommendation_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -84,6 +85,17 @@ void main() {
     );
     expect(mapGuestItemIds(['local-item'], state), ['cloud-item']);
     expect(tryMapGuestItemIds(['local-item', 'missing-item'], state), isNull);
+  });
+
+  test('unknown recommendation events produce an explicit migration warning', () {
+    expect(
+      recommendationMigrationWarning(RecommendationEventType.unknown),
+      'Skipped recommendation history because its event type is no longer recognized.',
+    );
+    expect(
+      recommendationMigrationWarning(RecommendationEventType.generated),
+      isNull,
+    );
   });
 
   test(
