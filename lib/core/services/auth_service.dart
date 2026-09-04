@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:functions_client/functions_client.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_config.dart';
@@ -20,6 +21,34 @@ class AppleDeletionCredential {
     'apple_authorization_code': authorizationCode,
     'apple_nonce': rawNonce,
   };
+}
+
+class AccountDeletionException implements Exception {
+  const AccountDeletionException({required this.code, this.status});
+
+  final String code;
+  final int? status;
+}
+
+class AccountDeletionCoordinator {
+  AccountDeletionCoordinator({
+    required this.invokeDeletion,
+    required this.requestAppleCredential,
+  });
+
+  final Future<void> Function(Map<String, String> body) invokeDeletion;
+  final Future<AppleDeletionCredential> Function() requestAppleCredential;
+
+  Future<void> deleteAccount() async {
+    try {
+      await invokeDeletion(const <String, String>{});
+      return;
+    } on AccountDeletionException catch (error) {
+      if (error.code != 'apple_reauthentication_required') rethrow;
+    }
+    final credential = await requestAppleCredential();
+    await invokeDeletion(credential.toJson());
+  }
 }
 
 class AuthService {
@@ -110,27 +139,47 @@ class AuthService {
 
   Future<void> deleteAccount() async {
     final client = _client;
-    final user = client?.auth.currentUser;
-    if (client == null || user == null) {
+    if (client == null || client.auth.currentUser == null) {
       throw StateError('No signed-in account is available to delete.');
     }
 
-    AppleDeletionCredential? appleCredential;
-    final hasAppleIdentity =
-        user.identities?.any((identity) => identity.provider == 'apple') ??
-        false;
-    if (hasAppleIdentity) {
-      appleCredential = await _reauthenticateWithApple();
-    }
-
-    final response = await client.functions.invoke(
-      'delete-account',
-      body: appleCredential?.toJson() ?? const <String, String>{},
-    );
-    if (response.status < 200 || response.status >= 300) {
-      throw StateError('Account deletion failed (${response.status}).');
-    }
+    await AccountDeletionCoordinator(
+      invokeDeletion: _invokeDeleteAccount,
+      requestAppleCredential: _reauthenticateWithApple,
+    ).deleteAccount();
     await client.auth.signOut(scope: SignOutScope.local);
+  }
+
+  Future<void> _invokeDeleteAccount(Map<String, String> body) async {
+    final client = _client!;
+    try {
+      final response = await client.functions.invoke(
+        'delete-account',
+        body: body,
+      );
+      if (response.status < 200 || response.status >= 300) {
+        throw AccountDeletionException(
+          code: _functionErrorCode(response.data) ?? 'account_deletion_failed',
+          status: response.status,
+        );
+      }
+    } on AccountDeletionException {
+      rethrow;
+    } on FunctionException catch (error) {
+      throw AccountDeletionException(
+        code: _functionErrorCode(error.details) ?? 'account_deletion_failed',
+        status: error.status,
+      );
+    } catch (_) {
+      throw const AccountDeletionException(code: 'account_deletion_failed');
+    }
+  }
+
+  String? _functionErrorCode(Object? value) {
+    if (value is Map && value['code'] is String) {
+      return value['code'] as String;
+    }
+    return null;
   }
 
   Future<AppleDeletionCredential> _reauthenticateWithApple() async {

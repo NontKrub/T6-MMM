@@ -24,6 +24,127 @@ void main() {
     });
   });
 
+  test(
+    'account deletion skips Apple UI when the server deletes immediately',
+    () async {
+      final calls = <Map<String, String>>[];
+      var appleCalls = 0;
+      final coordinator = AccountDeletionCoordinator(
+        invokeDeletion: (body) async => calls.add(body),
+        requestAppleCredential: () async {
+          appleCalls++;
+          return const AppleDeletionCredential(
+            authorizationCode: 'code',
+            rawNonce: 'nonce',
+          );
+        },
+      );
+
+      await coordinator.deleteAccount();
+
+      expect(calls, [const <String, String>{}]);
+      expect(appleCalls, 0);
+    },
+  );
+
+  test(
+    'account deletion requests Apple only after the server requires it',
+    () async {
+      final calls = <Map<String, String>>[];
+      var appleCalls = 0;
+      final coordinator = AccountDeletionCoordinator(
+        invokeDeletion: (body) async {
+          calls.add(body);
+          if (calls.length == 1) {
+            throw const AccountDeletionException(
+              code: 'apple_reauthentication_required',
+            );
+          }
+        },
+        requestAppleCredential: () async {
+          appleCalls++;
+          return const AppleDeletionCredential(
+            authorizationCode: 'code',
+            rawNonce: 'nonce',
+          );
+        },
+      );
+
+      await coordinator.deleteAccount();
+
+      expect(appleCalls, 1);
+      expect(calls, [
+        const <String, String>{},
+        {'apple_authorization_code': 'code', 'apple_nonce': 'nonce'},
+      ]);
+    },
+  );
+
+  test(
+    'account deletion retry skips Apple UI after server-side revocation',
+    () async {
+      var appleCalls = 0;
+      final coordinator = AccountDeletionCoordinator(
+        invokeDeletion: (_) async {},
+        requestAppleCredential: () async {
+          appleCalls++;
+          return const AppleDeletionCredential(
+            authorizationCode: 'code',
+            rawNonce: 'nonce',
+          );
+        },
+      );
+
+      await coordinator.deleteAccount();
+
+      expect(appleCalls, 0);
+    },
+  );
+
+  test(
+    'account deletion does not open Apple UI for another backend failure',
+    () async {
+      var appleCalls = 0;
+      final coordinator = AccountDeletionCoordinator(
+        invokeDeletion: (_) async => throw const AccountDeletionException(
+          code: 'account_deletion_failed',
+        ),
+        requestAppleCredential: () async {
+          appleCalls++;
+          return const AppleDeletionCredential(
+            authorizationCode: 'code',
+            rawNonce: 'nonce',
+          );
+        },
+      );
+
+      await expectLater(
+        coordinator.deleteAccount(),
+        throwsA(isA<AccountDeletionException>()),
+      );
+      expect(appleCalls, 0);
+    },
+  );
+
+  test(
+    'account deletion cancellation does not make a second server request',
+    () async {
+      var serverCalls = 0;
+      final coordinator = AccountDeletionCoordinator(
+        invokeDeletion: (_) async {
+          serverCalls++;
+          throw const AccountDeletionException(
+            code: 'apple_reauthentication_required',
+          );
+        },
+        requestAppleCredential: () async => throw StateError('cancelled'),
+      );
+
+      await expectLater(coordinator.deleteAccount(), throwsStateError);
+      expect(serverCalls, 1);
+    },
+  );
+
   testWidgets('iOS shows Apple and Google while keeping Guest visible', (
     tester,
   ) async {
