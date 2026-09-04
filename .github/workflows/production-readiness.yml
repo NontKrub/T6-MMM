@@ -86,6 +86,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.116.0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
       - run: supabase start
       - run: supabase db reset --local
       - run: supabase test db --local
