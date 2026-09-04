@@ -43,6 +43,7 @@ dependencies:
   # Utils
   geolocator: ^14.0.2
   shared_preferences: ^2.3.5
+  package_info_plus: ^10.2.1
   uuid: ^4.5.1
   url_launcher: ^6.3.2
   flutter_local_notifications: ^22.3.0

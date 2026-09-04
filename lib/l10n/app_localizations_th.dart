@@ -464,7 +464,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsVersion => 'เวอร์ชัน';
 
   @override
-  String get settingsVersionValue => '1.0.0 (build 1)';
+  String get settingsVersionValue => '—';
 
   @override
   String get settingsPrivacy => 'นโยบายความเป็นส่วนตัว';

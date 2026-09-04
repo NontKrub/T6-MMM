@@ -468,7 +468,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsVersion => 'Version';
 
   @override
-  String get settingsVersionValue => '1.0.0 (build 1)';
+  String get settingsVersionValue => '—';
 
   @override
   String get settingsPrivacy => 'Privacy Policy';

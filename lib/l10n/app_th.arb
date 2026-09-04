@@ -175,7 +175,7 @@
   "settingsAIConsentAccept": "อนุญาตการวิเคราะห์ด้วย AI",
   "settingsAbout": "เกี่ยวกับ",
   "settingsVersion": "เวอร์ชัน",
-  "settingsVersionValue": "1.0.0 (build 1)",
+  "settingsVersionValue": "—",
   "settingsPrivacy": "นโยบายความเป็นส่วนตัว",
   "settingsPrivacyNotConfigured": "ยังไม่ได้ตั้งค่าลิงก์นโยบายความเป็นส่วนตัวแบบ HTTPS สาธารณะ",
   "settingsLanguage": "ภาษา",

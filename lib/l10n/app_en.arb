@@ -175,7 +175,7 @@
   "settingsAIConsentAccept": "Allow AI analysis",
   "settingsAbout": "About",
   "settingsVersion": "Version",
-  "settingsVersionValue": "1.0.0 (build 1)",
+  "settingsVersionValue": "—",
   "settingsPrivacy": "Privacy Policy",
   "settingsPrivacyNotConfigured": "A public HTTPS privacy-policy URL has not been configured yet.",
   "settingsLanguage": "Language",

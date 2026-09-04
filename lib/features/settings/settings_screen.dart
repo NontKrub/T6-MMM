@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
@@ -169,11 +170,19 @@ class SettingsScreen extends ConsumerWidget {
 
           // About
           _SectionHeader(title: l10n?.settingsAbout ?? 'About'),
-          _SettingsTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.grey,
-            title: l10n?.settingsVersion ?? 'Version',
-            subtitle: l10n?.settingsVersionValue ?? '1.0.0 (build 1)',
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) => _SettingsTile(
+              icon: Icons.info_outline_rounded,
+              iconColor: Colors.grey,
+              title: l10n?.settingsVersion ?? 'Version',
+              subtitle: snapshot.data == null
+                  ? '—'
+                  : formatApplicationVersion(
+                      snapshot.data!.version,
+                      snapshot.data!.buildNumber,
+                    ),
+            ),
           ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
@@ -525,6 +534,13 @@ class SettingsScreen extends ConsumerWidget {
     }
     await ref.read(appSettingsProvider.notifier).setRepetitionAlerts(value);
   }
+}
+
+String formatApplicationVersion(String version, String buildNumber) {
+  final normalizedVersion = version.trim();
+  final normalizedBuild = buildNumber.trim();
+  if (normalizedVersion.isEmpty || normalizedBuild.isEmpty) return '—';
+  return '$normalizedVersion (build $normalizedBuild)';
 }
 
 class _SettingsChoice {

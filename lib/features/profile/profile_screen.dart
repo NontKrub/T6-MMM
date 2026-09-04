@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
+import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
@@ -23,6 +24,8 @@ class ProfileScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final profile = ref.watch(userProfileProvider);
     final wardrobe = ref.watch(wardrobeProvider);
+    final outfits = ref.watch(outfitsProvider);
+    final uniqueOutfitIds = outfits.map((outfit) => outfit.id).toSet();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.profileTitle ?? 'Profile')),
@@ -87,7 +90,10 @@ class ProfileScreen extends ConsumerWidget {
                   label: l10n?.profileItems ?? 'Items',
                 ),
                 const SizedBox(width: 12),
-                _StatCard(value: '5', label: l10n?.profileOutfits ?? 'Outfits'),
+                _StatCard(
+                  value: '${uniqueOutfitIds.length}',
+                  label: l10n?.profileOutfits ?? 'Outfits',
+                ),
                 const SizedBox(width: 12),
                 _StatCard(
                   value: wardrobe.isNotEmpty
