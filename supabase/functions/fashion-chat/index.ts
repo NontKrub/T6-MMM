@@ -13,13 +13,51 @@ type Body = {
   thread_id?: string;
 };
 
-Deno.serve(async (req) => {
+type ChatAiRequest = {
+  instructions: string;
+  input: unknown;
+  responseFormat: {
+    type: "json_schema";
+    name: string;
+    schema: Record<string, unknown>;
+    strict: boolean;
+  };
+};
+
+type ChatAiCaller = (
+  params: ChatAiRequest,
+) => Promise<{ reply: string; title: string }>;
+
+export type FashionChatDependencies = {
+  requireUser: typeof requireUser;
+  hasAiConsent: typeof hasAiConsent;
+  openAiJson: ChatAiCaller;
+};
+
+const defaultDependencies: FashionChatDependencies = {
+  requireUser,
+  hasAiConsent,
+  openAiJson: (params) => openAiJson<{ reply: string; title: string }>(params),
+};
+
+if (import.meta.main) {
+  Deno.serve((req) => handleFashionChat(req));
+}
+
+export async function handleFashionChat(
+  req: Request,
+  overrides: Partial<FashionChatDependencies> = {},
+): Promise<Response> {
+  const dependencies: FashionChatDependencies = {
+    ...defaultDependencies,
+    ...overrides,
+  };
   const options = handleOptions(req);
   if (options) return options;
 
   try {
-    const { supabase, userId } = await requireUser(req);
-    if (!await hasAiConsent(supabase, userId)) {
+    const { supabase, userId } = await dependencies.requireUser(req);
+    if (!await dependencies.hasAiConsent(supabase, userId)) {
       return jsonResponse({
         error: "Third-party AI consent is required for fashion chat.",
         code: "ai_consent_required",
@@ -71,7 +109,7 @@ Deno.serve(async (req) => {
     if (wardrobeResult.error) throw wardrobeResult.error;
     if (recentMessagesResult.error) throw recentMessagesResult.error;
 
-    const result = await openAiJson<{ reply: string; title: string }>({
+    const result = await dependencies.openAiJson({
       instructions:
         "You are Mix Match Mood's fashion assistant. Answer conversationally, identify style names when asked, and use the user's wardrobe context only when relevant. Keep advice concise and actionable.",
       input: [{
@@ -114,4 +152,4 @@ Deno.serve(async (req) => {
       error: error instanceof Error ? error.message : "Unknown error",
     }, 500);
   }
-});
+}
