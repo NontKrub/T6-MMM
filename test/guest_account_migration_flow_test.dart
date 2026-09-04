@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
 import 'package:mix_match_mood/core/services/guest_account_migration_service.dart';
 import 'package:mix_match_mood/core/services/local_account_repository.dart';
 import 'package:mix_match_mood/core/services/profile_repository.dart';
@@ -44,14 +42,19 @@ void main() {
         createdAt: DateTime.utc(2026, 9, 4),
       ),
     );
-    // Keep the fixture honest: this is the legacy record the migration must report.
+    // Keep the fixture honest: this is the legacy record being migrated.
     expect(await local.fetchRecommendationEvents(), hasLength(1));
 
     final api = _MigrationApi(failNextDownload: true);
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final serverSubscription = server.listen(api.handle);
+    addTearDown(() async {
+      await serverSubscription.cancel();
+      await server.close(force: true);
+    });
     final client = SupabaseClient(
-      'http://mmm-migration.test',
+      'http://${server.address.host}:${server.port}',
       'test-publishable-key',
-      httpClient: api,
     );
     addTearDown(client.dispose);
     await client.auth.signInWithPassword(
@@ -97,7 +100,7 @@ void main() {
   });
 }
 
-class _MigrationApi extends http.BaseClient {
+class _MigrationApi {
   _MigrationApi({required this.failNextDownload});
 
   final String userId = 'cloud-user';
@@ -106,10 +109,9 @@ class _MigrationApi extends http.BaseClient {
   Map<String, dynamic>? clothingItem;
   final uploadedItemIds = <String>[];
 
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final body = await request.finalize().bytesToString();
-    final path = request.url.path;
+  Future<void> handle(HttpRequest request) async {
+    final body = await utf8.decoder.bind(request).join();
+    final path = request.uri.path;
     if (path.endsWith('/auth/v1/token')) {
       return _jsonResponse(request, 200, {
         'access_token': _jwt(),
@@ -128,23 +130,15 @@ class _MigrationApi extends http.BaseClient {
           failNextDownload = false;
           return _jsonResponse(request, 500, {'message': 'download failed'});
         }
-        return http.StreamedResponse(
-          Stream.value([1, 2, 3]),
-          200,
-          headers: const {'content-type': 'application/octet-stream'},
-          request: request,
-        );
+        return _bytesResponse(request, 200, [1, 2, 3]);
       }
       return _jsonResponse(request, 200, {'Key': path});
     }
     return _jsonResponse(request, 404, {'message': 'unexpected request'});
   }
 
-  Future<http.StreamedResponse> _restResponse(
-    http.BaseRequest request,
-    String body,
-  ) async {
-    final table = request.url.pathSegments.last;
+  Future<void> _restResponse(HttpRequest request, String body) async {
+    final table = request.uri.pathSegments.last;
     if (request.method == 'GET') {
       switch (table) {
         case 'profiles':
@@ -186,17 +180,28 @@ class _MigrationApi extends http.BaseClient {
     return _jsonResponse(request, 200, []);
   }
 
-  http.StreamedResponse _jsonResponse(
-    http.BaseRequest request,
+  Future<void> _jsonResponse(
+    HttpRequest request,
     int status,
     Object body,
-  ) {
-    return http.StreamedResponse(
-      Stream.value(utf8.encode(jsonEncode(body))),
-      status,
-      headers: const {'content-type': 'application/json'},
-      request: request,
-    );
+  ) async {
+    request.response
+      ..statusCode = status
+      ..headers.contentType = ContentType.json
+      ..add(utf8.encode(jsonEncode(body)));
+    await request.response.close();
+  }
+
+  Future<void> _bytesResponse(
+    HttpRequest request,
+    int status,
+    List<int> body,
+  ) async {
+    request.response
+      ..statusCode = status
+      ..headers.contentType = ContentType.binary
+      ..add(body);
+    await request.response.close();
   }
 
   Map<String, dynamic> _profileJson() => {
