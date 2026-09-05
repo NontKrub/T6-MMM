@@ -22,7 +22,7 @@ class FloatingNavBar extends StatelessWidget {
   static double contentInset(BuildContext context) {
     return heightFor(context) +
         AppSpacing.md +
-        MediaQuery.paddingOf(context).bottom;
+        MediaQuery.viewPaddingOf(context).bottom;
   }
 
   static const _tabPaths = ['/home', '/wardrobe', '/missing', '/chat'];

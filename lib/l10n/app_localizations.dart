@@ -734,6 +734,12 @@ abstract class AppLocalizations {
   /// **'Good morning, {name}'**
   String homeGreeting(String name);
 
+  /// No description provided for @homeGreetingGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingGeneric;
+
   /// No description provided for @homePrompt.
   ///
   /// In en, this message translates to:

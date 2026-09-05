@@ -128,6 +128,7 @@
   "homeCustomize": "ปรับแต่ง",
   "homeGenerateOutfit": "สร้างชุด",
   "homeGreeting": "สวัสดีตอนเช้า {name}",
+  "homeGreetingGeneric": "สวัสดีตอนเช้า",
   "homePrompt": "วันนี้จะแต่งตัวแบบไหนดี?",
 
   "wardrobeTitle": "ตู้เสื้อผ้า",

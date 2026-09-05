@@ -131,6 +131,7 @@
   "@homeGreeting": {
     "placeholders": {"name": {"type": "String"}}
   },
+  "homeGreetingGeneric": "Good morning",
   "homePrompt": "What are we wearing today?",
 
   "wardrobeTitle": "Wardrobe",

@@ -55,6 +55,10 @@ class HomeScreen extends ConsumerWidget {
                 constraints.maxHeight * avatarScale,
               ),
             );
+            final regularAvatarHeight = math.min(
+              360.0,
+              math.max(280.0, constraints.maxHeight * 0.42),
+            );
             final header = Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
@@ -125,8 +129,10 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n?.homeGreeting(profile.name) ??
-                        'Good morning, ${profile.name}',
+                    profile.name.trim().isEmpty
+                        ? (l10n?.homeGreetingGeneric ?? 'Good morning')
+                        : (l10n?.homeGreeting(profile.name) ??
+                              'Good morning, ${profile.name}'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -204,14 +210,25 @@ class HomeScreen extends ConsumerWidget {
                 AppBreakpoints.largeText(context) ||
                 constraints.maxHeight < 620;
             if (!compactLayout) {
-              return Column(
-                children: [
-                  header,
-                  const SizedBox(height: AppSpacing.sm),
-                  prompt,
-                  Expanded(child: avatar),
-                  actions,
-                ],
+              return ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  children: [
+                    header,
+                    const SizedBox(height: AppSpacing.sm),
+                    prompt,
+                    Expanded(
+                      child: Center(
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: regularAvatarHeight,
+                          child: avatar,
+                        ),
+                      ),
+                    ),
+                    actions,
+                  ],
+                ),
               );
             }
             return SingleChildScrollView(

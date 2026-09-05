@@ -345,6 +345,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get homeGreetingGeneric => 'Good morning';
+
+  @override
   String get homePrompt => 'What are we wearing today?';
 
   @override
