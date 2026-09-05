@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "generator": "tools/avatar/build_avatar.py",
+  "models": {
+    "female": "assets/avatar/human_female_v1.glb",
+    "male": "assets/avatar/human_male_v1.glb"
+  },
+  "posters": {
+    "female": "assets/avatar/posters/human_female.png",
+    "male": "assets/avatar/posters/human_male.png"
+  },
+  "templates": [
+    "hat",
+    "regular_tee",
+    "fitted_top",
+    "oversized_top",
+    "shirt_blouse",
+    "sweater_hoodie",
+    "jacket",
+    "blazer",
+    "coat",
+    "regular_pants",
+    "slim_pants",
+    "wide_leg_pants",
+    "shorts",
+    "skirt",
+    "straight_dress",
+    "a_line_dress",
+    "sneaker",
+    "dress_shoe",
+    "boot",
+    "bag",
+    "accessory"
+  ],
+  "animations": [
+    "idle",
+    "blink",
+    "wave",
+    "look",
+    "outfit_reveal"
+  ],
+  "hairStyles": 6,
+  "skinTones": 7,
+  "hairColors": 6,
+  "materials": {
+    "body": "MMM_BODY__skin",
+    "hair": "MMM_HAIR__style_{style}__base",
+    "garment": "MMM_GARMENT__{template}__base"
+  },
+  "sha256": {
+    "female": "075eac1fea5e2e40c74535e676b68b36e1e978199db4cc7fc24154d6defa070d",
+    "male": "c00df9f16d0dbcfb2447625c2d1a224f530ce4bf213d8aef8cf9ba3d5082dcc7"
+  }
+}

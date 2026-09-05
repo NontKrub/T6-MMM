@@ -1,0 +1,8 @@
+{
+  "name": "mmm-avatar-asset-validation",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "gltf-validator": "2.0.0-dev.3.10"
+  }
+}

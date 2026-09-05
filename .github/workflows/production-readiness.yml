@@ -18,6 +18,17 @@ env:
   FLUTTER_VERSION: 3.44.8
 
 jobs:
+  avatar-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          cache: npm
+          cache-dependency-path: tools/avatar/package-lock.json
+      - run: tools/avatar/validate_assets.sh
+
   format:
     runs-on: ubuntu-latest
     steps:
