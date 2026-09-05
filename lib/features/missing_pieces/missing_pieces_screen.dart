@@ -21,6 +21,23 @@ final missingPiecesProvider =
       return RecommendationRepository().generateMissingPieces();
     });
 
+String _localizedMissingCategory(
+  AppLocalizations? l10n,
+  ClothingCategory category,
+) => switch (category) {
+  ClothingCategory.hat => l10n?.clothingCategoryHat ?? category.label,
+  ClothingCategory.top => l10n?.clothingCategoryTop ?? category.label,
+  ClothingCategory.pants => l10n?.clothingCategoryPants ?? category.label,
+  ClothingCategory.shoes => l10n?.clothingCategoryShoes ?? category.label,
+  ClothingCategory.outerwear =>
+    l10n?.clothingCategoryOuterwear ?? category.label,
+  ClothingCategory.dress => l10n?.clothingCategoryDress ?? category.label,
+  ClothingCategory.bag => l10n?.clothingCategoryBag ?? category.label,
+  ClothingCategory.accessory =>
+    l10n?.clothingCategoryAccessory ?? category.label,
+  ClothingCategory.unknown => l10n?.clothingCategoryUnknown ?? category.label,
+};
+
 class MissingPiecesScreen extends ConsumerStatefulWidget {
   const MissingPiecesScreen({super.key});
 
@@ -315,11 +332,78 @@ class _RecommendationCard extends StatefulWidget {
 
 class _RecommendationCardState extends State<_RecommendationCard> {
   bool _expanded = false;
+
+  String _title(AppLocalizations? l10n) {
+    final rec = widget.rec;
+    if (rec.id == 'local-selection-shoes') {
+      return l10n?.missingSelectionShoesTitle ?? 'Add neutral shoes';
+    }
+    if (rec.id.startsWith('local-item-') && rec.title.startsWith('Try ')) {
+      return l10n?.missingTryItem(rec.title.substring(4)) ?? rec.title;
+    }
+    if (rec.id == 'local-accessory' || rec.id.startsWith('local-')) {
+      final category = clothingCategoryFromString(rec.category);
+      if (category != ClothingCategory.unknown) {
+        return l10n?.missingAddCategory(
+              _localizedMissingCategory(l10n, category),
+            ) ??
+            'Add ${category.label.toLowerCase()}';
+      }
+    }
+    return rec.title;
+  }
+
+  String _priority(AppLocalizations? l10n) => switch (widget.rec.priority) {
+    'essential' => l10n?.missingPriorityEssential ?? 'Essential',
+    'recommended' => l10n?.missingPriorityRecommended ?? 'Recommended',
+    'nice_to_have' => l10n?.missingPriorityNiceToHave ?? 'Nice to have',
+    'high_impact' => l10n?.missingPriorityHighImpact ?? 'High impact',
+    _ => widget.rec.priority,
+  };
+
+  String _reason(AppLocalizations? l10n) => switch (widget.rec.reason) {
+    'Your wardrobe needs this category for complete outfits.' =>
+      l10n?.missingReasonCategory ??
+          'Your wardrobe needs this category for complete outfits.',
+    'Your selected top and pants need shoes to complete the outfit.' =>
+      l10n?.missingSelectionShoesReason ??
+          'Your selected top and pants need shoes to complete the outfit.',
+    'A simple piece balances the selected patterns.' =>
+      l10n?.missingReasonPattern ??
+          'A simple piece balances the selected patterns.',
+    'Its colors and style fit the selected top and pants.' =>
+      l10n?.missingReasonColors ??
+          'Its colors and style fit the selected top and pants.',
+    'Your base wardrobe is complete but has no finishing piece.' =>
+      l10n?.missingAccessoryReason ??
+          'Your base wardrobe is complete but has no finishing piece.',
+    _ => widget.rec.reason,
+  };
+
+  String _suggestion(AppLocalizations? l10n) => switch (widget.rec.suggestion) {
+    'Choose a versatile neutral piece you will wear often.' =>
+      l10n?.missingSuggestionNeutral ??
+          'Choose a versatile neutral piece you will wear often.',
+    'Try white, black, gray, beige, or brown footwear.' =>
+      l10n?.missingSelectionShoesSuggestion ??
+          'Try white, black, gray, beige, or brown footwear.',
+    'This neutral piece keeps the outfit balanced.' =>
+      l10n?.missingSuggestionBalanced ??
+          'This neutral piece keeps the outfit balanced.',
+    'Use this piece as the outfit accent.' =>
+      l10n?.missingSuggestionAccent ?? 'Use this piece as the outfit accent.',
+    'Try a neutral belt, bag, watch, or scarf.' =>
+      l10n?.missingAccessorySuggestion ??
+          'Try a neutral belt, bag, watch, or scarf.',
+    _ => widget.rec.suggestion,
+  };
+
   @override
   Widget build(BuildContext context) {
     final brand = MmmBrandTheme.of(context);
     final rec = widget.rec;
     final category = clothingCategoryFromString(rec.category);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: MmmSurfaceCard(
@@ -346,11 +430,11 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        rec.title,
+                        _title(l10n),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
-                        rec.priority,
+                        _priority(l10n),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: brand.primaryGradient.colors.first,
                         ),
@@ -376,10 +460,13 @@ class _RecommendationCardState extends State<_RecommendationCard> {
               ),
             ),
             if (_expanded) ...[
-              Text(rec.reason, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                _reason(l10n),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                rec.suggestion,
+                _suggestion(l10n),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],

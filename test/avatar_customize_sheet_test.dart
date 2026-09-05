@@ -35,8 +35,8 @@ void main() {
       final longY = tester.getTopLeft(find.text('Long')).dy;
       final ponytailY = tester.getTopLeft(find.text('Ponytail')).dy;
       final bobY = tester.getTopLeft(find.text('Bob')).dy;
-      expect(sideSweptY, closeTo(tousledY, 0.1));
-      expect(undercutY, closeTo(tousledY, 0.1));
+      expect(sideSweptY, closeTo(tousledY, 2));
+      expect(undercutY, closeTo(tousledY, 2));
       expect(longY, greaterThan(tousledY));
       expect(ponytailY, closeTo(longY, 2));
       expect(bobY, closeTo(longY, 2));

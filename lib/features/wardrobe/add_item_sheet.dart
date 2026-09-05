@@ -463,106 +463,123 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   ),
                   const SizedBox(height: 20),
                   // Image picker
-                  Semantics(
-                    key: const Key('add-item-image-picker'),
-                    button: true,
-                    label: l10n?.addItemTapToAddPhoto ?? 'Add clothing photo',
-                    child: Material(
-                      color: brand.subtleAccentSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadii.cardBorder,
-                        side: BorderSide(color: brand.subtleBorder),
-                      ),
-                      child: InkWell(
-                        onTap: _saving || _analyzing
-                            ? null
-                            : () {
-                                final source = widget.quickPickSource;
-                                if (source != null) {
-                                  _pickImage(source);
-                                  return;
-                                }
-                                _showSourcePicker(context, l10n);
-                              },
-                        borderRadius: AppRadii.cardBorder,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 160),
-                          child: _saving || _analyzing
-                              ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    MmmLoadingIndicator(
-                                      label: _analyzing
-                                          ? (l10n?.addItemAnalysisReading ??
-                                                'MMM is reading this piece…')
-                                          : (l10n?.addItemSaving ??
-                                                'Saving...'),
-                                    ),
-                                  ],
-                                )
-                              : _imagePath != null
-                              ? Stack(
-                                  key: const Key('add-item-preview-image'),
-                                  alignment: Alignment.center,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: AppRadii.cardBorder,
-                                      child: Image.file(
-                                        File(_imagePath!),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: 160,
-                                      ),
-                                    ),
-                                    if (_isSignedIn && _category != null)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
+                  SizedBox(
+                    width: double.infinity,
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: Semantics(
+                        key: const Key('add-item-image-picker'),
+                        button: true,
+                        label:
+                            l10n?.addItemTapToAddPhoto ?? 'Add clothing photo',
+                        child: Material(
+                          color: brand.subtleAccentSurface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadii.cardBorder,
+                            side: BorderSide(color: brand.subtleBorder),
+                          ),
+                          child: InkWell(
+                            onTap: _saving || _analyzing
+                                ? null
+                                : () {
+                                    final source = widget.quickPickSource;
+                                    if (source != null) {
+                                      _pickImage(source);
+                                      return;
+                                    }
+                                    _showSourcePicker(context, l10n);
+                                  },
+                            borderRadius: AppRadii.cardBorder,
+                            child: SizedBox.expand(
+                              child: _saving || _analyzing
+                                  ? Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        MmmLoadingIndicator(
+                                          label: _analyzing
+                                              ? (l10n?.addItemAnalysisReading ??
+                                                    'MMM is reading this piece…')
+                                              : (l10n?.addItemSaving ??
+                                                    'Saving...'),
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                      ],
+                                    )
+                                  : _imagePath != null
+                                  ? Stack(
+                                      key: const Key('add-item-preview-image'),
+                                      alignment: Alignment.center,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: AppRadii.cardBorder,
+                                          child: Image.file(
+                                            File(_imagePath!),
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
                                           ),
                                         ),
-                                        child: Text(
-                                          l10n?.addItemCategoryLabel(
-                                                _localizedCategory(
-                                                  l10n,
-                                                  _category!,
-                                                ),
-                                              ) ??
-                                              'Category: ${_localizedCategory(l10n, _category!)}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 13,
+                                        if (_isSignedIn && _category != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.6,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              l10n?.addItemCategoryLabel(
+                                                    _localizedCategory(
+                                                      l10n,
+                                                      _category!,
+                                                    ),
+                                                  ) ??
+                                                  'Category: ${_localizedCategory(l10n, _category!)}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: Colors.white,
+                                                  ),
+                                            ),
                                           ),
+                                      ],
+                                    )
+                                  : Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_photo_alternate_rounded,
+                                          size: 36,
+                                          color: brand
+                                              .primaryGradient
+                                              .colors
+                                              .first,
                                         ),
-                                      ),
-                                  ],
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_photo_alternate_rounded,
-                                      size: 36,
-                                      color: brand.primaryGradient.colors.first,
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          l10n?.addItemTapToAddPhoto ??
+                                              'Tap to add photo',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.copyWith(
+                                                color: brand
+                                                    .primaryGradient
+                                                    .colors
+                                                    .first,
+                                              ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      l10n?.addItemTapToAddPhoto ??
-                                          'Tap to add photo',
-                                      style: TextStyle(
-                                        color:
-                                            brand.primaryGradient.colors.first,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -580,7 +597,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                       child: Text(
                         l10n?.addItemCategoryRequired ?? 'Select category',
                         key: Key('add-item-category-required'),
-                        style: TextStyle(color: brand.warning),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: brand.warning),
                       ),
                     ),
                   Wrap(

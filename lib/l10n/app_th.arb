@@ -163,6 +163,29 @@
   "missingAnalyze": "วิเคราะห์ช่องว่าง",
   "missingLoading": "กำลังค้นหาช่องว่าง…",
   "missingTryAgain": "ลองอีกครั้งในอีกสักครู่",
+  "missingAddCategory": "เพิ่ม{category}",
+  "missingSelectionShoesTitle": "เพิ่มรองเท้าสีพื้น",
+  "missingReasonCategory": "ตู้เสื้อผ้าของคุณต้องมีหมวดหมู่นี้เพื่อให้จัดชุดได้ครบ",
+  "missingSuggestionNeutral": "เลือกชิ้นสีพื้นอเนกประสงค์ที่คุณจะใส่บ่อย",
+  "missingSelectionShoesReason": "เสื้อและกางเกงที่เลือกต้องมีรองเท้าเพื่อให้ชุดสมบูรณ์",
+  "missingSelectionShoesSuggestion": "ลองรองเท้าสีขาว ดำ เทา เบจ หรือน้ำตาล",
+  "missingReasonPattern": "ชิ้นเรียบช่วยให้ลวดลายที่เลือกสมดุล",
+  "missingReasonColors": "สีและสไตล์เข้ากับเสื้อและกางเกงที่เลือก",
+  "missingSuggestionBalanced": "ชิ้นสีพื้นนี้ช่วยให้ชุดดูสมดุล",
+  "missingSuggestionAccent": "ใช้ชิ้นนี้เป็นสีเด่นของชุด",
+  "missingAccessoryReason": "ตู้เสื้อผ้าพื้นฐานของคุณครบแล้ว แต่ยังขาดชิ้นปิดท้าย",
+  "missingAccessorySuggestion": "ลองเข็มขัด กระเป๋า นาฬิกา หรือผ้าพันคอสีพื้น",
+  "missingTryItem": "ลอง{name}",
+  "missingPriorityEssential": "จำเป็น",
+  "missingPriorityRecommended": "แนะนำ",
+  "missingPriorityNiceToHave": "ควรมี",
+  "missingPriorityHighImpact": "สำคัญมาก",
+  "@missingAddCategory": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "@missingTryItem": {
+    "placeholders": {"name": {"type": "String"}}
+  },
 
   "chatTitle": "Fashion AI",
   "chatStatusLocked": "ต้องเข้าสู่ระบบ",

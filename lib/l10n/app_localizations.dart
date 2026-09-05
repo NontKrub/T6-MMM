@@ -902,6 +902,108 @@ abstract class AppLocalizations {
   /// **'Try again in a moment.'**
   String get missingTryAgain;
 
+  /// No description provided for @missingAddCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {category}'**
+  String missingAddCategory(String category);
+
+  /// No description provided for @missingSelectionShoesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add neutral shoes'**
+  String get missingSelectionShoesTitle;
+
+  /// No description provided for @missingReasonCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe needs this category for complete outfits.'**
+  String get missingReasonCategory;
+
+  /// No description provided for @missingSuggestionNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a versatile neutral piece you will wear often.'**
+  String get missingSuggestionNeutral;
+
+  /// No description provided for @missingSelectionShoesReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your selected top and pants need shoes to complete the outfit.'**
+  String get missingSelectionShoesReason;
+
+  /// No description provided for @missingSelectionShoesSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Try white, black, gray, beige, or brown footwear.'**
+  String get missingSelectionShoesSuggestion;
+
+  /// No description provided for @missingReasonPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'A simple piece balances the selected patterns.'**
+  String get missingReasonPattern;
+
+  /// No description provided for @missingReasonColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Its colors and style fit the selected top and pants.'**
+  String get missingReasonColors;
+
+  /// No description provided for @missingSuggestionBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'This neutral piece keeps the outfit balanced.'**
+  String get missingSuggestionBalanced;
+
+  /// No description provided for @missingSuggestionAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this piece as the outfit accent.'**
+  String get missingSuggestionAccent;
+
+  /// No description provided for @missingAccessoryReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your base wardrobe is complete but has no finishing piece.'**
+  String get missingAccessoryReason;
+
+  /// No description provided for @missingAccessorySuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a neutral belt, bag, watch, or scarf.'**
+  String get missingAccessorySuggestion;
+
+  /// No description provided for @missingTryItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Try {name}'**
+  String missingTryItem(String name);
+
+  /// No description provided for @missingPriorityEssential.
+  ///
+  /// In en, this message translates to:
+  /// **'Essential'**
+  String get missingPriorityEssential;
+
+  /// No description provided for @missingPriorityRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get missingPriorityRecommended;
+
+  /// No description provided for @missingPriorityNiceToHave.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice to have'**
+  String get missingPriorityNiceToHave;
+
+  /// No description provided for @missingPriorityHighImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'High impact'**
+  String get missingPriorityHighImpact;
+
   /// No description provided for @chatTitle.
   ///
   /// In en, this message translates to:

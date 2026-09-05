@@ -59,68 +59,74 @@ class HomeScreen extends ConsumerWidget {
               360.0,
               math.max(280.0, constraints.maxHeight * 0.42),
             );
-            final header = Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                0,
-              ),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Semantics(
-                      button: true,
-                      label: l10n?.commonProfile ?? 'Open profile',
-                      child: Material(
-                        color: brand.raisedSurface,
-                        borderRadius: AppRadii.controlBorder,
-                        child: InkWell(
-                          onTap: () => context.push('/profile'),
+            final header = SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.lg,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Semantics(
+                        button: true,
+                        label: l10n?.commonProfile ?? 'Open profile',
+                        child: Material(
+                          color: brand.raisedSurface,
                           borderRadius: AppRadii.controlBorder,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSpacing.xs),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor:
-                                      brand.primaryGradient.colors.first,
-                                  child: Text(
-                                    profile.name.isNotEmpty
-                                        ? profile.name[0]
-                                        : 'A',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
+                          child: InkWell(
+                            onTap: () => context.push('/profile'),
+                            borderRadius: AppRadii.controlBorder,
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.xs),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor:
+                                        brand.primaryGradient.colors.first,
+                                    child: Text(
+                                      profile.name.isNotEmpty
+                                          ? profile.name[0]
+                                          : 'A',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: AppSpacing.xs),
-                                Flexible(
-                                  child: Text(
-                                    profile.name,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge,
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Flexible(
+                                    child: Text(
+                                      profile.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: l10n?.commonSettings ?? 'Settings',
-                    onPressed: () => context.push('/settings'),
-                    icon: const Icon(Icons.settings_rounded),
-                  ),
-                ],
+                    const Spacer(),
+                    IconButton(
+                      tooltip: l10n?.commonSettings ?? 'Settings',
+                      onPressed: () => context.push('/settings'),
+                      icon: const Icon(Icons.settings_rounded),
+                    ),
+                  ],
+                ),
               ),
             );
             final prompt = Padding(
@@ -507,15 +513,15 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                 const SizedBox(height: 6),
                                 Text(
                                   _localizedAvatarLabel(l10n, label),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: selected
-                                        ? Colors.white
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: selected
+                                            ? Colors.white
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                                 if (selected) ...[
                                   const SizedBox(height: 4),
@@ -602,15 +608,15 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                                   const SizedBox(height: 6),
                                   Text(
                                     _localizedBodyShapeLabel(l10n, label),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: sel
-                                          ? Colors.white
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: sel
+                                              ? Colors.white
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                        ),
                                   ),
                                   if (sel) ...[
                                     const SizedBox(height: 4),
@@ -640,8 +646,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                     crossAxisCount: 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: AppSpacing.xs,
-                    mainAxisSpacing: AppSpacing.xs,
+                    crossAxisSpacing: AppSpacing.xxs,
+                    mainAxisSpacing: AppSpacing.xxs,
                     mainAxisExtent: AppBreakpoints.veryLargeText(context)
                         ? 96
                         : AppBreakpoints.largeText(context)
@@ -661,45 +667,52 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                               .read(userProfileProvider.notifier)
                               .updateHairStyleIndex(i);
                         },
-                        child: AnimatedContainer(
-                          duration: AppMotion.duration(
-                            context,
-                            const Duration(milliseconds: 200),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: sel ? brand.primaryGradient : null,
-                            color: sel ? null : brand.subtleAccentSurface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: sel
-                                ? null
-                                : Border.all(color: brand.subtleBorder),
-                            boxShadow: sel
-                                ? [
-                                    BoxShadow(
-                                      color: brand.primaryGradient.colors.first
-                                          .withValues(alpha: 0.20),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Text(
-                            _localizedHairStyle(l10n, _hairStyleKeys[i]),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: sel
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: sel
-                                  ? Colors.white
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: AnimatedContainer(
+                            duration: AppMotion.duration(
+                              context,
+                              const Duration(milliseconds: 200),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: sel ? brand.primaryGradient : null,
+                              color: sel ? null : brand.subtleAccentSurface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: sel
+                                  ? null
+                                  : Border.all(color: brand.subtleBorder),
+                              boxShadow: sel
+                                  ? [
+                                      BoxShadow(
+                                        color: brand
+                                            .primaryGradient
+                                            .colors
+                                            .first
+                                            .withValues(alpha: 0.20),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Text(
+                              _localizedHairStyle(l10n, _hairStyleKeys[i]),
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: sel
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: sel
+                                        ? Colors.white
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ),
                         ),
@@ -714,8 +727,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                     crossAxisCount: 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: AppSpacing.xs,
-                    mainAxisSpacing: AppSpacing.xs,
+                    crossAxisSpacing: AppSpacing.xxs,
+                    mainAxisSpacing: AppSpacing.xxs,
                     mainAxisExtent: 56,
                     children: List.generate(_skinTones.length, (i) {
                       final sel = skinTone == i;
@@ -779,8 +792,8 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                     crossAxisCount: 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: AppSpacing.xs,
-                    mainAxisSpacing: AppSpacing.xs,
+                    crossAxisSpacing: AppSpacing.xxs,
+                    mainAxisSpacing: AppSpacing.xxs,
                     mainAxisExtent: AppBreakpoints.veryLargeText(context)
                         ? 96
                         : AppBreakpoints.largeText(context)
@@ -837,17 +850,17 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                             const SizedBox(height: 5),
                             Text(
                               _localizedHairColor(l10n, _hairLabels[i]),
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: sel
-                                    ? brand.primaryGradient.colors.first
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                fontWeight: sel
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: sel
+                                        ? brand.primaryGradient.colors.first
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    fontWeight: sel
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
+                                  ),
                             ),
                           ],
                         ),
@@ -915,8 +928,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: TextStyle(
-        fontSize: 13,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.w600,
         color: Colors.grey.withValues(alpha: 0.65),
         letterSpacing: 0.5,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/features/missing_pieces/missing_pieces_screen.dart';
+import 'package:mix_match_mood/l10n/app_localizations.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
 import 'package:mix_match_mood/shared/widgets/mmm_gradient_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +49,35 @@ void main() {
     await tester.tap(find.byKey(const Key('missing-piece-analyze')));
     await tester.pumpAndSettle();
     expect(find.text('Add neutral shoes'), findsOneWidget);
+  });
+
+  testWidgets('local recommendations use Thai copy', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'mmm_guest_enabled': true,
+      'mmm_guest_wardrobe': jsonEncode([
+        _item('top', 'เสื้อขาว', ClothingCategory.top).toJson(),
+      ]),
+    });
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          locale: Locale('th'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: MissingPiecesScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('เพิ่มกางเกง'), findsOneWidget);
+    expect(find.text('จำเป็น'), findsNWidgets(2));
+    await tester.tap(find.text('ทำไม?').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('ตู้เสื้อผ้าของคุณต้องมีหมวดหมู่นี้เพื่อให้จัดชุดได้ครบ'),
+      findsOneWidget,
+    );
   });
 }
 

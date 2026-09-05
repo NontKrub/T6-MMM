@@ -431,6 +431,67 @@ class AppLocalizationsTh extends AppLocalizations {
   String get missingTryAgain => 'ลองอีกครั้งในอีกสักครู่';
 
   @override
+  String missingAddCategory(String category) {
+    return 'เพิ่ม$category';
+  }
+
+  @override
+  String get missingSelectionShoesTitle => 'เพิ่มรองเท้าสีพื้น';
+
+  @override
+  String get missingReasonCategory =>
+      'ตู้เสื้อผ้าของคุณต้องมีหมวดหมู่นี้เพื่อให้จัดชุดได้ครบ';
+
+  @override
+  String get missingSuggestionNeutral =>
+      'เลือกชิ้นสีพื้นอเนกประสงค์ที่คุณจะใส่บ่อย';
+
+  @override
+  String get missingSelectionShoesReason =>
+      'เสื้อและกางเกงที่เลือกต้องมีรองเท้าเพื่อให้ชุดสมบูรณ์';
+
+  @override
+  String get missingSelectionShoesSuggestion =>
+      'ลองรองเท้าสีขาว ดำ เทา เบจ หรือน้ำตาล';
+
+  @override
+  String get missingReasonPattern => 'ชิ้นเรียบช่วยให้ลวดลายที่เลือกสมดุล';
+
+  @override
+  String get missingReasonColors => 'สีและสไตล์เข้ากับเสื้อและกางเกงที่เลือก';
+
+  @override
+  String get missingSuggestionBalanced => 'ชิ้นสีพื้นนี้ช่วยให้ชุดดูสมดุล';
+
+  @override
+  String get missingSuggestionAccent => 'ใช้ชิ้นนี้เป็นสีเด่นของชุด';
+
+  @override
+  String get missingAccessoryReason =>
+      'ตู้เสื้อผ้าพื้นฐานของคุณครบแล้ว แต่ยังขาดชิ้นปิดท้าย';
+
+  @override
+  String get missingAccessorySuggestion =>
+      'ลองเข็มขัด กระเป๋า นาฬิกา หรือผ้าพันคอสีพื้น';
+
+  @override
+  String missingTryItem(String name) {
+    return 'ลอง$name';
+  }
+
+  @override
+  String get missingPriorityEssential => 'จำเป็น';
+
+  @override
+  String get missingPriorityRecommended => 'แนะนำ';
+
+  @override
+  String get missingPriorityNiceToHave => 'ควรมี';
+
+  @override
+  String get missingPriorityHighImpact => 'สำคัญมาก';
+
+  @override
   String get chatTitle => 'Fashion AI';
 
   @override

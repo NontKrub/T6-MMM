@@ -174,6 +174,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byKey(const Key('add-item-preview-image')), findsOneWidget);
+    final preview = tester.getRect(
+      find.byKey(const Key('add-item-image-picker')),
+    );
+    expect(preview.width, greaterThan(preview.height));
+    expect(preview.height, greaterThan(160));
   });
 
   testWidgets('android lost data returns an image and preview appears', (

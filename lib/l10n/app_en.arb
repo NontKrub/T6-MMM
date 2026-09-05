@@ -169,6 +169,29 @@
   "missingAnalyze": "Analyze the gap",
   "missingLoading": "Finding the gap…",
   "missingTryAgain": "Try again in a moment.",
+  "missingAddCategory": "Add {category}",
+  "missingSelectionShoesTitle": "Add neutral shoes",
+  "missingReasonCategory": "Your wardrobe needs this category for complete outfits.",
+  "missingSuggestionNeutral": "Choose a versatile neutral piece you will wear often.",
+  "missingSelectionShoesReason": "Your selected top and pants need shoes to complete the outfit.",
+  "missingSelectionShoesSuggestion": "Try white, black, gray, beige, or brown footwear.",
+  "missingReasonPattern": "A simple piece balances the selected patterns.",
+  "missingReasonColors": "Its colors and style fit the selected top and pants.",
+  "missingSuggestionBalanced": "This neutral piece keeps the outfit balanced.",
+  "missingSuggestionAccent": "Use this piece as the outfit accent.",
+  "missingAccessoryReason": "Your base wardrobe is complete but has no finishing piece.",
+  "missingAccessorySuggestion": "Try a neutral belt, bag, watch, or scarf.",
+  "missingTryItem": "Try {name}",
+  "missingPriorityEssential": "Essential",
+  "missingPriorityRecommended": "Recommended",
+  "missingPriorityNiceToHave": "Nice to have",
+  "missingPriorityHighImpact": "High impact",
+  "@missingAddCategory": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "@missingTryItem": {
+    "placeholders": {"name": {"type": "String"}}
+  },
 
   "chatTitle": "Fashion AI",
   "chatStatusLocked": "Sign in required",

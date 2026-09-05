@@ -438,6 +438,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get missingTryAgain => 'Try again in a moment.';
 
   @override
+  String missingAddCategory(String category) {
+    return 'Add $category';
+  }
+
+  @override
+  String get missingSelectionShoesTitle => 'Add neutral shoes';
+
+  @override
+  String get missingReasonCategory =>
+      'Your wardrobe needs this category for complete outfits.';
+
+  @override
+  String get missingSuggestionNeutral =>
+      'Choose a versatile neutral piece you will wear often.';
+
+  @override
+  String get missingSelectionShoesReason =>
+      'Your selected top and pants need shoes to complete the outfit.';
+
+  @override
+  String get missingSelectionShoesSuggestion =>
+      'Try white, black, gray, beige, or brown footwear.';
+
+  @override
+  String get missingReasonPattern =>
+      'A simple piece balances the selected patterns.';
+
+  @override
+  String get missingReasonColors =>
+      'Its colors and style fit the selected top and pants.';
+
+  @override
+  String get missingSuggestionBalanced =>
+      'This neutral piece keeps the outfit balanced.';
+
+  @override
+  String get missingSuggestionAccent => 'Use this piece as the outfit accent.';
+
+  @override
+  String get missingAccessoryReason =>
+      'Your base wardrobe is complete but has no finishing piece.';
+
+  @override
+  String get missingAccessorySuggestion =>
+      'Try a neutral belt, bag, watch, or scarf.';
+
+  @override
+  String missingTryItem(String name) {
+    return 'Try $name';
+  }
+
+  @override
+  String get missingPriorityEssential => 'Essential';
+
+  @override
+  String get missingPriorityRecommended => 'Recommended';
+
+  @override
+  String get missingPriorityNiceToHave => 'Nice to have';
+
+  @override
+  String get missingPriorityHighImpact => 'High impact';
+
+  @override
   String get chatTitle => 'Fashion AI';
 
   @override
