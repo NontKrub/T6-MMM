@@ -182,7 +182,7 @@ class _ScorePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: brand.subtleAccentSurface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.compactBorder,
       ),
       child: Text(
         score.round().toString(),
@@ -207,7 +207,7 @@ class _FactorChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: brand.subtleAccentSurface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.compactBorder,
       ),
       child: Text(
         label.replaceAll('_', ' '),
@@ -231,14 +231,14 @@ class _ItemThumb extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadii.compactBorder,
         border: Border.all(
           color: Theme.of(context).scaffoldBackgroundColor,
           width: 2,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadii.compactBorder,
         child: WardrobeImage(item: item),
       ),
     );

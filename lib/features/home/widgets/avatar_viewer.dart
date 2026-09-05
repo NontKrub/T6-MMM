@@ -1,9 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/services/avatar_outfit_resolver.dart';
 import '../../../shared/models/user_profile.dart';
+import '../../../shared/models/wearable_asset.dart';
 import '../../../core/theme/app_brand_theme.dart';
 import '../../../core/theme/app_motion.dart';
+import 'glb_avatar_renderer.dart';
 
 class AvatarViewer extends StatefulWidget {
   final AvatarType avatarType;
@@ -11,6 +14,7 @@ class AvatarViewer extends StatefulWidget {
   final int skinToneIndex;
   final int hairColorIndex;
   final int hairStyleIndex;
+  final AvatarOutfitLook? outfitLook;
 
   const AvatarViewer({
     super.key,
@@ -19,6 +23,7 @@ class AvatarViewer extends StatefulWidget {
     this.skinToneIndex = 1,
     this.hairColorIndex = 1,
     this.hairStyleIndex = 3,
+    this.outfitLook,
   });
 
   @override
@@ -112,6 +117,16 @@ class _AvatarViewerState extends State<AvatarViewer>
 
   @override
   Widget build(BuildContext context) {
+    final outfitLook = widget.outfitLook;
+    final modelPath = outfitLook?.baseModelPath;
+    if (modelPath != null && modelPath.trim().isNotEmpty) {
+      return GlbAvatarRenderer(
+        modelPath: modelPath,
+        semanticLabel: outfitLook!.semanticsLabel,
+        materialVariant: outfitLook.primaryMaterialVariant,
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brand = MmmBrandTheme.of(context);
 
@@ -124,175 +139,96 @@ class _AvatarViewerState extends State<AvatarViewer>
       builder: (context, _) {
         final floatOffset = _floatController.value * 7.0 - 3.5;
 
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onHorizontalDragStart: (_) {
-            _isDragging = true;
-            _spinController.stop();
-          },
-          onHorizontalDragUpdate: (d) {
-            setState(() => _yAngle += d.delta.dx * 0.016);
-          },
-          onHorizontalDragEnd: (_) {
-            _isDragging = false;
-            if (_reduceMotion) return;
-            _resumeAutoSpin();
-          },
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final h = constraints.maxHeight;
-              final figureH = h * 0.80;
-              final figureW = figureH * 0.55;
+        return Semantics(
+          container: true,
+          label: outfitLook?.semanticsLabel ?? 'Avatar',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: (_) {
+              _isDragging = true;
+              _spinController.stop();
+            },
+            onHorizontalDragUpdate: (d) {
+              setState(() => _yAngle += d.delta.dx * 0.016);
+            },
+            onHorizontalDragEnd: (_) {
+              _isDragging = false;
+              if (_reduceMotion) return;
+              _resumeAutoSpin();
+            },
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final figureH = h * 0.80;
+                final figureW = figureH * 0.55;
 
-              return Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  // Ambient glow
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(0, -0.20),
-                          radius: 0.88,
-                          colors: [
-                            brand.primaryGradient.colors.first.withValues(
-                              alpha: isDark
-                                  ? 0.11 + _glowController.value * 0.08
-                                  : 0.05 + _glowController.value * 0.03,
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
+                return Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Platform rings
+                    Positioned(
+                      bottom: h * 0.010,
+                      child: _PlatformRings(
+                        width: w * 0.58,
+                        glow: _glowController.value,
+                        isDark: isDark,
+                        primary: brand.primaryGradient.colors.first,
+                        accent: brand.primaryGradient.colors.last,
                       ),
                     ),
-                  ),
 
-                  // Secondary accent glow
-                  Positioned(
-                    right: -w * 0.1,
-                    top: h * 0.2,
-                    child: Container(
-                      width: w * 0.5,
-                      height: w * 0.5,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            brand.primaryGradient.colors.last.withValues(
-                              alpha: isDark
-                                  ? 0.07 + _glowController.value * 0.04
-                                  : 0.03,
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Shimmer particles
-                  ..._buildParticles(w, h, isDark, brand),
-
-                  // Platform rings
-                  Positioned(
-                    bottom: h * 0.010,
-                    child: _PlatformRings(
-                      width: w * 0.58,
-                      glow: _glowController.value,
-                      isDark: isDark,
-                      primary: brand.primaryGradient.colors.first,
-                      accent: brand.primaryGradient.colors.last,
-                    ),
-                  ),
-
-                  // Figure
-                  Positioned(
-                    top: h * 0.015 + floatOffset,
-                    child:
-                        Transform(
-                              transform: _perspective(_yAngle),
-                              alignment: Alignment.center,
-                              child: SizedBox(
-                                width: figureW,
-                                height: figureH,
-                                child: CustomPaint(
-                                  painter: _FashionFigurePainter(
-                                    avatarType: widget.avatarType,
-                                    bodyShape: widget.bodyShape,
-                                    yAngle: _yAngle,
-                                    isDark: isDark,
-                                    skinToneIndex: widget.skinToneIndex,
-                                    hairColorIndex: widget.hairColorIndex,
-                                    hairStyleIndex: widget.hairStyleIndex,
+                    // Figure
+                    Positioned(
+                      top: h * 0.015 + floatOffset,
+                      child:
+                          Transform(
+                                transform: _perspective(_yAngle),
+                                alignment: Alignment.center,
+                                child: SizedBox(
+                                  width: figureW,
+                                  height: figureH,
+                                  child: CustomPaint(
+                                    painter: _FashionFigurePainter(
+                                      avatarType: widget.avatarType,
+                                      bodyShape: widget.bodyShape,
+                                      yAngle: _yAngle,
+                                      isDark: isDark,
+                                      skinToneIndex: widget.skinToneIndex,
+                                      hairColorIndex: widget.hairColorIndex,
+                                      hairStyleIndex: widget.hairStyleIndex,
+                                      outfitLook: outfitLook,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )
-                            .animate(controller: _entryController)
-                            .scale(
-                              begin: const Offset(0.70, 0.70),
-                              end: const Offset(1, 1),
-                              curve: AppMotion.curve,
-                            )
-                            .fadeIn(duration: AppMotion.transition),
-                  ),
-
-                  // Drag hint
-                  Positioned(
-                    bottom: h * 0.085,
-                    child: _DragHint(
-                      opacity:
-                          (1.0 - (_yAngle.abs() / (pi * 1.5)).clamp(0.0, 1.0))
-                              .clamp(0.0, 1.0),
+                              )
+                              .animate(controller: _entryController)
+                              .scale(
+                                begin: const Offset(0.70, 0.70),
+                                end: const Offset(1, 1),
+                                curve: AppMotion.curve,
+                              )
+                              .fadeIn(duration: AppMotion.transition),
                     ),
-                  ),
-                ],
-              );
-            },
+
+                    // Drag hint
+                    Positioned(
+                      bottom: h * 0.085,
+                      child: _DragHint(
+                        opacity:
+                            (1.0 - (_yAngle.abs() / (pi * 1.5)).clamp(0.0, 1.0))
+                                .clamp(0.0, 1.0),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         );
       },
     );
-  }
-
-  List<Widget> _buildParticles(
-    double w,
-    double h,
-    bool isDark,
-    MmmBrandTheme brand,
-  ) {
-    const positions = [
-      [0.10, 0.12],
-      [0.88, 0.20],
-      [0.06, 0.52],
-      [0.94, 0.58],
-      [0.18, 0.76],
-      [0.82, 0.38],
-    ];
-    const phases = [0.0, 0.28, 0.55, 0.12, 0.72, 0.44];
-
-    return List.generate(positions.length, (i) {
-      final phase = (_glowController.value + phases[i]) % 1.0;
-      final alpha = sin(phase * pi).clamp(0.0, 1.0);
-      return Positioned(
-        left: w * positions[i][0],
-        top: h * positions[i][1],
-        child: Container(
-          width: i.isEven ? 3 : 2,
-          height: i.isEven ? 3 : 2,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color:
-                (i.isEven
-                        ? brand.primaryGradient.colors.first
-                        : brand.primaryGradient.colors.last)
-                    .withValues(alpha: isDark ? alpha * 0.55 : alpha * 0.28),
-          ),
-        ),
-      );
-    });
   }
 }
 
@@ -439,6 +375,7 @@ class _FashionFigurePainter extends CustomPainter {
   final int skinToneIndex;
   final int hairColorIndex;
   final int hairStyleIndex;
+  final AvatarOutfitLook? outfitLook;
 
   static const _skinPalette = [
     Color(0xFFF5E6D3), // 0: porcelain
@@ -467,6 +404,7 @@ class _FashionFigurePainter extends CustomPainter {
     required this.skinToneIndex,
     required this.hairColorIndex,
     required this.hairStyleIndex,
+    this.outfitLook,
   });
 
   double get _rightFactor => cos(yAngle - pi / 6).clamp(0.0, 1.0);
@@ -493,6 +431,20 @@ class _FashionFigurePainter extends CustomPainter {
       (c.b * 255 * f).round().clamp(0, 255),
     );
   }
+
+  Color _garmentColor(AvatarSlot slot, Color fallback) {
+    final wearables = outfitLook?.wearables ?? const <WearableAsset>[];
+    for (final wearable in wearables) {
+      if (wearable.slot != slot || wearable.baseColorHex == null) continue;
+      final hex = wearable.baseColorHex!.replaceFirst('#', '');
+      final value = int.tryParse(hex, radix: 16);
+      if (value != null) return Color(0xFF000000 | value);
+    }
+    return fallback;
+  }
+
+  bool _hasSlot(AvatarSlot slot) =>
+      outfitLook?.wearables.any((wearable) => wearable.slot == slot) ?? false;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -586,7 +538,7 @@ class _FashionFigurePainter extends CustomPainter {
   }
 
   void _drawFemaleBody(Canvas canvas, double w, double h) {
-    final topBase = const Color(0xFFD4C5F5);
+    final topBase = _garmentColor(AvatarSlot.top, const Color(0xFFD4C5F5));
     final topL = _lit(topBase, boost: 0.10);
     final topD = _shadowed(topBase, darken: 0.22);
     final bodyTop = h * 0.46;
@@ -627,7 +579,10 @@ class _FashionFigurePainter extends CustomPainter {
     );
 
     // Skirt
-    final skirtBase = const Color(0xFFB8A0E8);
+    final skirtBase = _garmentColor(
+      _hasSlot(AvatarSlot.dress) ? AvatarSlot.dress : AvatarSlot.bottom,
+      const Color(0xFFB8A0E8),
+    );
     final skirtL = _lit(skirtBase, boost: 0.08);
     final skirtD = _shadowed(skirtBase, darken: 0.25);
     final skirtTop = bodyTop + h * 0.21;
@@ -688,10 +643,10 @@ class _FashionFigurePainter extends CustomPainter {
   }
 
   void _drawMaleBody(Canvas canvas, double w, double h) {
-    final topBase = const Color(0xFFF0E4D4);
+    final topBase = _garmentColor(AvatarSlot.top, const Color(0xFFF0E4D4));
     final topL = _lit(topBase, boost: 0.10);
     final topD = _shadowed(topBase, darken: 0.22);
-    final pantsBase = const Color(0xFFB8946A);
+    final pantsBase = _garmentColor(AvatarSlot.bottom, const Color(0xFFB8946A));
     final pantsL = _lit(pantsBase, boost: 0.10);
     final pantsD = _shadowed(pantsBase, darken: 0.28);
     final bodyTop = h * 0.46;
@@ -762,7 +717,10 @@ class _FashionFigurePainter extends CustomPainter {
     double shoeTop, {
     required bool narrow,
   }) {
-    final shoeColor = _shadowed(const Color(0xFF2C1A0E), darken: 0.10);
+    final shoeColor = _shadowed(
+      _garmentColor(AvatarSlot.shoes, const Color(0xFF2C1A0E)),
+      darken: 0.10,
+    );
     final shoeW = narrow ? w * 0.22 : w * 0.26;
     for (final isLeft in [true, false]) {
       final sx = isLeft ? w * 0.12 : (narrow ? w * 0.50 : w * 0.53);

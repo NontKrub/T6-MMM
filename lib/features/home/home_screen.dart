@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/avatar_customization_provider.dart';
+import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
+import '../../core/providers/wardrobe_provider.dart';
+import '../../core/services/avatar_outfit_resolver.dart';
 import '../../core/theme/app_brand_theme.dart';
 import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
@@ -30,7 +33,15 @@ class HomeScreen extends ConsumerWidget {
     final hairColor = ref.watch(hairColorIndexProvider);
     final bodyShape = ref.watch(bodyShapeProvider);
     final hairStyle = ref.watch(hairStyleIndexProvider);
+    final currentOutfit = ref.watch(currentOutfitProvider);
+    final wardrobe = ref.watch(wardrobeProvider);
     final brand = MmmBrandTheme.of(context);
+    final outfitLook = currentOutfit == null
+        ? null
+        : const AvatarOutfitResolver().resolve(
+            outfit: currentOutfit,
+            wardrobe: wardrobe,
+          );
 
     return Scaffold(
       body: SafeArea(
@@ -164,6 +175,7 @@ class HomeScreen extends ConsumerWidget {
                     skinToneIndex: skinTone,
                     hairColorIndex: hairColor,
                     hairStyleIndex: hairStyle,
+                    outfitLook: outfitLook,
                   ),
                 ),
                 Positioned(

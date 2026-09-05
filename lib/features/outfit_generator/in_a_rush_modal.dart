@@ -385,7 +385,7 @@ class _RushChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: brand.subtleAccentSurface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadii.compactBorder,
         border: Border.all(color: brand.subtleBorder),
       ),
       child: Text(

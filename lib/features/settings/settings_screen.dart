@@ -16,6 +16,7 @@ import '../../core/services/legal_links_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/mmm_bottom_sheet.dart';
 import '../../shared/widgets/mmm_dialog.dart';
@@ -291,7 +292,7 @@ class SettingsScreen extends ConsumerWidget {
             final selected = option.value == currentValue;
             return ListTile(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadii.compactBorder,
               ),
               onTap: () {
                 onSelected(option.value);
