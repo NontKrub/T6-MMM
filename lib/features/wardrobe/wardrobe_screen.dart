@@ -128,22 +128,19 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                       hasSearch: _searchQuery.isNotEmpty,
                       onAdd: _showAddItem,
                     )
-                  : GridView.builder(
+                  : ListView.separated(
+                      key: const Key('wardrobe-list'),
                       padding: EdgeInsets.fromLTRB(
                         AppSpacing.lg,
                         0,
                         AppSpacing.lg,
                         AppSpacing.xl,
                       ),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 220,
-                            crossAxisSpacing: AppSpacing.sm,
-                            mainAxisSpacing: AppSpacing.sm,
-                            childAspectRatio: .72,
-                          ),
                       itemCount: filtered.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (context, index) => _WardrobeItemCard(
+                        key: ValueKey('wardrobe-item-${filtered[index].id}'),
                         item: filtered[index],
                         onTap: () =>
                             context.push('/item/${filtered[index].id}'),
@@ -184,11 +181,15 @@ class _CategoryFilter extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           final isSelected = selected == category;
-          final allLabel = AppLocalizations.of(context)?.wardrobeAll ?? 'All';
+          final l10n = AppLocalizations.of(context);
+          final allLabel = l10n?.wardrobeAll ?? 'All';
+          final label = category == null
+              ? allLabel
+              : _localizedCategoryLabel(l10n, category);
           return Semantics(
             button: true,
             selected: isSelected,
-            label: category?.label ?? allLabel,
+            label: label,
             child: Material(
               color: isSelected
                   ? brand.subtleAccentSurface
@@ -210,7 +211,7 @@ class _CategoryFilter extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      category?.label ?? allLabel,
+                      label,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: isSelected
                             ? brand.primaryGradient.colors.first
@@ -229,56 +230,103 @@ class _CategoryFilter extends StatelessWidget {
 }
 
 class _WardrobeItemCard extends StatelessWidget {
-  const _WardrobeItemCard({required this.item, required this.onTap});
+  const _WardrobeItemCard({super.key, required this.item, required this.onTap});
 
   final ClothingItem item;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => MmmSurfaceCard(
-    padding: EdgeInsets.zero,
-    onTap: onTap,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: AppRadii.card),
-            child: SizedBox.expand(child: WardrobeImage(item: item)),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.sm,
-            AppSpacing.sm,
-            AppSpacing.sm,
-            AppSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final categoryLabel = _localizedCategoryLabel(l10n, item.category);
+    final brandLabel = item.brand?.trim();
+    final semanticsLabel = brandLabel == null || brandLabel.isEmpty
+        ? '${item.name}, $categoryLabel'
+        : '${item.name}, $brandLabel, $categoryLabel';
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: MmmSurfaceCard(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 88),
+          child: Row(
             children: [
-              Text(
-                item.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                item.brand ?? item.category.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ClipRRect(
+                borderRadius: AppRadii.controlBorder,
+                child: ColoredBox(
+                  color: brand.neutralSurface,
+                  child: SizedBox(
+                    width: 88,
+                    height: 88,
+                    child: WardrobeImage(item: item, fit: BoxFit.contain),
+                  ),
                 ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (brandLabel != null && brandLabel.isNotEmpty)
+                      Text(
+                        brandLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    Text(
+                      categoryLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ],
           ),
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
+
+String _localizedCategoryLabel(
+  AppLocalizations? l10n,
+  ClothingCategory category,
+) => switch (category) {
+  ClothingCategory.hat => l10n?.clothingCategoryHat ?? category.label,
+  ClothingCategory.top => l10n?.clothingCategoryTop ?? category.label,
+  ClothingCategory.pants => l10n?.clothingCategoryPants ?? category.label,
+  ClothingCategory.shoes => l10n?.clothingCategoryShoes ?? category.label,
+  ClothingCategory.outerwear =>
+    l10n?.clothingCategoryOuterwear ?? category.label,
+  ClothingCategory.dress => l10n?.clothingCategoryDress ?? category.label,
+  ClothingCategory.bag => l10n?.clothingCategoryBag ?? category.label,
+  ClothingCategory.accessory =>
+    l10n?.clothingCategoryAccessory ?? category.label,
+  ClothingCategory.unknown => l10n?.clothingCategoryUnknown ?? category.label,
+};
 
 class _WardrobeEmptyState extends StatelessWidget {
   const _WardrobeEmptyState({required this.hasSearch, required this.onAdd});

@@ -512,11 +512,14 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                                       children: [
                                         ClipRRect(
                                           borderRadius: AppRadii.cardBorder,
-                                          child: Image.file(
-                                            File(_imagePath!),
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
+                                          child: ColoredBox(
+                                            color: brand.neutralSurface,
+                                            child: Image.file(
+                                              File(_imagePath!),
+                                              fit: BoxFit.contain,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                            ),
                                           ),
                                         ),
                                         if (_isSignedIn && _category != null)
@@ -707,6 +710,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             key: const Key('add-item-pattern'),
                             isExpanded: true,
                             initialValue: _pattern,
+                            borderRadius: AppRadii.cardBorder,
+                            dropdownColor: brand.raisedSurface,
                             decoration: InputDecoration(
                               labelText: l10n?.addItemPattern ?? 'Pattern',
                             ),
@@ -735,6 +740,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             key: const Key('add-item-silhouette'),
                             isExpanded: true,
                             initialValue: _silhouette,
+                            borderRadius: AppRadii.cardBorder,
+                            dropdownColor: brand.raisedSurface,
                             decoration: InputDecoration(
                               labelText:
                                   l10n?.addItemSilhouette ?? 'Silhouette',

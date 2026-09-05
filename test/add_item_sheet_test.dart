@@ -174,6 +174,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byKey(const Key('add-item-preview-image')), findsOneWidget);
+    final image = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const Key('add-item-preview-image')),
+        matching: find.byType(Image),
+      ),
+    );
+    expect(image.fit, BoxFit.contain);
     final preview = tester.getRect(
       find.byKey(const Key('add-item-image-picker')),
     );
