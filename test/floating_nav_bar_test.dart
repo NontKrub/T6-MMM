@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mix_match_mood/core/theme/app_theme.dart';
+import 'package:mix_match_mood/core/theme/app_radii.dart';
 import 'package:mix_match_mood/shared/widgets/floating_nav_bar.dart';
 
 void main() {
@@ -29,6 +30,10 @@ void main() {
     expect(find.text('Wardrobe'), findsOneWidget);
     expect(find.text('Missing'), findsOneWidget);
     expect(find.text('Chat'), findsOneWidget);
+    expect(
+      tester.widget<ClipRRect>(find.byType(ClipRRect)).borderRadius,
+      AppRadii.heroBorder,
+    );
 
     await tester.tap(find.byKey(const ValueKey('nav-/wardrobe')));
     await tester.pumpAndSettle();

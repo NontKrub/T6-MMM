@@ -57,13 +57,13 @@ class FloatingNavBar extends StatelessWidget {
           AppSpacing.md,
         ),
         child: ClipRRect(
-          borderRadius: AppRadii.sheetBorder,
+          borderRadius: AppRadii.heroBorder,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: Material(
               color: brand.raisedSurface.withValues(alpha: 0.92),
               shape: RoundedRectangleBorder(
-                borderRadius: AppRadii.sheetBorder,
+                borderRadius: AppRadii.heroBorder,
                 side: BorderSide(color: brand.subtleBorder),
               ),
               child: SizedBox(

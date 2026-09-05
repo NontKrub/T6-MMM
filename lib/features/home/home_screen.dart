@@ -37,12 +37,24 @@ class HomeScreen extends ConsumerWidget {
         bottom: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final avatarHeight =
-                AppBreakpoints.largeText(context) || constraints.maxHeight < 700
-                ? 200.0
-                : math
-                      .min(360, math.max(220, constraints.maxHeight * .48))
-                      .toDouble();
+            // Keep the avatar proportional to the available viewport instead
+            // of switching abruptly to a fixed size on shorter devices.
+            final avatarScale = AppBreakpoints.veryLargeText(context)
+                ? .28
+                : AppBreakpoints.largeText(context)
+                ? .32
+                : .38;
+            final avatarHeight = math.min(
+              AppBreakpoints.veryLargeText(context)
+                  ? 220.0
+                  : AppBreakpoints.largeText(context)
+                  ? 260.0
+                  : 300.0,
+              math.max(
+                constraints.maxHeight < 520 ? 170.0 : 190.0,
+                constraints.maxHeight * avatarScale,
+              ),
+            );
             return SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),

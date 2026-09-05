@@ -12,5 +12,6 @@ abstract final class AppRadii {
   static const controlBorder = BorderRadius.all(control);
   static const cardBorder = BorderRadius.all(card);
   static const emphasizedCardBorder = BorderRadius.all(emphasizedCard);
+  static const heroBorder = BorderRadius.all(hero);
   static const sheetBorder = BorderRadius.vertical(top: sheet);
 }
