@@ -408,6 +408,15 @@ class _ProviderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The Apple package derives its label size from a 48pt button (48 * .43).
+    // Keep the custom provider label in the same visual family without
+    // replacing Apple's system-compatible control.
+    final providerLabelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontSize: 20.64,
+      height: 1,
+      fontWeight: FontWeight.w400,
+      letterSpacing: -0.41,
+    );
     final icon = provider == _AuthProvider.google
         ? _GoogleIdentityIcon()
         : const Icon(Icons.facebook, size: 22);
@@ -420,6 +429,7 @@ class _ProviderButton extends StatelessWidget {
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadii.controlBorder,
           ),
+          textStyle: providerLabelStyle,
         ),
         child: loading
             ? const SizedBox(
@@ -432,7 +442,13 @@ class _ProviderButton extends StatelessWidget {
                 children: [
                   icon,
                   const SizedBox(width: AppSpacing.sm),
-                  Flexible(child: Text(label, textAlign: TextAlign.center)),
+                  Flexible(
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: providerLabelStyle,
+                    ),
+                  ),
                 ],
               ),
       ),

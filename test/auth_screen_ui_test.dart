@@ -59,6 +59,10 @@ void main() {
       );
       expect(find.text('Back to Chat'), findsOneWidget);
       expect(find.text('Create a wardrobe'), findsNothing);
+      final googleLabel = tester.widget<Text>(
+        find.text('Continue with Google'),
+      );
+      expect(googleLabel.style?.fontSize, closeTo(20.64, 0.01));
     },
   );
 

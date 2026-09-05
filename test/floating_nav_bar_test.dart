@@ -34,6 +34,15 @@ void main() {
       tester.widget<ClipRRect>(find.byType(ClipRRect)).borderRadius,
       AppRadii.heroBorder,
     );
+    expect(
+      tester
+          .widgetList<Material>(find.byType(Material))
+          .any(
+            (material) =>
+                material.borderRadius == AppRadii.emphasizedCardBorder,
+          ),
+      isTrue,
+    );
 
     await tester.tap(find.byKey(const ValueKey('nav-/wardrobe')));
     await tester.pumpAndSettle();

@@ -112,6 +112,9 @@ class _NavItem extends StatelessWidget {
     final color = selected
         ? brand.primaryGradient.colors.first
         : Theme.of(context).colorScheme.onSurfaceVariant;
+    final itemRadius = selected
+        ? AppRadii.emphasizedCardBorder
+        : AppRadii.compactBorder;
     return Semantics(
       key: navKey,
       button: true,
@@ -122,10 +125,10 @@ class _NavItem extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xs),
         child: Material(
           color: selected ? brand.subtleAccentSurface : Colors.transparent,
-          borderRadius: AppRadii.compactBorder,
+          borderRadius: itemRadius,
           child: InkWell(
             onTap: onTap,
-            borderRadius: AppRadii.compactBorder,
+            borderRadius: itemRadius,
             child: AnimatedDefaultTextStyle(
               duration: AppMotion.duration(context, AppMotion.selection),
               curve: AppMotion.curve,

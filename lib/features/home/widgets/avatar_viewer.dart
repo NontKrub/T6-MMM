@@ -27,6 +27,8 @@ class AvatarViewer extends StatefulWidget {
 
 class _AvatarViewerState extends State<AvatarViewer>
     with TickerProviderStateMixin {
+  static const _autoSpinArc = pi / 5;
+
   late final AnimationController _spinController;
   late final AnimationController _glowController;
   late final AnimationController _entryController;
@@ -46,7 +48,12 @@ class _AvatarViewerState extends State<AvatarViewer>
     )..repeat();
     _spinController.addListener(() {
       if (!_isDragging) {
-        setState(() => _yAngle = _spinController.value * 2 * pi);
+        // Keep the automatic motion in a flattering three-quarter view. A
+        // full turn makes the perspective collapse to a paper-thin profile;
+        // dragging still allows the user to inspect the complete rotation.
+        setState(
+          () => _yAngle = sin(_spinController.value * 2 * pi) * _autoSpinArc,
+        );
       }
     });
 
