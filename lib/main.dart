@@ -52,8 +52,8 @@ class MixMatchMoodApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Mix Match Mood',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(locale: locale),
+      darkTheme: AppTheme.dark(locale: locale),
       themeMode: themeMode,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,

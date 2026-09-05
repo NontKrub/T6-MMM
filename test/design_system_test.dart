@@ -9,6 +9,18 @@ import 'package:mix_match_mood/shared/widgets/mmm_choice_chip.dart';
 import 'package:mix_match_mood/shared/widgets/mmm_gradient_button.dart';
 
 void main() {
+  test('Thai theme uses an explicit Thai fallback family', () {
+    final theme = AppTheme.light(locale: const Locale('th'));
+    final english = AppTheme.light().textTheme.headlineMedium!.fontSize!;
+    final thai = theme.textTheme.headlineMedium!.fontSize!;
+
+    expect(
+      theme.textTheme.headlineMedium?.fontFamilyFallback,
+      contains('Noto Sans Thai'),
+    );
+    expect(thai, closeTo(english * 0.9, 0.01));
+  });
+
   testWidgets('MMM theme exposes documented gradient in both appearances', (
     tester,
   ) async {

@@ -31,7 +31,15 @@ void main() {
 
       final tousledY = tester.getTopLeft(find.text('Tousled')).dy;
       final sideSweptY = tester.getTopLeft(find.text('Side Swept')).dy;
+      final undercutY = tester.getTopLeft(find.text('Undercut')).dy;
+      final longY = tester.getTopLeft(find.text('Long')).dy;
+      final ponytailY = tester.getTopLeft(find.text('Ponytail')).dy;
+      final bobY = tester.getTopLeft(find.text('Bob')).dy;
       expect(sideSweptY, closeTo(tousledY, 0.1));
+      expect(undercutY, closeTo(tousledY, 0.1));
+      expect(longY, greaterThan(tousledY));
+      expect(ponytailY, closeTo(longY, 2));
+      expect(bobY, closeTo(longY, 2));
 
       await tester.drag(find.text('Your Avatar'), const Offset(0, 700));
       await tester.pump();

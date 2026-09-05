@@ -7,6 +7,7 @@ import 'package:mix_match_mood/features/home/home_screen.dart';
 import 'package:mix_match_mood/features/shell/main_shell.dart';
 import 'package:mix_match_mood/shared/widgets/floating_nav_bar.dart';
 import 'package:mix_match_mood/shared/widgets/mmm_secondary_button.dart';
+import 'package:mix_match_mood/shared/widgets/mmm_gradient_button.dart';
 
 void main() {
   testWidgets('home actions sit directly above the floating dock', (
@@ -40,5 +41,22 @@ void main() {
     );
     final rushBottom = tester.getRect(rushButton).bottom;
     expect(dockTop - rushBottom, lessThanOrEqualTo(40));
+
+    final home = tester.getRect(find.byType(HomeScreen));
+    final settings = tester.getRect(find.byTooltip('Settings'));
+    final greeting = tester.getRect(find.textContaining('Good morning'));
+    expect(settings.right, greaterThan(home.right - 48));
+    expect(greeting.left, closeTo(home.left + 20, 4));
+    expect(
+      tester
+          .getRect(
+            find.ancestor(
+              of: find.text('Generate Outfit'),
+              matching: find.byType(MmmGradientButton),
+            ),
+          )
+          .left,
+      closeTo(home.left + 20, 4),
+    );
   });
 }

@@ -5,29 +5,35 @@ import 'app_radii.dart';
 import 'app_typography.dart';
 
 class AppTheme {
-  static ThemeData light() {
+  static ThemeData light({Locale? locale}) {
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.brandIndigo,
       brightness: Brightness.light,
       surface: AppColors.surfaceRaisedLight,
     );
-    return _build(scheme, Brightness.light);
+    return _build(scheme, Brightness.light, locale: locale);
   }
 
-  static ThemeData dark() {
+  static ThemeData dark({Locale? locale}) {
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.brandIndigo,
       brightness: Brightness.dark,
       surface: AppColors.surfaceRaisedDark,
     );
-    return _build(scheme, Brightness.dark);
+    return _build(scheme, Brightness.dark, locale: locale);
   }
 
-  static ThemeData _build(ColorScheme scheme, Brightness brightness) {
+  static ThemeData _build(
+    ColorScheme scheme,
+    Brightness brightness, {
+    Locale? locale,
+  }) {
     final isLight = brightness == Brightness.light;
     final textColor = isLight
         ? AppColors.textPrimaryLight
         : AppColors.textPrimaryDark;
+
+    final textTheme = AppTypography.textTheme(textColor, locale: locale);
 
     return ThemeData(
       colorScheme: scheme,
@@ -35,7 +41,7 @@ class AppTheme {
       scaffoldBackgroundColor: isLight
           ? AppColors.surfaceLight
           : AppColors.surfaceDark,
-      textTheme: AppTypography.textTheme(textColor),
+      textTheme: textTheme,
       extensions: [isLight ? MmmBrandTheme.light() : MmmBrandTheme.dark()],
       cardTheme: const CardThemeData(
         elevation: 0,
@@ -46,7 +52,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: textColor),
-        titleTextStyle: AppTypography.textTheme(textColor).titleMedium,
+        titleTextStyle: textTheme.titleMedium,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -70,7 +76,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: AppRadii.controlBorder),
-          textStyle: AppTypography.textTheme(textColor).labelLarge,
+          textStyle: textTheme.labelLarge,
         ),
       ),
       chipTheme: ChipThemeData(

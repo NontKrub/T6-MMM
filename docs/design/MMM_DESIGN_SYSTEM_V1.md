@@ -45,7 +45,9 @@ Spacing scale: `4, 8, 12, 16, 20, 24, 32, 40, 48`.
 
 ## Typography and icons
 
-Use Plus Jakarta Sans through the app theme. Preserve its Thai fallback unless validation demonstrates a readability fault; then add an explicit Thai fallback without changing hierarchy.
+Use Plus Jakarta Sans through the app theme. Thai keeps Plus Jakarta Sans for
+Latin glyphs and uses an explicit Noto Sans Thai/Sarabun fallback before the
+platform default, without changing the hierarchy.
 
 | Style | Size / line height / weight |
 | --- | --- |

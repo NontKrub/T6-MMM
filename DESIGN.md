@@ -14,7 +14,11 @@ Screens use clear vertical task hierarchy, generous but purposeful negative spac
 
 ## Typography and icons
 
-Plus Jakarta Sans carries hierarchy. Material icons provide a single accessible icon system. The supplied MMM ribbon mark and wordmark are assets in `assets/branding/`; they are not recreated as UI text or Material icons.
+Plus Jakarta Sans carries hierarchy. Thai glyphs use an explicit Noto Sans
+Thai/Sarabun fallback while Latin text stays in Plus Jakarta Sans. Material
+icons provide a single accessible icon system. The supplied MMM ribbon mark and
+wordmark are assets in `assets/branding/`; they are not recreated as UI text or
+Material icons.
 
 ## Materials, color, and motion
 

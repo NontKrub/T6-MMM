@@ -213,6 +213,7 @@ class HomeScreen extends ConsumerWidget {
               return ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     header,
                     const SizedBox(height: AppSpacing.sm),
@@ -235,6 +236,7 @@ class HomeScreen extends ConsumerWidget {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     header,
                     const SizedBox(height: AppSpacing.sm),
@@ -634,15 +636,22 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   // Hair style
                   _SectionLabel(label: l10n?.avatarHairStyle ?? 'Hair Style'),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: AppSpacing.xs,
+                    mainAxisSpacing: AppSpacing.xs,
+                    mainAxisExtent: AppBreakpoints.veryLargeText(context)
+                        ? 96
+                        : AppBreakpoints.largeText(context)
+                        ? 80
+                        : 52,
                     children: List.generate(_hairStyleKeys.length, (i) {
                       final sel = hairStyle == i;
                       return _AvatarChoiceTarget(
                         label: _localizedHairStyle(l10n, _hairStyleKeys[i]),
                         selected: sel,
-                        shrinkWrap: true,
                         onTap: () {
                           widgetRef
                                   .read(hairStyleIndexProvider.notifier)
@@ -701,16 +710,19 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
 
                   _SectionLabel(label: l10n?.avatarSkinTone ?? 'Skin Tone'),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: AppSpacing.xs,
+                    mainAxisSpacing: AppSpacing.xs,
+                    mainAxisExtent: 56,
                     children: List.generate(_skinTones.length, (i) {
                       final sel = skinTone == i;
                       return _AvatarChoiceTarget(
                         label:
                             '${l10n?.avatarSkinTone ?? 'Skin tone'} ${i + 1}',
                         selected: sel,
-                        shrinkWrap: true,
                         onTap: () {
                           widgetRef.read(skinToneIndexProvider.notifier).state =
                               i;
@@ -763,16 +775,22 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                   const SizedBox(height: 22),
                   _SectionLabel(label: l10n?.avatarHair ?? 'Hair'),
                   const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: AppSpacing.xs,
+                    mainAxisSpacing: AppSpacing.xs,
+                    mainAxisExtent: AppBreakpoints.veryLargeText(context)
+                        ? 96
+                        : AppBreakpoints.largeText(context)
+                        ? 84
+                        : 64,
                     children: List.generate(_hairColors.length, (i) {
                       final sel = hairColor == i;
                       return _AvatarChoiceTarget(
                         label: _localizedHairColor(l10n, _hairLabels[i]),
                         selected: sel,
-                        shrinkWrap: true,
                         onTap: () {
                           widgetRef
                                   .read(hairColorIndexProvider.notifier)
@@ -860,14 +878,12 @@ class _AvatarChoiceTarget extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.child,
-    this.shrinkWrap = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final Widget child;
-  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -881,8 +897,6 @@ class _AvatarChoiceTarget extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppRadii.controlBorder,
         child: Align(
-          widthFactor: shrinkWrap ? 1 : null,
-          heightFactor: shrinkWrap ? 1 : null,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             child: ExcludeSemantics(child: child),
