@@ -4,6 +4,30 @@ import '../../shared/models/wearable_asset.dart';
 class WearableTemplateResolver {
   const WearableTemplateResolver();
 
+  static const templateKeys = <String>{
+    'hat',
+    'regular_tee',
+    'fitted_top',
+    'oversized_top',
+    'shirt_blouse',
+    'sweater_hoodie',
+    'jacket',
+    'blazer',
+    'coat',
+    'regular_pants',
+    'slim_pants',
+    'wide_leg_pants',
+    'shorts',
+    'skirt',
+    'straight_dress',
+    'a_line_dress',
+    'sneaker',
+    'dress_shoe',
+    'boot',
+    'bag',
+    'accessory',
+  };
+
   WearableAsset resolve(ClothingItem item) {
     final slot = _slotFor(item.category);
     if (slot == null) {
@@ -24,6 +48,7 @@ class WearableTemplateResolver {
       slot: slot,
       templateKey: _templateFor(item, slot),
       baseColorHex: _baseColor(item),
+      patternKey: _patternKey(item),
       materialVariant: item.material == ClothingMaterial.unknown
           ? null
           : item.material.name,
@@ -44,6 +69,7 @@ class WearableTemplateResolver {
       templateKey: resolved.templateKey,
       baseColorHex: resolved.baseColorHex,
       materialVariant: resolved.materialVariant,
+      patternKey: resolved.patternKey,
       fitParameters: resolved.fitParameters,
       isFallback: true,
     );
@@ -157,6 +183,15 @@ class WearableTemplateResolver {
     final normalized = color.startsWith('#') ? color : '#$color';
     return RegExp(r'^#[0-9A-F]{6}$').hasMatch(normalized) ? normalized : null;
   }
+
+  String _patternKey(ClothingItem item) => switch (item.pattern) {
+    ClothingPattern.striped => 'stripe',
+    ClothingPattern.checked => 'plaid',
+    ClothingPattern.floral => 'floral',
+    ClothingPattern.graphic => 'graphic',
+    ClothingPattern.textured => 'textured',
+    _ => 'solid',
+  };
 
   String _normalized(String? value) =>
       (value ?? '').trim().toLowerCase().replaceAll(RegExp(r'[_\s-]+'), '');

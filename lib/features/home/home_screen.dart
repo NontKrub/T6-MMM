@@ -8,6 +8,7 @@ import '../../core/providers/outfit_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/avatar_outfit_resolver.dart';
+import '../../core/services/avatar_scene_mapper.dart';
 import '../../core/theme/app_brand_theme.dart';
 import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_motion.dart';
@@ -17,6 +18,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/mmm_gradient_button.dart';
 import '../../shared/widgets/mmm_secondary_button.dart';
 import '../../shared/models/user_profile.dart';
+import '../../shared/models/avatar_scene.dart';
 import 'widgets/avatar_viewer.dart';
 import 'widgets/repetition_insight_card.dart';
 import '../outfit_generator/outfit_generator_sheet.dart';
@@ -36,12 +38,22 @@ class HomeScreen extends ConsumerWidget {
     final currentOutfit = ref.watch(currentOutfitProvider);
     final wardrobe = ref.watch(wardrobeProvider);
     final brand = MmmBrandTheme.of(context);
-    final outfitLook = currentOutfit == null
-        ? null
-        : const AvatarOutfitResolver().resolve(
-            outfit: currentOutfit,
-            wardrobe: wardrobe,
-          );
+    final baseModelPath = profile.avatarType == AvatarType.human
+        ? AvatarAssetCatalog.modelPathFor(bodyShape)
+        : null;
+    final outfitLook = const AvatarOutfitResolver().resolve(
+      outfit: currentOutfit,
+      wardrobe: wardrobe,
+      baseModelPath: baseModelPath,
+    );
+    final sceneState = const AvatarSceneMapper().resolve(
+      avatarType: profile.avatarType,
+      bodyShape: bodyShape,
+      skinToneIndex: skinTone,
+      hairColorIndex: hairColor,
+      hairStyleIndex: hairStyle,
+      outfitLook: outfitLook,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -176,6 +188,7 @@ class HomeScreen extends ConsumerWidget {
                     hairColorIndex: hairColor,
                     hairStyleIndex: hairStyle,
                     outfitLook: outfitLook,
+                    sceneState: sceneState,
                   ),
                 ),
                 Positioned(

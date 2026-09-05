@@ -27,6 +27,7 @@ dependencies:
 
   # 3D Avatar
   model_viewer_plus: ^1.10.0
+  webview_flutter: ^4.14.1
 
   # Image handling
   image_picker: ^1.2.3
@@ -64,3 +65,7 @@ flutter:
   assets:
     - assets/images/
     - assets/branding/
+    - assets/avatar/avatar_catalog.json
+    - assets/avatar/human_female_v1.glb
+    - assets/avatar/human_male_v1.glb
+    - assets/avatar/posters/

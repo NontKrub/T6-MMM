@@ -10,6 +10,7 @@ class AvatarOutfitLook {
   final List<String> missingItemIds;
   final List<String> fallbackItemIds;
   final String semanticsLabel;
+  final bool hasSelectedOutfit;
 
   const AvatarOutfitLook({
     this.baseModelPath,
@@ -18,6 +19,7 @@ class AvatarOutfitLook {
     this.missingItemIds = const [],
     this.fallbackItemIds = const [],
     this.semanticsLabel = 'Avatar with no selected outfit.',
+    this.hasSelectedOutfit = false,
   });
 
   String? get primaryMaterialVariant {
@@ -44,7 +46,9 @@ class AvatarOutfitResolver {
     Map<String, WearableAsset> wearableAssets = const {},
     String? baseModelPath,
   }) {
-    if (outfit == null) return const AvatarOutfitLook();
+    if (outfit == null) {
+      return AvatarOutfitLook(baseModelPath: baseModelPath);
+    }
 
     final itemsById = {for (final item in wardrobe) item.id: item};
     final missing = <String>[];
@@ -112,6 +116,7 @@ class AvatarOutfitResolver {
       missingItemIds: missing,
       fallbackItemIds: fallback,
       semanticsLabel: semantics,
+      hasSelectedOutfit: true,
     );
   }
 }

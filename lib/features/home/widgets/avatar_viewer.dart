@@ -1,9 +1,12 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/services/avatar_outfit_resolver.dart';
 import '../../../shared/models/user_profile.dart';
 import '../../../shared/models/wearable_asset.dart';
+import '../../../shared/models/avatar_scene.dart';
 import '../../../core/theme/app_brand_theme.dart';
 import '../../../core/theme/app_motion.dart';
 import 'glb_avatar_renderer.dart';
@@ -15,6 +18,7 @@ class AvatarViewer extends StatefulWidget {
   final int hairColorIndex;
   final int hairStyleIndex;
   final AvatarOutfitLook? outfitLook;
+  final AvatarSceneState? sceneState;
 
   const AvatarViewer({
     super.key,
@@ -24,6 +28,7 @@ class AvatarViewer extends StatefulWidget {
     this.hairColorIndex = 1,
     this.hairStyleIndex = 3,
     this.outfitLook,
+    this.sceneState,
   });
 
   @override
@@ -42,6 +47,7 @@ class _AvatarViewerState extends State<AvatarViewer>
   double _yAngle = 0.0;
   bool _isDragging = false;
   bool _reduceMotion = false;
+  bool _glbFailed = false;
 
   @override
   void initState() {
@@ -111,6 +117,16 @@ class _AvatarViewerState extends State<AvatarViewer>
     _spinController.repeat();
   }
 
+  @override
+  void didUpdateWidget(covariant AvatarViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldPath =
+        oldWidget.sceneState?.modelPath ?? oldWidget.outfitLook?.baseModelPath;
+    final newPath =
+        widget.sceneState?.modelPath ?? widget.outfitLook?.baseModelPath;
+    if (oldPath != newPath) _glbFailed = false;
+  }
+
   static Matrix4 _perspective(double yAngle) => Matrix4.identity()
     ..setEntry(3, 2, 0.0016)
     ..rotateY(yAngle);
@@ -118,12 +134,26 @@ class _AvatarViewerState extends State<AvatarViewer>
   @override
   Widget build(BuildContext context) {
     final outfitLook = widget.outfitLook;
-    final modelPath = outfitLook?.baseModelPath;
-    if (modelPath != null && modelPath.trim().isNotEmpty) {
+    final modelPath = widget.sceneState?.modelPath ?? outfitLook?.baseModelPath;
+    final supportsGlb =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+    if (supportsGlb &&
+        WebViewPlatform.instance != null &&
+        modelPath != null &&
+        modelPath.trim().isNotEmpty &&
+        !_glbFailed) {
       return GlbAvatarRenderer(
         modelPath: modelPath,
-        semanticLabel: outfitLook!.semanticsLabel,
-        materialVariant: outfitLook.primaryMaterialVariant,
+        semanticLabel:
+            outfitLook?.semanticsLabel ??
+            widget.sceneState?.semanticsLabel ??
+            'Avatar',
+        sceneState: widget.sceneState,
+        posterPath: widget.sceneState?.posterPath,
+        onRenderError: () {
+          if (mounted) setState(() => _glbFailed = true);
+        },
       );
     }
 
