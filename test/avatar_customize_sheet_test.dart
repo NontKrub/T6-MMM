@@ -6,7 +6,7 @@ import 'package:mix_match_mood/features/home/home_screen.dart';
 
 void main() {
   testWidgets(
-    'avatar customisation uses full-width choices and dismisses by drag',
+    'avatar customisation keeps choice targets usable and dismisses by drag',
     (tester) async {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -28,6 +28,10 @@ void main() {
       );
       expect(humanCard, findsOneWidget);
       expect(tester.getSize(humanCard).width, greaterThan(80));
+
+      final tousledY = tester.getTopLeft(find.text('Tousled')).dy;
+      final sideSweptY = tester.getTopLeft(find.text('Side Swept')).dy;
+      expect(sideSweptY, closeTo(tousledY, 0.1));
 
       await tester.drag(find.text('Your Avatar'), const Offset(0, 700));
       await tester.pump();

@@ -370,7 +370,7 @@ class _AppleButton extends StatelessWidget {
             child: SignInWithAppleButton(
               onPressed: onPressed,
               text: label,
-              height: 48,
+              height: 44,
               borderRadius: AppRadii.controlBorder,
               style: Theme.of(context).brightness == Brightness.dark
                   ? SignInWithAppleButtonStyle.white
@@ -408,11 +408,11 @@ class _ProviderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The Apple package derives its label size from a 48pt button (48 * .43).
+    // The Apple package derives its label size from the button height (44 * .43).
     // Keep the custom provider label in the same visual family without
     // replacing Apple's system-compatible control.
     final providerLabelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
-      fontSize: 20.64,
+      fontSize: 18.92,
       height: 1,
       fontWeight: FontWeight.w400,
       letterSpacing: -0.41,
@@ -421,11 +421,15 @@ class _ProviderButton extends StatelessWidget {
         ? _GoogleIdentityIcon()
         : const Icon(Icons.facebook, size: 22);
     return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 48),
+      constraints: BoxConstraints(
+        minHeight: Theme.of(context).platform == TargetPlatform.android
+            ? 48
+            : 44,
+      ),
       child: OutlinedButton(
         onPressed: enabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadii.controlBorder,
           ),

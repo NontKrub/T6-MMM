@@ -62,7 +62,7 @@ void main() {
       final googleLabel = tester.widget<Text>(
         find.text('Continue with Google'),
       );
-      expect(googleLabel.style?.fontSize, closeTo(20.64, 0.01));
+      expect(googleLabel.style?.fontSize, closeTo(18.92, 0.01));
     },
   );
 

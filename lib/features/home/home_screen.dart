@@ -642,6 +642,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                       return _AvatarChoiceTarget(
                         label: _localizedHairStyle(l10n, _hairStyleKeys[i]),
                         selected: sel,
+                        shrinkWrap: true,
                         onTap: () {
                           widgetRef
                                   .read(hairStyleIndexProvider.notifier)
@@ -709,6 +710,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                         label:
                             '${l10n?.avatarSkinTone ?? 'Skin tone'} ${i + 1}',
                         selected: sel,
+                        shrinkWrap: true,
                         onTap: () {
                           widgetRef.read(skinToneIndexProvider.notifier).state =
                               i;
@@ -770,6 +772,7 @@ class _AvatarCustomizeSheet extends ConsumerWidget {
                       return _AvatarChoiceTarget(
                         label: _localizedHairColor(l10n, _hairLabels[i]),
                         selected: sel,
+                        shrinkWrap: true,
                         onTap: () {
                           widgetRef
                                   .read(hairColorIndexProvider.notifier)
@@ -857,12 +860,14 @@ class _AvatarChoiceTarget extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.child,
+    this.shrinkWrap = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final Widget child;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -875,9 +880,13 @@ class _AvatarChoiceTarget extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadii.controlBorder,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-          child: Center(child: ExcludeSemantics(child: child)),
+        child: Align(
+          widthFactor: shrinkWrap ? 1 : null,
+          heightFactor: shrinkWrap ? 1 : null,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            child: ExcludeSemantics(child: child),
+          ),
         ),
       ),
     ),

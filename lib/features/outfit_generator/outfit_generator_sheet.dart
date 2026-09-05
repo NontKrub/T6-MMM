@@ -195,6 +195,7 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
         border: Border(top: BorderSide(color: brand.subtleBorder)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
           Center(
@@ -208,7 +209,8 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
               ),
             ),
           ),
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
