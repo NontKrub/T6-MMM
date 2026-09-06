@@ -194,33 +194,45 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   AppSpacing.lg,
                   AppSpacing.md,
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: MmmSurfaceCard(
-                    padding: const EdgeInsets.only(left: AppSpacing.md),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            onSubmitted: (_) => _send(),
-                            maxLines: 4,
-                            textInputAction: TextInputAction.send,
-                            decoration: InputDecoration(
-                              hintText:
-                                  l10n?.chatInputHint ??
-                                  'Ask about your wardrobe…',
-                              border: InputBorder.none,
+                child: MmmSurfaceCard(
+                  key: const ValueKey('chat-composer'),
+                  padding: const EdgeInsets.all(AppSpacing.xs),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          onSubmitted: (_) => _send(),
+                          maxLines: 4,
+                          textInputAction: TextInputAction.send,
+                          decoration: InputDecoration(
+                            hintText:
+                                l10n?.chatInputHint ??
+                                'Ask about your wardrobe…',
+                            filled: false,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.sm,
                             ),
+                            border: InputBorder.none,
                           ),
                         ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: brand.primaryGradient,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: brand.primaryGradient,
+                          borderRadius: AppRadii.controlBorder,
+                        ),
+                        child: SizedBox.square(
+                          dimension: 48,
                           child: IconButton(
                             tooltip: l10n?.chatSend ?? 'Send message',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 48,
+                              height: 48,
+                            ),
                             onPressed: _send,
                             icon: const Icon(
                               Icons.arrow_upward_rounded,
@@ -228,8 +240,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
