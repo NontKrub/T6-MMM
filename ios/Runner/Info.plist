@@ -40,9 +40,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Mix Match Mood uses your location only when you ask to match outfit suggestions to the local weather.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Mix Match Mood needs camera access so you can take photos of your wardrobe items.</string>
+	<string>Mix Match Mood uses the camera when you choose to photograph wardrobe items or your profile picture.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Mix Match Mood needs photo library access so you can upload wardrobe images.</string>
+	<string>Mix Match Mood uses selected photos for your wardrobe and profile picture.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

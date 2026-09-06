@@ -29,4 +29,27 @@ void main() {
     expect(await repository.fetchCachedCloudProfile('user-1'), isNotNull);
     expect(await repository.fetchCachedCloudProfile('user-2'), isNull);
   });
+
+  test(
+    'old profiles derive provider avatar mode and nullable paths can clear',
+    () {
+      final profile = UserProfile.fromJson({
+        'id': 'user-1',
+        'display_name': 'Nont',
+        'avatar_url': 'https://example.com/avatar.png',
+      });
+
+      expect(profile.avatarMode, ProfileAvatarMode.provider);
+      expect(
+        profile.copyWith(avatarPath: '/tmp/avatar.png').avatarPath,
+        '/tmp/avatar.png',
+      );
+      expect(profile.copyWith(avatarPath: null).avatarPath, isNull);
+      expect(profile.copyWith(avatarUrl: null).avatarUrl, isNull);
+      expect(
+        profile.copyWith(avatarMode: ProfileAvatarMode.none).avatarMode,
+        ProfileAvatarMode.none,
+      );
+    },
+  );
 }

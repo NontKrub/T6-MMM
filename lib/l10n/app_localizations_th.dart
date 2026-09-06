@@ -649,6 +649,213 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileDangerZone => 'โซนอันตราย';
 
   @override
+  String get profileEdit => 'แก้ไขโปรไฟล์';
+
+  @override
+  String get profileEditTitle => 'แก้ไขโปรไฟล์';
+
+  @override
+  String get profileChangePhoto => 'เปลี่ยนรูป';
+
+  @override
+  String get profileChooseFromPhotos => 'เลือกจากรูปภาพ';
+
+  @override
+  String get profileTakePhoto => 'ถ่ายรูป';
+
+  @override
+  String get profileUseAccountPhoto => 'ใช้รูปจากบัญชี';
+
+  @override
+  String get profileRemovePhoto => 'ลบรูป';
+
+  @override
+  String get profileDisplayName => 'ชื่อที่แสดง';
+
+  @override
+  String get profileSave => 'บันทึก';
+
+  @override
+  String get profileThisMonth => 'เดือนนี้';
+
+  @override
+  String get profileWardrobeUtilized => 'การใช้ตู้เสื้อผ้า';
+
+  @override
+  String get profileLooksWorn => 'ลุคที่ใส่';
+
+  @override
+  String get profilePiecesWorn => 'ชิ้นที่ใส่';
+
+  @override
+  String get profileViewInsights => 'ดูอินไซต์';
+
+  @override
+  String get profileStyleDNA => 'DNA สไตล์';
+
+  @override
+  String get profileWardrobeInsights => 'อินไซต์ตู้เสื้อผ้า';
+
+  @override
+  String get profileMostWorn => 'ใส่บ่อยที่สุด';
+
+  @override
+  String get profileNotWornRecently => 'ไม่ได้ใส่ช่วงนี้';
+
+  @override
+  String get profileMostRepeatedLook => 'ลุคที่ใส่ซ้ำที่สุด';
+
+  @override
+  String get profileRecentLooks => 'ลุคล่าสุด';
+
+  @override
+  String get profilePreferences => 'ความชอบ';
+
+  @override
+  String get profileOccasions => 'โอกาส';
+
+  @override
+  String get profileNoStylePreferences => 'ยังไม่มีความชอบด้านสไตล์';
+
+  @override
+  String get profileNoOccasions => 'ยังไม่ได้เลือกโอกาส';
+
+  @override
+  String get profileInsightsTitle => 'อินไซต์สไตล์';
+
+  @override
+  String get profileRangeMonthToDate => 'เดือนนี้';
+
+  @override
+  String get profileRange7Days => '7 วัน';
+
+  @override
+  String get profileRange30Days => '30 วัน';
+
+  @override
+  String get profileRange90Days => '90 วัน';
+
+  @override
+  String get profileRange1Year => '1 ปี';
+
+  @override
+  String get profileNoWearHistory =>
+      'ใส่เสื้อผ้าสักหน่อยเพื่อปลดล็อกแพตเทิร์นสไตล์ของคุณ';
+
+  @override
+  String get profileNoRepeatedLooks => 'ยังไม่มีลุคที่ใส่ซ้ำในช่วงนี้';
+
+  @override
+  String get profileNoStyleDNA =>
+      'เพิ่มและวิเคราะห์เสื้อผ้าสักสองสามชิ้นเพื่อดู DNA สไตล์ของคุณ';
+
+  @override
+  String get profileEmptyWardrobe => 'ตู้เสื้อผ้าของคุณพร้อมสำหรับชิ้นแรกแล้ว';
+
+  @override
+  String get profileEmptyWardrobeMessage =>
+      'เพิ่มเสื้อผ้าแล้ว MMM จะแสดงรูปแบบการสวมใส่ของคุณ';
+
+  @override
+  String get profileInsightsLoadFailed => 'โหลดอินไซต์ไม่สำเร็จ';
+
+  @override
+  String get profileIdentitySaveFailed =>
+      'บันทึกการเปลี่ยนแปลงโปรไฟล์ไม่สำเร็จ';
+
+  @override
+  String get profileChangePhotoFailed => 'ใช้รูปนี้ไม่ได้ ลองเลือกรูปอื่น';
+
+  @override
+  String get profileDiscardTitle => 'ละทิ้งการเปลี่ยนแปลงหรือไม่?';
+
+  @override
+  String get profileDiscardMessage => 'การแก้ไขโปรไฟล์ยังไม่ได้บันทึก';
+
+  @override
+  String get profileKeepEditing => 'แก้ไขต่อ';
+
+  @override
+  String get profileDiscard => 'ละทิ้ง';
+
+  @override
+  String get profileDisplayNameRequired => 'กรุณาใส่ชื่อที่แสดง';
+
+  @override
+  String get profileDisplayNameInvalid =>
+      'ใช้ไม่เกิน 50 ตัวอักษรและไม่มีอักขระควบคุม';
+
+  @override
+  String get profilePhoto => 'รูปโปรไฟล์';
+
+  @override
+  String profilePhotoFor(String name) {
+    return 'รูปโปรไฟล์ของ $name';
+  }
+
+  @override
+  String profileActivitySummary(String day, int count) {
+    return 'ใช้งานมากที่สุดในวัน$day: $count ลุค';
+  }
+
+  @override
+  String profileUtilizationSummary(int used, int total) {
+    return 'ใส่แล้ว $used จาก $total ชิ้น';
+  }
+
+  @override
+  String profileUtilizationAccessibility(int percent, int used, int total) {
+    return 'ใช้ตู้เสื้อผ้า $percent% ใส่แล้ว $used จาก $total ชิ้น';
+  }
+
+  @override
+  String profileColorSwatch(String hex, int count) {
+    return '$hex, $count ชิ้น';
+  }
+
+  @override
+  String get profileNoUnwornItems => 'ไม่มีชิ้นที่ไม่ได้ใส่นานเกิน 30 วัน';
+
+  @override
+  String get profileNoRecentLooks => 'ยังไม่มีลุคในช่วงนี้';
+
+  @override
+  String get profileCategoryMix => 'สัดส่วนหมวดหมู่';
+
+  @override
+  String get profileColorPalette => 'พาเลตสี';
+
+  @override
+  String get profilePreviousPeriod => 'เทียบกับช่วงก่อนหน้า';
+
+  @override
+  String profileRepeatedCount(int count) {
+    return 'ใส่ซ้ำ $count ครั้ง';
+  }
+
+  @override
+  String get profileAccountSettings => 'บัญชีและการตั้งค่า';
+
+  @override
+  String get profileStyleBusiness => 'ธุรกิจ';
+
+  @override
+  String get profileStyleSport => 'สปอร์ต';
+
+  @override
+  String get profileStyleSmartCasual => 'สมาร์ตแคชชวล';
+
+  @override
+  String profilePaletteSubtitle(String season) {
+    return 'พาเลตสี$season';
+  }
+
+  @override
+  String profileIdentitySubtitle(String style, String season) {
+    return '$style · พาเลตสี$season';
+  }
+
+  @override
   String get settingsTitle => 'การตั้งค่า';
 
   @override
@@ -766,6 +973,40 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsLanguageValue => 'ภาษาไทย';
+
+  @override
+  String get settingsAccount => 'บัญชี';
+
+  @override
+  String get settingsAccountEmail => 'อีเมล';
+
+  @override
+  String get settingsAccountProvider => 'เข้าสู่ระบบด้วย';
+
+  @override
+  String get settingsGuestAccount => 'บัญชีผู้เยี่ยมชมในเครื่อง';
+
+  @override
+  String get settingsSignOut => 'ออกจากระบบ';
+
+  @override
+  String get settingsDeleteAccount => 'ลบบัญชี';
+
+  @override
+  String get settingsDeleteAccountTitle => 'ต้องการลบบัญชีหรือไม่?';
+
+  @override
+  String get settingsDeleteAccountMessage =>
+      'การดำเนินการนี้จะลบโปรไฟล์ รูปตู้เสื้อผ้า ชุด และกิจกรรมทั้งหมดจาก MMM อย่างถาวร';
+
+  @override
+  String get settingsDeleteAccountConfirm => 'ลบบัญชี';
+
+  @override
+  String get settingsDeleteAccountFailed => 'ลบบัญชีไม่สำเร็จ';
+
+  @override
+  String get settingsSignOutFailed => 'ออกจากระบบไม่สำเร็จ';
 
   @override
   String get avatarTitle => 'อวาตาร์ของคุณ';

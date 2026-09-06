@@ -1298,6 +1298,378 @@ abstract class AppLocalizations {
   /// **'Danger zone'**
   String get profileDangerZone;
 
+  /// No description provided for @profileEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get profileEdit;
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get profileChangePhoto;
+
+  /// No description provided for @profileChooseFromPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Photos'**
+  String get profileChooseFromPhotos;
+
+  /// No description provided for @profileTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get profileTakePhoto;
+
+  /// No description provided for @profileUseAccountPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Use account photo'**
+  String get profileUseAccountPhoto;
+
+  /// No description provided for @profileRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get profileRemovePhoto;
+
+  /// No description provided for @profileDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get profileDisplayName;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get profileSave;
+
+  /// No description provided for @profileThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get profileThisMonth;
+
+  /// No description provided for @profileWardrobeUtilized.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe utilized'**
+  String get profileWardrobeUtilized;
+
+  /// No description provided for @profileLooksWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks worn'**
+  String get profileLooksWorn;
+
+  /// No description provided for @profilePiecesWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Pieces worn'**
+  String get profilePiecesWorn;
+
+  /// No description provided for @profileViewInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'View insights'**
+  String get profileViewInsights;
+
+  /// No description provided for @profileStyleDNA.
+  ///
+  /// In en, this message translates to:
+  /// **'Style DNA'**
+  String get profileStyleDNA;
+
+  /// No description provided for @profileWardrobeInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe insights'**
+  String get profileWardrobeInsights;
+
+  /// No description provided for @profileMostWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Most worn'**
+  String get profileMostWorn;
+
+  /// No description provided for @profileNotWornRecently.
+  ///
+  /// In en, this message translates to:
+  /// **'Not worn recently'**
+  String get profileNotWornRecently;
+
+  /// No description provided for @profileMostRepeatedLook.
+  ///
+  /// In en, this message translates to:
+  /// **'Most repeated look'**
+  String get profileMostRepeatedLook;
+
+  /// No description provided for @profileRecentLooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent looks'**
+  String get profileRecentLooks;
+
+  /// No description provided for @profilePreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get profilePreferences;
+
+  /// No description provided for @profileOccasions.
+  ///
+  /// In en, this message translates to:
+  /// **'Occasions'**
+  String get profileOccasions;
+
+  /// No description provided for @profileNoStylePreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'No style preferences yet.'**
+  String get profileNoStylePreferences;
+
+  /// No description provided for @profileNoOccasions.
+  ///
+  /// In en, this message translates to:
+  /// **'No occasions selected yet.'**
+  String get profileNoOccasions;
+
+  /// No description provided for @profileInsightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Style insights'**
+  String get profileInsightsTitle;
+
+  /// No description provided for @profileRangeMonthToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'MTD'**
+  String get profileRangeMonthToDate;
+
+  /// No description provided for @profileRange7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'7D'**
+  String get profileRange7Days;
+
+  /// No description provided for @profileRange30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'30D'**
+  String get profileRange30Days;
+
+  /// No description provided for @profileRange90Days.
+  ///
+  /// In en, this message translates to:
+  /// **'90D'**
+  String get profileRange90Days;
+
+  /// No description provided for @profileRange1Year.
+  ///
+  /// In en, this message translates to:
+  /// **'1Y'**
+  String get profileRange1Year;
+
+  /// No description provided for @profileNoWearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear something to unlock your style patterns.'**
+  String get profileNoWearHistory;
+
+  /// No description provided for @profileNoRepeatedLooks.
+  ///
+  /// In en, this message translates to:
+  /// **'No repeated looks in this period.'**
+  String get profileNoRepeatedLooks;
+
+  /// No description provided for @profileNoStyleDNA.
+  ///
+  /// In en, this message translates to:
+  /// **'Add and analyze a few wardrobe pieces to see your style DNA.'**
+  String get profileNoStyleDNA;
+
+  /// No description provided for @profileEmptyWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe is ready for its first piece.'**
+  String get profileEmptyWardrobe;
+
+  /// No description provided for @profileEmptyWardrobeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few pieces and MMM will show how you wear them.'**
+  String get profileEmptyWardrobeMessage;
+
+  /// No description provided for @profileInsightsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights could not load.'**
+  String get profileInsightsLoadFailed;
+
+  /// No description provided for @profileIdentitySaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile changes could not be saved.'**
+  String get profileIdentitySaveFailed;
+
+  /// No description provided for @profileChangePhotoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'That photo could not be used. Try another image.'**
+  String get profileChangePhotoFailed;
+
+  /// No description provided for @profileDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get profileDiscardTitle;
+
+  /// No description provided for @profileDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile edits have not been saved.'**
+  String get profileDiscardMessage;
+
+  /// No description provided for @profileKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get profileKeepEditing;
+
+  /// No description provided for @profileDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get profileDiscard;
+
+  /// No description provided for @profileDisplayNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a display name.'**
+  String get profileDisplayNameRequired;
+
+  /// No description provided for @profileDisplayNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 50 characters or fewer without control characters.'**
+  String get profileDisplayNameInvalid;
+
+  /// No description provided for @profilePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo'**
+  String get profilePhoto;
+
+  /// No description provided for @profilePhotoFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo for {name}'**
+  String profilePhotoFor(String name);
+
+  /// No description provided for @profileActivitySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Most active on {day}: {count} looks'**
+  String profileActivitySummary(String day, int count);
+
+  /// No description provided for @profileUtilizationSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total} active pieces worn'**
+  String profileUtilizationSummary(int used, int total);
+
+  /// No description provided for @profileUtilizationAccessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% utilized; {used} of {total} active pieces worn'**
+  String profileUtilizationAccessibility(int percent, int used, int total);
+
+  /// No description provided for @profileColorSwatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{hex}, {count} items'**
+  String profileColorSwatch(String hex, int count);
+
+  /// No description provided for @profileNoUnwornItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been unworn for 30+ days.'**
+  String get profileNoUnwornItems;
+
+  /// No description provided for @profileNoRecentLooks.
+  ///
+  /// In en, this message translates to:
+  /// **'No looks recorded in this period.'**
+  String get profileNoRecentLooks;
+
+  /// No description provided for @profileCategoryMix.
+  ///
+  /// In en, this message translates to:
+  /// **'Category mix'**
+  String get profileCategoryMix;
+
+  /// No description provided for @profileColorPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Color palette'**
+  String get profileColorPalette;
+
+  /// No description provided for @profilePreviousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous period'**
+  String get profilePreviousPeriod;
+
+  /// No description provided for @profileRepeatedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated {count} times'**
+  String profileRepeatedCount(int count);
+
+  /// No description provided for @profileAccountSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & settings'**
+  String get profileAccountSettings;
+
+  /// No description provided for @profileStyleBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get profileStyleBusiness;
+
+  /// No description provided for @profileStyleSport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport'**
+  String get profileStyleSport;
+
+  /// No description provided for @profileStyleSmartCasual.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart casual'**
+  String get profileStyleSmartCasual;
+
+  /// No description provided for @profilePaletteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{season} palette'**
+  String profilePaletteSubtitle(String season);
+
+  /// No description provided for @profileIdentitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{style} · {season} palette'**
+  String profileIdentitySubtitle(String style, String season);
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -1519,6 +1891,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get settingsLanguageValue;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsAccountEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get settingsAccountEmail;
+
+  /// No description provided for @settingsAccountProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in with'**
+  String get settingsAccountProvider;
+
+  /// No description provided for @settingsGuestAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Local guest account'**
+  String get settingsGuestAccount;
+
+  /// No description provided for @settingsSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get settingsSignOut;
+
+  /// No description provided for @settingsDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get settingsDeleteAccount;
+
+  /// No description provided for @settingsDeleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get settingsDeleteAccountTitle;
+
+  /// No description provided for @settingsDeleteAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.'**
+  String get settingsDeleteAccountMessage;
+
+  /// No description provided for @settingsDeleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get settingsDeleteAccountConfirm;
+
+  /// No description provided for @settingsDeleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion failed'**
+  String get settingsDeleteAccountFailed;
+
+  /// No description provided for @settingsSignOutFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out failed'**
+  String get settingsSignOutFailed;
 
   /// No description provided for @avatarTitle.
   ///

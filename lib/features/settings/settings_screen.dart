@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/locale_provider.dart';
@@ -12,7 +14,9 @@ import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/guest_account_migration_service.dart';
 import '../../core/services/ai_consent_repository.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/legal_links_service.dart';
+import '../../core/services/local_account_repository.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_brand_theme.dart';
@@ -41,6 +45,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
+          _accountSection(context, ref, l10n, brand),
           // Appearance
           _SectionHeader(title: l10n?.settingsAppearance ?? 'Appearance'),
           _SettingsTile(
@@ -199,6 +204,130 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _accountSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    MmmBrandTheme brand,
+  ) {
+    final user = AuthService().currentUser;
+    final signedIn = SupabaseService.isSignedIn;
+    final provider = _providerLabel(user);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: l10n?.settingsAccount ?? 'Account'),
+        _SettingsTile(
+          icon: Icons.email_outlined,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsAccountEmail ?? 'Email',
+          subtitle:
+              user?.email ??
+              (l10n?.settingsGuestAccount ?? 'Local guest account'),
+        ),
+        _SettingsTile(
+          icon: Icons.verified_user_outlined,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsAccountProvider ?? 'Signed in with',
+          subtitle: provider,
+        ),
+        _SettingsTile(
+          icon: Icons.logout_rounded,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsSignOut ?? 'Sign out',
+          onTap: () => _signOut(context, ref, l10n),
+        ),
+        if (signedIn)
+          _SettingsTile(
+            icon: Icons.delete_forever_outlined,
+            iconColor: brand.destructive,
+            title: l10n?.settingsDeleteAccount ?? 'Delete account',
+            onTap: () => _deleteAccount(context, ref, l10n),
+          ),
+      ],
+    );
+  }
+
+  String _providerLabel(User? user) {
+    if (user == null) return '—';
+    final provider = user.appMetadata['provider'] as String?;
+    if (provider == null || provider.isEmpty) return '—';
+    return provider[0].toUpperCase() + provider.substring(1);
+  }
+
+  Future<void> _signOut(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    try {
+      if (AppConfig.isSupabaseConfigured) await AuthService().signOut();
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(aiConsentProvider);
+      ref.invalidate(sessionProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+      if (context.mounted) context.go('/welcome');
+    } catch (error) {
+      debugPrint('Sign out failed: $error');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n?.settingsSignOutFailed ?? 'Sign out failed'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    final confirmed = await MmmDialog.show<bool>(
+      context: context,
+      title: Text(l10n?.settingsDeleteAccountTitle ?? 'Delete your account?'),
+      content: Text(
+        l10n?.settingsDeleteAccountMessage ??
+            'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n?.commonCancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: MmmBrandTheme.of(context).destructive,
+          ),
+          child: Text(l10n?.settingsDeleteAccountConfirm ?? 'Delete account'),
+        ),
+      ],
+    );
+    if (confirmed != true) return;
+    try {
+      await AuthService().deleteAccount();
+      await LocalAccountRepository().clearGuestAccount();
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(aiConsentProvider);
+      ref.invalidate(sessionProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+      if (context.mounted) context.go('/welcome');
+    } catch (error) {
+      debugPrint('Account deletion failed: $error');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsDeleteAccountFailed ?? 'Account deletion failed',
+          ),
+        ),
+      );
+    }
   }
 
   String _luckyColorLabel(String value, AppLocalizations? l10n) {

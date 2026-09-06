@@ -170,6 +170,11 @@ VALUES (
   '10000000-0000-4000-8000-000000000001/owner.png',
   '10000000-0000-4000-8000-000000000001',
   '{"mimetype":"image/png","size":1}'::jsonb
+), (
+  'wardrobe-images',
+  '10000000-0000-4000-8000-000000000001/profile/avatar-test.png',
+  '10000000-0000-4000-8000-000000000001',
+  '{"mimetype":"image/png","size":1}'::jsonb
 );
 
 -- Owner A can read each of their rows and create a new row in each table
@@ -178,6 +183,15 @@ SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
 
 SELECT is((SELECT count(*) FROM public.profiles), 1::bigint, 'A reads own profile');
+UPDATE public.profiles
+SET avatar_mode = 'custom',
+    avatar_path = '10000000-0000-4000-8000-000000000001/profile/avatar-test.png'
+WHERE id = '10000000-0000-4000-8000-000000000001';
+SELECT is(
+  (SELECT avatar_mode FROM public.profiles),
+  'custom',
+  'A can select a custom profile avatar'
+);
 SELECT is((SELECT count(*) FROM public.style_preferences), 1::bigint, 'A reads own style preferences');
 SELECT is((SELECT count(*) FROM public.clothing_items), 1::bigint, 'A reads own clothing');
 SELECT is((SELECT count(*) FROM public.outfits), 1::bigint, 'A reads own outfits');
@@ -388,11 +402,22 @@ SELECT throws_ok($$SELECT * FROM public.user_consents$$, '42501', null, 'anon ca
 -- Storage follows both the UID folder and owner_id.
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
-SELECT is((SELECT count(*) FROM storage.objects WHERE name LIKE '10000000-%'), 1::bigint, 'A reads own wardrobe image metadata');
+SELECT is((SELECT count(*) FROM storage.objects WHERE name LIKE '10000000-%'), 2::bigint, 'A reads own wardrobe and profile image metadata');
 
 SET LOCAL request.jwt.claim.sub = '20000000-0000-4000-8000-000000000002';
+SELECT is_empty(
+  $$SELECT * FROM public.profiles WHERE id = '10000000-0000-4000-8000-000000000001'$$,
+  'B cannot read A profile identity'
+);
+SELECT is_empty(
+  $$UPDATE public.profiles SET avatar_path = NULL
+    WHERE id = '10000000-0000-4000-8000-000000000001' RETURNING id$$,
+  'B cannot update A profile identity'
+);
 SELECT is_empty($$SELECT * FROM storage.objects WHERE name = '10000000-0000-4000-8000-000000000001/owner.png'$$, 'B cannot read A wardrobe image metadata');
+SELECT is_empty($$SELECT * FROM storage.objects WHERE name = '10000000-0000-4000-8000-000000000001/profile/avatar-test.png'$$, 'B cannot read A profile image metadata');
 SELECT is_empty($$UPDATE storage.objects SET metadata = '{"hacked":true}'::jsonb WHERE name = '10000000-0000-4000-8000-000000000001/owner.png' RETURNING name$$, 'B cannot update A wardrobe image metadata');
+SELECT is_empty($$UPDATE storage.objects SET metadata = '{"hacked":true}'::jsonb WHERE name = '10000000-0000-4000-8000-000000000001/profile/avatar-test.png' RETURNING name$$, 'B cannot update A profile image metadata');
 -- Supabase deliberately blocks direct SQL deletes from storage.objects; the
 -- Storage API is the supported delete path and must apply the same policy.
 SELECT throws_ok(

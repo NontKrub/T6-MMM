@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/profile_repository.dart';
 import '../../shared/models/user_profile.dart';
@@ -24,6 +26,7 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
 
   final dynamic _ref;
   final _repository = ProfileRepository();
+  Future<void> _writeQueue = Future.value();
 
   Future<void> load() async {
     try {
@@ -41,7 +44,30 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
   }
 
   void _persist() {
-    _repository.upsertProfile(state);
+    final snapshot = state;
+    _writeQueue = _writeQueue
+        .then((_) => _repository.upsertProfile(snapshot))
+        .catchError((_) {});
+  }
+
+  Future<void> flush() => _writeQueue;
+
+  Future<void> updateIdentity({
+    required String displayName,
+    required ProfileAvatarMode avatarMode,
+    String? avatarPath,
+    Uint8List? customAvatarBytes,
+    String customAvatarName = 'profile.png',
+  }) async {
+    await flush();
+    final updated = await _repository.updateIdentity(
+      displayName: displayName,
+      avatarMode: avatarMode,
+      avatarPath: avatarPath,
+      customAvatarBytes: customAvatarBytes,
+      customAvatarName: customAvatarName,
+    );
+    state = updated;
   }
 
   void updateColorSeason(ColorSeason season) {

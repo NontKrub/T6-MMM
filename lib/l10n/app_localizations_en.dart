@@ -659,6 +659,214 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileDangerZone => 'Danger zone';
 
   @override
+  String get profileEdit => 'Edit profile';
+
+  @override
+  String get profileEditTitle => 'Edit profile';
+
+  @override
+  String get profileChangePhoto => 'Change photo';
+
+  @override
+  String get profileChooseFromPhotos => 'Choose from Photos';
+
+  @override
+  String get profileTakePhoto => 'Take photo';
+
+  @override
+  String get profileUseAccountPhoto => 'Use account photo';
+
+  @override
+  String get profileRemovePhoto => 'Remove photo';
+
+  @override
+  String get profileDisplayName => 'Display name';
+
+  @override
+  String get profileSave => 'Save';
+
+  @override
+  String get profileThisMonth => 'This month';
+
+  @override
+  String get profileWardrobeUtilized => 'Wardrobe utilized';
+
+  @override
+  String get profileLooksWorn => 'Looks worn';
+
+  @override
+  String get profilePiecesWorn => 'Pieces worn';
+
+  @override
+  String get profileViewInsights => 'View insights';
+
+  @override
+  String get profileStyleDNA => 'Style DNA';
+
+  @override
+  String get profileWardrobeInsights => 'Wardrobe insights';
+
+  @override
+  String get profileMostWorn => 'Most worn';
+
+  @override
+  String get profileNotWornRecently => 'Not worn recently';
+
+  @override
+  String get profileMostRepeatedLook => 'Most repeated look';
+
+  @override
+  String get profileRecentLooks => 'Recent looks';
+
+  @override
+  String get profilePreferences => 'Preferences';
+
+  @override
+  String get profileOccasions => 'Occasions';
+
+  @override
+  String get profileNoStylePreferences => 'No style preferences yet.';
+
+  @override
+  String get profileNoOccasions => 'No occasions selected yet.';
+
+  @override
+  String get profileInsightsTitle => 'Style insights';
+
+  @override
+  String get profileRangeMonthToDate => 'MTD';
+
+  @override
+  String get profileRange7Days => '7D';
+
+  @override
+  String get profileRange30Days => '30D';
+
+  @override
+  String get profileRange90Days => '90D';
+
+  @override
+  String get profileRange1Year => '1Y';
+
+  @override
+  String get profileNoWearHistory =>
+      'Wear something to unlock your style patterns.';
+
+  @override
+  String get profileNoRepeatedLooks => 'No repeated looks in this period.';
+
+  @override
+  String get profileNoStyleDNA =>
+      'Add and analyze a few wardrobe pieces to see your style DNA.';
+
+  @override
+  String get profileEmptyWardrobe =>
+      'Your wardrobe is ready for its first piece.';
+
+  @override
+  String get profileEmptyWardrobeMessage =>
+      'Add a few pieces and MMM will show how you wear them.';
+
+  @override
+  String get profileInsightsLoadFailed => 'Insights could not load.';
+
+  @override
+  String get profileIdentitySaveFailed => 'Profile changes could not be saved.';
+
+  @override
+  String get profileChangePhotoFailed =>
+      'That photo could not be used. Try another image.';
+
+  @override
+  String get profileDiscardTitle => 'Discard changes?';
+
+  @override
+  String get profileDiscardMessage => 'Your profile edits have not been saved.';
+
+  @override
+  String get profileKeepEditing => 'Keep editing';
+
+  @override
+  String get profileDiscard => 'Discard';
+
+  @override
+  String get profileDisplayNameRequired => 'Enter a display name.';
+
+  @override
+  String get profileDisplayNameInvalid =>
+      'Use 50 characters or fewer without control characters.';
+
+  @override
+  String get profilePhoto => 'Profile photo';
+
+  @override
+  String profilePhotoFor(String name) {
+    return 'Profile photo for $name';
+  }
+
+  @override
+  String profileActivitySummary(String day, int count) {
+    return 'Most active on $day: $count looks';
+  }
+
+  @override
+  String profileUtilizationSummary(int used, int total) {
+    return '$used of $total active pieces worn';
+  }
+
+  @override
+  String profileUtilizationAccessibility(int percent, int used, int total) {
+    return '$percent% utilized; $used of $total active pieces worn';
+  }
+
+  @override
+  String profileColorSwatch(String hex, int count) {
+    return '$hex, $count items';
+  }
+
+  @override
+  String get profileNoUnwornItems => 'Nothing has been unworn for 30+ days.';
+
+  @override
+  String get profileNoRecentLooks => 'No looks recorded in this period.';
+
+  @override
+  String get profileCategoryMix => 'Category mix';
+
+  @override
+  String get profileColorPalette => 'Color palette';
+
+  @override
+  String get profilePreviousPeriod => 'vs previous period';
+
+  @override
+  String profileRepeatedCount(int count) {
+    return 'Repeated $count times';
+  }
+
+  @override
+  String get profileAccountSettings => 'Account & settings';
+
+  @override
+  String get profileStyleBusiness => 'Business';
+
+  @override
+  String get profileStyleSport => 'Sport';
+
+  @override
+  String get profileStyleSmartCasual => 'Smart casual';
+
+  @override
+  String profilePaletteSubtitle(String season) {
+    return '$season palette';
+  }
+
+  @override
+  String profileIdentitySubtitle(String style, String season) {
+    return '$style · $season palette';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -776,6 +984,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageValue => 'English';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get settingsAccountEmail => 'Email';
+
+  @override
+  String get settingsAccountProvider => 'Signed in with';
+
+  @override
+  String get settingsGuestAccount => 'Local guest account';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsDeleteAccount => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get settingsDeleteAccountMessage =>
+      'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.';
+
+  @override
+  String get settingsDeleteAccountConfirm => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountFailed => 'Account deletion failed';
+
+  @override
+  String get settingsSignOutFailed => 'Sign out failed';
 
   @override
   String get avatarTitle => 'Your Avatar';

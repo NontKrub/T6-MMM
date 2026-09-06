@@ -11,6 +11,7 @@ import '../../shared/models/recommendation_event.dart';
 import '../../shared/models/user_profile.dart';
 import 'local_account_repository.dart';
 import 'profile_repository.dart';
+import 'profile_image_storage_service.dart';
 import 'supabase_service.dart';
 import 'wardrobe_repository.dart';
 
@@ -166,17 +167,20 @@ class GuestAccountMigrationService {
     LocalAccountRepository? local,
     ProfileRepository? profiles,
     WardrobeRepository? wardrobe,
+    ProfileImageStorageService? profileImageStorage,
     SupabaseClient? client,
   }) : _clientOverride = client {
     _local = local ?? LocalAccountRepository();
     _profiles = profiles ?? ProfileRepository(client: client);
     _wardrobe = wardrobe ?? WardrobeRepository(local: _local, client: client);
+    _profileImageStorage = profileImageStorage ?? ProfileImageStorageService();
   }
 
   final SupabaseClient? _clientOverride;
   late final LocalAccountRepository _local;
   late final ProfileRepository _profiles;
   late final WardrobeRepository _wardrobe;
+  late final ProfileImageStorageService _profileImageStorage;
 
   SupabaseClient? get _client => _clientOverride ?? SupabaseService.client;
 
@@ -227,7 +231,11 @@ class GuestAccountMigrationService {
         ),
       );
       if (snapshot.profile != null) {
-        await _profiles.mergeGuestProfile(snapshot.profile!);
+        final guestAvatarBytes = await _readProfileAvatar(snapshot.profile!);
+        await _profiles.mergeGuestProfile(
+          snapshot.profile!,
+          guestAvatarBytes: guestAvatarBytes,
+        );
       }
 
       state = await _save(state.copyWith(phase: GuestMigrationPhase.wardrobe));
@@ -370,6 +378,18 @@ class GuestAccountMigrationService {
       throw StateError('The local image for "${item.name}" is unavailable.');
     }
     return File(path).readAsBytes();
+  }
+
+  Future<Uint8List?> _readProfileAvatar(UserProfile profile) async {
+    if (profile.avatarMode != ProfileAvatarMode.custom ||
+        profile.avatarPath == null ||
+        profile.avatarPath!.isEmpty) {
+      return null;
+    }
+    if (!await _profileImageStorage.owns(profile.avatarPath!)) {
+      throw StateError('The local profile image is not owned by MMM.');
+    }
+    return _profileImageStorage.readOwned(profile.avatarPath!);
   }
 
   Future<_MigrationEventResult> _migrateEvents(

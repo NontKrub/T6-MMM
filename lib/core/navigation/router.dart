@@ -13,6 +13,8 @@ import '../../features/missing_pieces/missing_pieces_screen.dart';
 import '../../features/chatbot/chatbot_screen.dart';
 import '../../features/item_detail/item_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/edit_profile_screen.dart';
+import '../../features/profile/profile_insights_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -62,6 +64,16 @@ final appRouter = GoRouter(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (_, __) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (_, __) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/insights',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (_, __) => const ProfileInsightsScreen(),
     ),
     GoRoute(
       path: '/settings',
