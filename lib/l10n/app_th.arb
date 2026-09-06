@@ -314,6 +314,13 @@
 
   "settingsTitle": "การตั้งค่า",
   "settingsAppearance": "การแสดงผล",
+  "settingsTheme": "ธีม",
+  "settingsThemeSystem": "ตามระบบ",
+  "settingsThemeLight": "สว่าง",
+  "settingsThemeDark": "มืด",
+  "settingsThemeSystemSubtitle": "ทำตามการตั้งค่ารูปลักษณ์ของอุปกรณ์",
+  "settingsThemeLightSubtitle": "ใช้รูปลักษณ์สว่างเสมอ",
+  "settingsThemeDarkSubtitle": "ใช้รูปลักษณ์มืดเสมอ",
   "settingsDarkMode": "โหมดมืด",
   "settingsDarkModeOn": "เปิด",
   "settingsDarkModeOff": "ปิด",

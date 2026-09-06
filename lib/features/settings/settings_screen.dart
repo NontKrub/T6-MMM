@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +35,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
     final appSettings = ref.watch(appSettingsProvider);
     final pendingMigration = ref.watch(guestMigrationPendingProvider);
@@ -49,17 +50,11 @@ class SettingsScreen extends ConsumerWidget {
           // Appearance
           _SectionHeader(title: l10n?.settingsAppearance ?? 'Appearance'),
           _SettingsTile(
-            icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            iconColor: brand.primaryGradient.colors.first,
-            title: l10n?.settingsDarkMode ?? 'Dark Mode',
-            subtitle: isDark
-                ? (l10n?.settingsDarkModeOn ?? 'On')
-                : (l10n?.settingsDarkModeOff ?? 'Off'),
-            trailing: Switch(
-              value: isDark,
-              onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-              activeThumbColor: brand.primaryGradient.colors.first,
-            ),
+            icon: _themeModeIcon(themeMode),
+            iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            title: l10n?.settingsTheme ?? 'Theme',
+            subtitle: _themeModeLabel(themeMode, l10n),
+            onTap: () => _showThemeModeSheet(context, ref, l10n),
           ),
 
           // Language
@@ -350,6 +345,91 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
+  void _showThemeModeSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) {
+    final mode = ref.read(themeModeProvider);
+    _showChoiceSheet(
+      context: context,
+      title: l10n?.settingsTheme ?? 'Theme',
+      currentValue: _themeModeValue(mode),
+      options: [
+        _SettingsChoice(
+          value: 'system',
+          label: l10n?.settingsThemeSystem ?? 'System',
+          subtitle:
+              l10n?.settingsThemeSystemSubtitle ??
+              'Follows your device appearance',
+          icon: Icons.brightness_auto_rounded,
+        ),
+        _SettingsChoice(
+          value: 'light',
+          label: l10n?.settingsThemeLight ?? 'Light',
+          subtitle:
+              l10n?.settingsThemeLightSubtitle ?? 'Always use light appearance',
+          icon: Icons.light_mode_rounded,
+        ),
+        _SettingsChoice(
+          value: 'dark',
+          label: l10n?.settingsThemeDark ?? 'Dark',
+          subtitle:
+              l10n?.settingsThemeDarkSubtitle ?? 'Always use dark appearance',
+          icon: Icons.dark_mode_rounded,
+        ),
+      ],
+      onSelected: (value) => ref
+          .read(themeModeProvider.notifier)
+          .setMode(_themeModeFromValue(value)),
+    );
+  }
+
+  String _themeModeValue(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'system';
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+    }
+  }
+
+  ThemeMode _themeModeFromValue(String value) {
+    switch (value) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  String _themeModeLabel(ThemeMode mode, AppLocalizations? l10n) {
+    switch (mode) {
+      case ThemeMode.system:
+        return l10n?.settingsThemeSystem ?? 'System';
+      case ThemeMode.light:
+        return l10n?.settingsThemeLight ?? 'Light';
+      case ThemeMode.dark:
+        return l10n?.settingsThemeDark ?? 'Dark';
+    }
+  }
+
+  IconData _themeModeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto_rounded;
+      case ThemeMode.light:
+        return Icons.light_mode_rounded;
+      case ThemeMode.dark:
+        return Icons.dark_mode_rounded;
+    }
+  }
+
   void _showLuckyColorMethodSheet(
     BuildContext context,
     WidgetRef ref,
@@ -415,7 +495,7 @@ class SettingsScreen extends ConsumerWidget {
     required String title,
     required String currentValue,
     required List<_SettingsChoice> options,
-    required ValueChanged<String> onSelected,
+    required FutureOr<void> Function(String) onSelected,
   }) {
     MmmBottomSheet.show<void>(
       context: context,
@@ -431,10 +511,20 @@ class SettingsScreen extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: AppRadii.compactBorder,
               ),
-              onTap: () {
-                onSelected(option.value);
-                Navigator.pop(context);
+              onTap: () async {
+                await onSelected(option.value);
+                if (context.mounted) Navigator.pop(context);
               },
+              leading: option.icon == null
+                  ? null
+                  : Icon(
+                      option.icon,
+                      color: selected
+                          ? MmmBrandTheme.of(
+                              context,
+                            ).primaryGradient.colors.first
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               title: Text(option.label),
               subtitle: Text(option.subtitle),
               trailing: Icon(
@@ -680,11 +770,13 @@ class _SettingsChoice {
   final String value;
   final String label;
   final String subtitle;
+  final IconData? icon;
 
   const _SettingsChoice({
     required this.value,
     required this.label,
     required this.subtitle,
+    this.icon,
   });
 }
 

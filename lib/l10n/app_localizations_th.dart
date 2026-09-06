@@ -866,6 +866,28 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAppearance => 'การแสดงผล';
 
   @override
+  String get settingsTheme => 'ธีม';
+
+  @override
+  String get settingsThemeSystem => 'ตามระบบ';
+
+  @override
+  String get settingsThemeLight => 'สว่าง';
+
+  @override
+  String get settingsThemeDark => 'มืด';
+
+  @override
+  String get settingsThemeSystemSubtitle =>
+      'ทำตามการตั้งค่ารูปลักษณ์ของอุปกรณ์';
+
+  @override
+  String get settingsThemeLightSubtitle => 'ใช้รูปลักษณ์สว่างเสมอ';
+
+  @override
+  String get settingsThemeDarkSubtitle => 'ใช้รูปลักษณ์มืดเสมอ';
+
+  @override
   String get settingsDarkMode => 'โหมดมืด';
 
   @override

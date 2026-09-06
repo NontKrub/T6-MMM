@@ -320,6 +320,13 @@
 
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystemSubtitle": "Follows your device appearance",
+  "settingsThemeLightSubtitle": "Always use light appearance",
+  "settingsThemeDarkSubtitle": "Always use dark appearance",
   "settingsDarkMode": "Dark Mode",
   "settingsDarkModeOn": "On",
   "settingsDarkModeOff": "Off",

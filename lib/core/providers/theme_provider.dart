@@ -2,26 +2,89 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
-  ref,
-) {
-  return ThemeModeNotifier();
-});
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+  (ref) => ThemeModeNotifier(),
+);
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.dark) {
-    _load();
+  ThemeModeNotifier({Future<SharedPreferences> Function()? preferencesLoader})
+    : _preferencesLoader = preferencesLoader ?? SharedPreferences.getInstance,
+      super(ThemeMode.system) {
+    load();
   }
 
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isDark = prefs.getBool('isDarkMode') ?? true;
-    state = isDark ? ThemeMode.dark : ThemeMode.light;
+  static const _themeModeKey = 'mmm_theme_mode';
+  static const _legacyDarkModeKey = 'isDarkMode';
+
+  final Future<SharedPreferences> Function() _preferencesLoader;
+  int _revision = 0;
+
+  Future<void> load() async {
+    final requestRevision = _revision;
+    try {
+      final prefs = await _preferencesLoader();
+      final storedMode = _modeFromStored(prefs.getString(_themeModeKey));
+      final legacyDarkMode = prefs.getBool(_legacyDarkModeKey);
+      final mode =
+          storedMode ??
+          (legacyDarkMode == null
+              ? ThemeMode.system
+              : legacyDarkMode
+              ? ThemeMode.dark
+              : ThemeMode.light);
+
+      if (!mounted || requestRevision != _revision) return;
+      state = mode;
+
+      if (storedMode == null && legacyDarkMode != null) {
+        try {
+          final persisted = await prefs.setString(
+            _themeModeKey,
+            _storedValue(mode),
+          );
+          if (persisted) await prefs.remove(_legacyDarkModeKey);
+        } catch (_) {
+          // Keep the new state even when migration cleanup is unavailable.
+        }
+      }
+    } catch (_) {
+      // System mode is the safe default when local preferences are unavailable.
+    }
   }
 
-  Future<void> toggle() async {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', state == ThemeMode.dark);
+  Future<void> setMode(ThemeMode mode) async {
+    final selectionRevision = ++_revision;
+    state = mode;
+    final prefs = await _preferencesLoader();
+    if (!mounted || selectionRevision != _revision) return;
+    await prefs.setString(_themeModeKey, _storedValue(mode));
+  }
+
+  Future<void> toggle() {
+    return setMode(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+  }
+
+  ThemeMode? _modeFromStored(String? value) {
+    switch (value) {
+      case 'system':
+        return ThemeMode.system;
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return null;
+    }
+  }
+
+  String _storedValue(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'system';
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+    }
   }
 }
