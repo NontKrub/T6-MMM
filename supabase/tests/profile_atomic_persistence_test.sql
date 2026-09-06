@@ -55,6 +55,8 @@ SELECT results_eq(
   $$VALUES ('occasion', 'work'), ('style', 'casual'), ('style', 'street')$$,
   'preferences are replaced, trimmed, and deduplicated'
 );
+
+SET LOCAL ROLE postgres;
 SELECT is(
   (SELECT display_name FROM public.profiles
     WHERE id = '20000000-0000-4000-8000-000000000002'),
@@ -68,6 +70,9 @@ SELECT results_eq(
   $$VALUES ('occasion', 'travel'), ('style', 'formal')$$,
   'another user preferences are unchanged'
 );
+
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
 
 SELECT public.save_profile_with_preferences(
   'Owner empty', NULL, NULL, 'none', 'spring', 'human', false, NULL,
