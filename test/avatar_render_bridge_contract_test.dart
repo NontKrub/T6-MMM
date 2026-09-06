@@ -13,9 +13,12 @@ void main() {
       source,
       contains('window.mmmAvatar.playInteraction = playInteraction'),
     );
-    expect(source, contains("['wave', 'look'].includes(name)"));
+    expect(
+      source,
+      contains("['wave', 'look', 'outfit_reveal'].includes(name)"),
+    );
     expect(source, contains("playInteraction('wave')"));
-    expect(source, contains("playInteraction('look')"));
+    expect(source, contains("playInteraction('outfit_reveal')"));
     expect(source, contains('setTimeout(returnToIdle'));
     expect(source, contains('look.texturesEnabled'));
     expect(source, contains('MMMAvatarTextureError'));

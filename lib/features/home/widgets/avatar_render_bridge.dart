@@ -177,10 +177,7 @@ abstract final class AvatarRenderBridge {
         garment.color,
         garment.pattern,
         garment.textureDigest
-      ]).sort(),
-      hairColorIndex: look && look.hairColorIndex,
-      hairStyleIndex: look && look.hairStyleIndex,
-      skinToneIndex: look && look.skinToneIndex
+      ]).sort()
     });
   };
 
@@ -193,12 +190,17 @@ abstract final class AvatarRenderBridge {
 
   const playInteraction = (name) => {
     if (!viewer.model || !lastLook || lastLook.reduceMotion) return;
-    const interaction = ['wave', 'look'].includes(name) ? name : 'wave';
+    const interaction = ['wave', 'look', 'outfit_reveal'].includes(name)
+      ? name
+      : 'wave';
     if (interactionTimer) clearTimeout(interactionTimer);
     viewer.timeScale = 1;
     viewer.animationName = interaction;
     viewer.play({ repetitions: 1 });
-    interactionTimer = setTimeout(returnToIdle, interaction === 'wave' ? 1100 : 850);
+    interactionTimer = setTimeout(
+      returnToIdle,
+      interaction === 'wave' ? 1100 : 850,
+    );
   };
 
   const playAnimation = (look) => {
@@ -253,7 +255,7 @@ abstract final class AvatarRenderBridge {
         ];
     await Promise.all(visibleGarments.map((garment) => applyGarment(garment, nextLook)));
     if (token !== applyToken) return;
-    if (shouldReveal) playInteraction('look');
+    if (shouldReveal) playInteraction('outfit_reveal');
     else playAnimation(nextLook);
   };
 
@@ -266,8 +268,9 @@ abstract final class AvatarRenderBridge {
   });
   viewer.addEventListener('error', () => send('MMMAvatarError', { reason: 'model_load_failed' }));
   viewer.addEventListener('pointerup', (event) => {
-    if (!viewer.model || typeof viewer.materialFromPoint !== 'function') return;
+    if (!viewer.model) return;
     playInteraction('wave');
+    if (typeof viewer.materialFromPoint !== 'function') return;
     const material = viewer.materialFromPoint(event.offsetX, event.offsetY);
     if (material && material.name) send('MMMAvatarMaterialTap', { material: material.name });
   });
