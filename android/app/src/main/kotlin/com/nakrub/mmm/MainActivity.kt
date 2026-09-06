@@ -1,5 +1,6 @@
 package com.nakrub.mmm
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
