@@ -10,6 +10,7 @@ import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
 import 'package:mix_match_mood/core/services/image_pick_service.dart';
 import 'package:mix_match_mood/features/wardrobe/add_item_sheet.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeImagePickerClient implements ImagePickerClient {
   XFile? pickResult;
@@ -119,6 +120,8 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   Future<void> pumpSheet(
     WidgetTester tester, {
     required ImagePickService imagePickService,
@@ -191,6 +194,9 @@ void main() {
   testWidgets('android lost data returns an image and preview appears', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({
+      'mmm_pending_image_pick_purpose': ImagePickPurpose.wardrobeItem.name,
+    });
     final lostFile = XFile('/tmp/lost-preview.jpg');
     final pickerClient = _FakeImagePickerClient()
       ..lostDataResponse = LostDataResponse(

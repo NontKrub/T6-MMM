@@ -158,7 +158,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   Future<void> _restoreLostImage() async {
     final l10n = AppLocalizations.of(context);
     try {
-      final file = await _imagePickService.retrieveLostImage();
+      final file = await _imagePickService.retrieveLostImage(
+        purpose: ImagePickPurpose.wardrobeItem,
+      );
       if (file == null) return;
       if (!mounted) return;
       await _setPickedFile(file);
@@ -175,7 +177,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   Future<void> _pickImage(ImageSource source) async {
     final l10n = AppLocalizations.of(context);
     try {
-      final file = await _imagePickService.pickImage(source: source);
+      final file = await _imagePickService.pickImage(
+        source: source,
+        purpose: ImagePickPurpose.wardrobeItem,
+      );
       if (file == null) return;
       if (!mounted) return;
       await _setPickedFile(file);
