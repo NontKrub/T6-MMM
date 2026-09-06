@@ -1,16 +1,25 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Provider;
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/profile_repository.dart';
 import '../../shared/models/user_profile.dart';
 import 'avatar_customization_provider.dart';
 
+final profileRepositoryProvider = Provider<ProfileRepository>(
+  (_) => ProfileRepository(),
+);
+
 final userProfileProvider =
     StateNotifierProvider<UserProfileNotifier, UserProfile>((ref) {
-      return UserProfileNotifier(ref);
+      return UserProfileNotifier(ref, ref.read(profileRepositoryProvider));
     });
 
 class UserProfileNotifier extends StateNotifier<UserProfile> {
-  UserProfileNotifier(this._ref)
-    : super(
+  UserProfileNotifier(this._ref, [ProfileRepository? repository])
+    : _repository = repository ?? ProfileRepository(),
+      super(
         const UserProfile(
           id: 'local_guest',
           name: 'Guest',
@@ -23,7 +32,8 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
   }
 
   final dynamic _ref;
-  final _repository = ProfileRepository();
+  final ProfileRepository _repository;
+  Future<void> _writeQueue = Future.value();
 
   Future<void> load() async {
     try {
@@ -41,7 +51,57 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
   }
 
   void _persist() {
-    _repository.upsertProfile(state);
+    unawaited(_enqueue(() => _repository.upsertProfile(state)));
+  }
+
+  Future<void> _enqueue(Future<void> Function() operation) {
+    final result = _writeQueue.then((_) => operation());
+    _writeQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stack) {
+        debugPrint('Profile persistence failed: $error');
+      },
+    );
+    return result;
+  }
+
+  Future<void> _saveProfileMutation(
+    UserProfile Function(UserProfile current) mutation,
+  ) => _enqueue(() async {
+    final updated = mutation(state);
+    await _repository.upsertProfile(updated);
+    state = updated;
+  });
+
+  Future<void> saveColorSeason(ColorSeason season) =>
+      _saveProfileMutation((current) => current.copyWith(colorSeason: season));
+
+  Future<void> saveStylePreferences(List<String> prefs) => _saveProfileMutation(
+    (current) => current.copyWith(stylePreferences: prefs.toList()),
+  );
+
+  Future<void> saveOccasions(List<String> occasions) => _saveProfileMutation(
+    (current) => current.copyWith(occasions: occasions.toList()),
+  );
+
+  Future<void> flush() => _writeQueue;
+
+  Future<void> updateIdentity({
+    required String displayName,
+    required ProfileAvatarMode avatarMode,
+    String? avatarPath,
+    Uint8List? customAvatarBytes,
+    String customAvatarName = 'profile.png',
+  }) async {
+    await flush();
+    final updated = await _repository.updateIdentity(
+      displayName: displayName,
+      avatarMode: avatarMode,
+      avatarPath: avatarPath,
+      customAvatarBytes: customAvatarBytes,
+      customAvatarName: customAvatarName,
+    );
+    state = updated;
   }
 
   void updateColorSeason(ColorSeason season) {

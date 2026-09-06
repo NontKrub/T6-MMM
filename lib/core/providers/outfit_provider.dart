@@ -148,4 +148,14 @@ class OutfitNotifier extends StateNotifier<List<Outfit>> {
 
   Future<int> repeatCountFor(Outfit outfit) =>
       _repository.repeatCountFor(outfit.itemIds);
+
+  Future<Outfit?> chooseDailyOutfit({
+    required DateTime date,
+    required Iterable<Outfit> candidates,
+    Outfit? explicitSelection,
+  }) => _repository.chooseDailyOutfit(
+    date: date,
+    candidates: candidates,
+    explicitSelection: explicitSelection,
+  );
 }

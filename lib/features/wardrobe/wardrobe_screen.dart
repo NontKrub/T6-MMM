@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/providers/wardrobe_provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../shared/models/clothing_item.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
-import '../../shared/widgets/category_tabs.dart';
-import '../../shared/widgets/clothing_item_card.dart';
+import '../../shared/models/clothing_item.dart';
+import '../../shared/widgets/mmm_empty_state.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
+import '../../shared/widgets/wardrobe_image.dart';
 import 'add_item_sheet.dart';
 
 class WardrobeScreen extends ConsumerStatefulWidget {
@@ -23,15 +26,20 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final allItems = ref.watch(wardrobeProvider);
-
-    List<ClothingItem> filtered = _searchQuery.isNotEmpty
+    final filtered = _searchQuery.isNotEmpty
         ? ref.read(wardrobeProvider.notifier).search(_searchQuery)
-        : (_selectedCategory != null
-              ? allItems.where((i) => i.category == _selectedCategory).toList()
-              : allItems);
+        : _selectedCategory == null
+        ? allItems
+        : allItems.where((item) => item.category == _selectedCategory).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -39,151 +47,313 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
+              ),
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n?.wardrobeTitle ?? 'Wardrobe',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        l10n?.wardrobeItemCount(allItems.length) ??
-                            '${allItems.length} items',
-                        style: TextStyle(
-                          color: Colors.grey.withValues(alpha: 0.7),
-                          fontSize: 13,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n?.wardrobeTitle ?? 'Wardrobe',
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: AppSpacing.xxs),
+                        Text(
+                          l10n?.wardrobeItemCount(allItems.length) ??
+                              '${allItems.length} items',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Semantics(
+                    button: true,
+                    label: l10n?.commonAddItem ?? 'Add item',
+                    child: IconButton.filled(
+                      onPressed: _showAddItem,
+                      icon: const Icon(Icons.add_rounded),
+                      tooltip: l10n?.commonAddItem ?? 'Add item',
+                    ),
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms),
-            const SizedBox(height: 16),
-            // Search bar
+            ),
+            const SizedBox(height: AppSpacing.lg),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: AppSpacing.screen,
               child: TextField(
                 controller: _searchController,
-                onChanged: (v) => setState(() => _searchQuery = v),
+                onChanged: (value) => setState(() => _searchQuery = value),
+                textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText:
                       l10n?.wardrobeSearchHint ??
                       'Search by name, brand, or tag…',
                   prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 18),
+                  suffixIcon: _searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 20),
+                          tooltip: l10n?.commonClearSearch ?? 'Clear search',
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
                           },
-                        )
-                      : null,
+                        ),
                 ),
               ),
-            ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
-            const SizedBox(height: 14),
-            // Category tabs
-            CategoryTabs(
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _CategoryFilter(
               selected: _selectedCategory,
-              onSelect: (cat) => setState(() => _selectedCategory = cat),
-            ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
-            const SizedBox(height: 14),
-            // Grid
+              onSelect: (category) =>
+                  setState(() => _selectedCategory = category),
+            ),
+            const SizedBox(height: AppSpacing.md),
             Expanded(
               child: filtered.isEmpty
-                  ? _EmptyState(hasSearch: _searchQuery.isNotEmpty)
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.78,
-                          ),
+                  ? _WardrobeEmptyState(
+                      hasSearch: _searchQuery.isNotEmpty,
+                      onAdd: _showAddItem,
+                    )
+                  : ListView.separated(
+                      key: const Key('wardrobe-list'),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        AppSpacing.xl,
+                      ),
                       itemCount: filtered.length,
-                      itemBuilder: (context, i) =>
-                          ClothingItemCard(
-                                item: filtered[i],
-                                onTap: () =>
-                                    context.push('/item/${filtered[i].id}'),
-                              )
-                              .animate(delay: (i * 50).ms)
-                              .fadeIn(duration: 300.ms)
-                              .scale(
-                                begin: const Offset(0.9, 0.9),
-                                end: const Offset(1, 1),
-                                duration: 300.ms,
-                              ),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (context, index) => _WardrobeItemCard(
+                        key: ValueKey('wardrobe-item-${filtered[index].id}'),
+                        item: filtered[index],
+                        onTap: () =>
+                            context.push('/item/${filtered[index].id}'),
+                      ),
                     ),
             ),
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 96),
-        child: FloatingActionButton(
-          onPressed: () => showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => const AddItemSheet(),
+    );
+  }
+
+  void _showAddItem() => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const AddItemSheet(),
+  );
+}
+
+class _CategoryFilter extends StatelessWidget {
+  const _CategoryFilter({required this.selected, required this.onSelect});
+
+  final ClothingCategory? selected;
+  final ValueChanged<ClothingCategory?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = <ClothingCategory?>[null, ...ClothingCategory.values];
+    final brand = MmmBrandTheme.of(context);
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: AppSpacing.screen,
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = selected == category;
+          final l10n = AppLocalizations.of(context);
+          final allLabel = l10n?.wardrobeAll ?? 'All';
+          final label = category == null
+              ? allLabel
+              : _localizedCategoryLabel(l10n, category);
+          return Semantics(
+            button: true,
+            selected: isSelected,
+            label: label,
+            child: Material(
+              color: isSelected
+                  ? brand.subtleAccentSurface
+                  : brand.raisedSurface,
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadii.compactBorder,
+                side: BorderSide(
+                  color: isSelected
+                      ? brand.primaryGradient.colors.first
+                      : brand.subtleBorder,
+                ),
+              ),
+              child: InkWell(
+                onTap: () => onSelect(category),
+                borderRadius: AppRadii.compactBorder,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: isSelected
+                            ? brand.primaryGradient.colors.first
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _WardrobeItemCard extends StatelessWidget {
+  const _WardrobeItemCard({super.key, required this.item, required this.onTap});
+
+  final ClothingItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final categoryLabel = _localizedCategoryLabel(l10n, item.category);
+    final brandLabel = item.brand?.trim();
+    final semanticsLabel = brandLabel == null || brandLabel.isEmpty
+        ? '${item.name}, $categoryLabel'
+        : '${item.name}, $brandLabel, $categoryLabel';
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: MmmSurfaceCard(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 88),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: AppRadii.controlBorder,
+                child: ColoredBox(
+                  color: brand.neutralSurface,
+                  child: SizedBox(
+                    width: 88,
+                    height: 88,
+                    child: WardrobeImage(item: item, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (brandLabel != null && brandLabel.isNotEmpty)
+                      Text(
+                        brandLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    Text(
+                      categoryLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
-          backgroundColor: AppColors.seedColor,
-          child: const Icon(Icons.add_rounded, color: Colors.white),
         ),
       ),
     );
   }
 }
 
-class _EmptyState extends StatelessWidget {
+String _localizedCategoryLabel(
+  AppLocalizations? l10n,
+  ClothingCategory category,
+) => switch (category) {
+  ClothingCategory.hat => l10n?.clothingCategoryHat ?? category.label,
+  ClothingCategory.top => l10n?.clothingCategoryTop ?? category.label,
+  ClothingCategory.pants => l10n?.clothingCategoryPants ?? category.label,
+  ClothingCategory.shoes => l10n?.clothingCategoryShoes ?? category.label,
+  ClothingCategory.outerwear =>
+    l10n?.clothingCategoryOuterwear ?? category.label,
+  ClothingCategory.dress => l10n?.clothingCategoryDress ?? category.label,
+  ClothingCategory.bag => l10n?.clothingCategoryBag ?? category.label,
+  ClothingCategory.accessory =>
+    l10n?.clothingCategoryAccessory ?? category.label,
+  ClothingCategory.unknown => l10n?.clothingCategoryUnknown ?? category.label,
+};
+
+class _WardrobeEmptyState extends StatelessWidget {
+  const _WardrobeEmptyState({required this.hasSearch, required this.onAdd});
+
   final bool hasSearch;
-  const _EmptyState({required this.hasSearch});
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            hasSearch ? Icons.search_off_rounded : Icons.checkroom_outlined,
-            size: 56,
-            color: Colors.grey.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            hasSearch
-                ? (l10n?.wardrobeNoResults ?? 'No items found')
-                : (l10n?.wardrobeEmpty ?? 'Your wardrobe is empty'),
-            style: TextStyle(
-              color: Colors.grey.withValues(alpha: 0.6),
-              fontSize: 15,
-            ),
-          ),
-          if (!hasSearch) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n?.wardrobeEmptyHint ?? 'Tap + to add your first item',
-              style: TextStyle(
-                color: Colors.grey.withValues(alpha: 0.4),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ],
-      ),
+    if (hasSearch) {
+      return MmmEmptyState(
+        icon: Icons.search_off_rounded,
+        title: l10n?.wardrobeNoResults ?? 'No items found',
+        message:
+            l10n?.wardrobeNoResultsHint ??
+            'Try a different name, brand, or tag.',
+      );
+    }
+    return MmmEmptyState(
+      icon: Icons.auto_awesome_outlined,
+      title: l10n?.wardrobeEmpty ?? 'Your wardrobe is empty',
+      message:
+          l10n?.wardrobeEmptyMessage ??
+          'Your wardrobe is ready for its first piece.',
+      actionLabel: l10n?.wardrobeEmptyAdd ?? 'Add an item',
+      onAction: onAdd,
     );
   }
 }

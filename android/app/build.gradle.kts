@@ -23,7 +23,11 @@ android {
         applicationId = "com.nakrub.mmm"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        val resolvedMinSdk = flutter.minSdkVersion
+        require(resolvedMinSdk >= 24) {
+            "ML Kit Subject Segmentation requires minSdk 24; resolved $resolvedMinSdk"
+        }
+        minSdk = resolvedMinSdk
         targetSdk = 37
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -91,4 +95,5 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("com.google.mlkit:image-labeling:17.0.9")
+    implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
 }

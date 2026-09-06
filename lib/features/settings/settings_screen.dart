@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/providers/ai_consent_provider.dart';
@@ -15,11 +14,17 @@ import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/guest_account_migration_service.dart';
 import '../../core/services/ai_consent_repository.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/services/legal_links_service.dart';
+import '../../core/services/local_account_repository.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/supabase_service.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_container.dart';
+import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_radii.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/widgets/mmm_bottom_sheet.dart';
+import '../../shared/widgets/mmm_dialog.dart';
+import '../../shared/widgets/mmm_surface_card.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -33,17 +38,19 @@ class SettingsScreen extends ConsumerWidget {
     final appSettings = ref.watch(appSettingsProvider);
     final pendingMigration = ref.watch(guestMigrationPendingProvider);
     final aiConsent = ref.watch(aiConsentProvider);
+    final brand = MmmBrandTheme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n?.settingsTitle ?? 'Settings')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
+          _accountSection(context, ref, l10n, brand),
           // Appearance
           _SectionHeader(title: l10n?.settingsAppearance ?? 'Appearance'),
           _SettingsTile(
             icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            iconColor: isDark ? const Color(0xFF818CF8) : AppColors.accentGold,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsDarkMode ?? 'Dark Mode',
             subtitle: isDark
                 ? (l10n?.settingsDarkModeOn ?? 'On')
@@ -51,22 +58,22 @@ class SettingsScreen extends ConsumerWidget {
             trailing: Switch(
               value: isDark,
               onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: brand.primaryGradient.colors.first,
             ),
-          ).animate().fadeIn(duration: 300.ms),
+          ),
 
           // Language
           _SectionHeader(title: l10n?.settingsLanguage ?? 'Language'),
           _SettingsTile(
             icon: Icons.language_rounded,
-            iconColor: AppColors.seedColor,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsLanguage ?? 'Language',
             subtitle: locale.languageCode == 'th'
                 ? (l10n?.settingsLanguageValue ?? 'ภาษาไทย')
                 : 'English',
             onTap: () =>
                 context.push('/language', extra: {'fromSettings': true}),
-          ).animate(delay: 50.ms).fadeIn(duration: 300.ms),
+          ),
 
           // Personalization
           _SectionHeader(
@@ -74,35 +81,35 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _SettingsTile(
             icon: Icons.palette_rounded,
-            iconColor: AppColors.gradientEnd,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsLuckyColor ?? 'Lucky Color Method',
             subtitle: _luckyColorLabel(appSettings.luckyColorMethod, l10n),
             onTap: () => _showLuckyColorMethodSheet(context, ref, l10n),
-          ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
+          ),
           _SettingsTile(
             icon: Icons.wb_sunny_rounded,
-            iconColor: AppColors.accentGold,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsWeather ?? 'Weather Location',
             subtitle: _weatherLocationLabel(
               appSettings.weatherLocationMode,
               l10n,
             ),
             onTap: () => _showWeatherLocationSheet(context, ref, l10n),
-          ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
+          ),
 
           if (SupabaseService.isSignedIn)
             pendingMigration.when(
               data: (pending) => pending
                   ? _SettingsTile(
                       icon: Icons.cloud_upload_outlined,
-                      iconColor: AppColors.seedColor,
+                      iconColor: brand.primaryGradient.colors.first,
                       title:
                           l10n?.settingsImportLocal ?? 'Import local wardrobe',
                       subtitle:
                           l10n?.settingsImportLocalSubtitle ??
                           'Resume importing your guest wardrobe',
                       onTap: () => _importLocalWardrobe(context, ref, l10n),
-                    ).animate(delay: 175.ms).fadeIn(duration: 300.ms)
+                    )
                   : const SizedBox.shrink(),
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
@@ -112,7 +119,7 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader(title: l10n?.settingsNotifications ?? 'Notifications'),
           _SettingsTile(
             icon: Icons.notifications_rounded,
-            iconColor: const Color(0xFF34D399),
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsDailyReminder ?? 'Daily outfit reminder',
             subtitle: appSettings.dailyOutfitReminder
                 ? '${l10n?.settingsDarkModeOn ?? 'On'} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay(hour: appSettings.dailyOutfitReminderMinutes ~/ 60, minute: appSettings.dailyOutfitReminderMinutes % 60))}'
@@ -126,12 +133,12 @@ class SettingsScreen extends ConsumerWidget {
                 l10n,
                 value,
               ),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: brand.primaryGradient.colors.first,
             ),
-          ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
+          ),
           _SettingsTile(
             icon: Icons.repeat_rounded,
-            iconColor: AppColors.colorHats,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsRepetitionAlerts ?? 'Repetition alerts',
             subtitle: appSettings.repetitionAlerts
                 ? (l10n?.settingsDarkModeOn ?? 'On')
@@ -140,15 +147,15 @@ class SettingsScreen extends ConsumerWidget {
               value: appSettings.repetitionAlerts,
               onChanged: (value) =>
                   _setRepetitionAlerts(context, ref, l10n, value),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: brand.primaryGradient.colors.first,
             ),
-          ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
+          ),
 
           // AI
           _SectionHeader(title: l10n?.settingsAI ?? 'AI Features'),
           _SettingsTile(
             icon: Icons.auto_awesome_rounded,
-            iconColor: AppColors.seedColor,
+            iconColor: brand.primaryGradient.colors.first,
             title: l10n?.settingsLearnPreferences ?? 'Learn my preferences',
             subtitle:
                 l10n?.settingsLearnPreferencesSubtitle ??
@@ -158,15 +165,10 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) => ref
                   .read(appSettingsProvider.notifier)
                   .setLearnPreferences(value),
-              activeThumbColor: AppColors.seedColor,
+              activeThumbColor: brand.primaryGradient.colors.first,
             ),
-          ).animate(delay: 300.ms).fadeIn(duration: 300.ms),
-          _aiConsentTile(
-            context,
-            ref,
-            l10n,
-            aiConsent,
-          ).animate(delay: 325.ms).fadeIn(duration: 300.ms),
+          ),
+          _aiConsentTile(context, ref, l10n, aiConsent),
 
           // About
           _SectionHeader(title: l10n?.settingsAbout ?? 'About'),
@@ -183,17 +185,149 @@ class SettingsScreen extends ConsumerWidget {
                       snapshot.data!.buildNumber,
                     ),
             ),
-          ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
+          ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             iconColor: Colors.grey,
             title: l10n?.settingsPrivacy ?? 'Privacy Policy',
             subtitle: l10n?.settingsPrivacy ?? 'Privacy Policy',
-            onTap: () => _openPrivacyPolicy(context, l10n),
-          ).animate(delay: 400.ms).fadeIn(duration: 300.ms),
+            onTap: () =>
+                _openLegalDocument(context, l10n, LegalDocument.privacy),
+          ),
+          _SettingsTile(
+            icon: Icons.article_outlined,
+            iconColor: Colors.grey,
+            title: l10n?.settingsTerms ?? 'Terms of Service',
+            subtitle: l10n?.settingsTerms ?? 'Terms of Service',
+            onTap: () => _openLegalDocument(context, l10n, LegalDocument.terms),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _accountSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+    MmmBrandTheme brand,
+  ) {
+    final user = AuthService().currentUser;
+    final signedIn = SupabaseService.isSignedIn;
+    final provider = _providerLabel(user);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: l10n?.settingsAccount ?? 'Account'),
+        _SettingsTile(
+          icon: Icons.email_outlined,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsAccountEmail ?? 'Email',
+          subtitle:
+              user?.email ??
+              (l10n?.settingsGuestAccount ?? 'Local guest account'),
+        ),
+        _SettingsTile(
+          icon: Icons.verified_user_outlined,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsAccountProvider ?? 'Signed in with',
+          subtitle: provider,
+        ),
+        _SettingsTile(
+          icon: Icons.logout_rounded,
+          iconColor: brand.primaryGradient.colors.first,
+          title: l10n?.settingsSignOut ?? 'Sign out',
+          onTap: () => _signOut(context, ref, l10n),
+        ),
+        if (signedIn)
+          _SettingsTile(
+            icon: Icons.delete_forever_outlined,
+            iconColor: brand.destructive,
+            title: l10n?.settingsDeleteAccount ?? 'Delete account',
+            onTap: () => _deleteAccount(context, ref, l10n),
+          ),
+      ],
+    );
+  }
+
+  String _providerLabel(User? user) {
+    if (user == null) return '—';
+    final provider = user.appMetadata['provider'] as String?;
+    if (provider == null || provider.isEmpty) return '—';
+    return provider[0].toUpperCase() + provider.substring(1);
+  }
+
+  Future<void> _signOut(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    try {
+      if (AppConfig.isSupabaseConfigured) await AuthService().signOut();
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(aiConsentProvider);
+      ref.invalidate(sessionProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+      if (context.mounted) context.go('/welcome');
+    } catch (error) {
+      debugPrint('Sign out failed: $error');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n?.settingsSignOutFailed ?? 'Sign out failed'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    final confirmed = await MmmDialog.show<bool>(
+      context: context,
+      title: Text(l10n?.settingsDeleteAccountTitle ?? 'Delete your account?'),
+      content: Text(
+        l10n?.settingsDeleteAccountMessage ??
+            'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n?.commonCancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: MmmBrandTheme.of(context).destructive,
+          ),
+          child: Text(l10n?.settingsDeleteAccountConfirm ?? 'Delete account'),
+        ),
+      ],
+    );
+    if (confirmed != true) return;
+    try {
+      await AuthService().deleteAccount();
+      await LocalAccountRepository().clearGuestAccount();
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(aiConsentProvider);
+      ref.invalidate(sessionProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(outfitsProvider);
+      if (context.mounted) context.go('/welcome');
+    } catch (error) {
+      debugPrint('Account deletion failed: $error');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsDeleteAccountFailed ?? 'Account deletion failed',
+          ),
+        ),
+      );
+    }
   }
 
   String _luckyColorLabel(String value, AppLocalizations? l10n) {
@@ -283,84 +417,77 @@ class SettingsScreen extends ConsumerWidget {
     required List<_SettingsChoice> options,
     required ValueChanged<String> onSelected,
   }) {
-    showModalBottomSheet<void>(
+    MmmBottomSheet.show<void>(
       context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                ...options.map((option) {
-                  final selected = option.value == currentValue;
-                  return ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onTap: () {
-                      onSelected(option.value);
-                      Navigator.pop(context);
-                    },
-                    title: Text(option.label),
-                    subtitle: Text(option.subtitle),
-                    trailing: Icon(
-                      selected
-                          ? Icons.radio_button_checked_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                      color: selected ? AppColors.seedColor : Colors.grey,
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          ...options.map((option) {
+            final selected = option.value == currentValue;
+            return ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadii.compactBorder,
+              ),
+              onTap: () {
+                onSelected(option.value);
+                Navigator.pop(context);
+              },
+              title: Text(option.label),
+              subtitle: Text(option.subtitle),
+              trailing: Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected
+                    ? MmmBrandTheme.of(context).primaryGradient.colors.first
+                    : Theme.of(context).colorScheme.outline,
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
-  Future<void> _openPrivacyPolicy(
+  Future<void> _openLegalDocument(
     BuildContext context,
     AppLocalizations? l10n,
+    LegalDocument document,
   ) async {
-    final uri = Uri.tryParse(AppConfig.privacyPolicyUrl.trim());
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+    final title = document == LegalDocument.privacy
+        ? (l10n?.settingsPrivacy ?? 'Privacy Policy')
+        : (l10n?.settingsTerms ?? 'Terms of Service');
+    if (LegalLinksService.uri(document) == null) {
       if (!context.mounted) return;
-      await showDialog<void>(
+      await MmmDialog.show<void>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
-          content: Text(
-            l10n?.settingsPrivacyNotConfigured ??
-                'A public HTTPS privacy-policy URL has not been configured yet.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n?.dialogClose ?? 'Close'),
-            ),
-          ],
+        title: Text(title),
+        content: Text(
+          l10n?.legalLinkNotConfigured ??
+              'A public HTTPS legal-document URL has not been configured yet.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n?.dialogClose ?? 'Close'),
+          ),
+        ],
       );
       return;
     }
 
-    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    if (await LegalLinksService.open(document)) return;
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n?.settingsPrivacy ?? 'Privacy Policy')),
+      SnackBar(
+        content: Text(
+          l10n?.legalLinkOpenFailed ??
+              'This link could not be opened. Check your connection and try again.',
+        ),
+      ),
     );
   }
 
@@ -401,7 +528,7 @@ class SettingsScreen extends ConsumerWidget {
     );
     return _SettingsTile(
       icon: Icons.privacy_tip_outlined,
-      iconColor: AppColors.seedColor,
+      iconColor: MmmBrandTheme.of(context).primaryGradient.colors.first,
       title: l10n?.settingsAIConsent ?? 'Third-party AI analysis',
       subtitle: !signedIn
           ? (l10n?.settingsAIConsentSignIn ??
@@ -415,7 +542,9 @@ class SettingsScreen extends ConsumerWidget {
         onChanged: signedIn
             ? (value) => _setAiConsent(context, ref, l10n, value)
             : null,
-        activeThumbColor: AppColors.seedColor,
+        activeThumbColor: MmmBrandTheme.of(
+          context,
+        ).primaryGradient.colors.first,
       ),
     );
   }
@@ -427,25 +556,23 @@ class SettingsScreen extends ConsumerWidget {
     bool value,
   ) async {
     if (value) {
-      final accepted = await showDialog<bool>(
+      final accepted = await MmmDialog.show<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
-          content: Text(
-            l10n?.settingsAIConsentMessage ??
-                'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
-            ),
-          ],
+        title: Text(l10n?.settingsAIConsentTitle ?? 'Allow third-party AI?'),
+        content: Text(
+          l10n?.settingsAIConsentMessage ??
+              'MMM may send wardrobe images and metadata, fashion questions, and limited style-profile information such as your color season to the configured AI provider for analysis and recommendations. This is optional and can be revoked in Settings.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n?.itemDeleteCancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n?.settingsAIConsentAccept ?? 'Allow AI analysis'),
+          ),
+        ],
       );
       if (accepted != true) return;
     }
@@ -460,9 +587,15 @@ class SettingsScreen extends ConsumerWidget {
       ref.invalidate(aiConsentProvider);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      debugPrint('AI consent update failed: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.settingsAIConsentFailed ??
+                'AI permission could not be updated. Please try again.',
+          ),
+        ),
+      );
     }
   }
 
@@ -562,16 +695,8 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 8, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: Colors.grey.withValues(alpha: 0.5),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ),
-      ),
+      padding: const EdgeInsets.only(top: 24, bottom: 8, left: 4),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
     );
   }
 }
@@ -595,12 +720,10 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      margin: const EdgeInsets.only(bottom: 8),
-      borderRadius: 16,
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: MmmSurfaceCard(
+        padding: EdgeInsets.zero,
         child: ListTile(
           onTap: onTap,
           shape: RoundedRectangleBorder(
@@ -611,7 +734,7 @@ class _SettingsTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 18),
@@ -620,23 +743,15 @@ class _SettingsTile extends StatelessWidget {
             title,
             style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
           ),
-          subtitle: subtitle != null
-              ? Text(
-                  subtitle!,
-                  style: TextStyle(
-                    color: Colors.grey.withValues(alpha: 0.6),
-                    fontSize: 12,
-                  ),
-                )
-              : null,
+          subtitle: subtitle == null ? null : Text(subtitle!),
           trailing:
               trailing ??
-              (onTap != null
-                  ? Icon(
+              (onTap == null
+                  ? null
+                  : Icon(
                       Icons.chevron_right_rounded,
-                      color: Colors.grey.withValues(alpha: 0.4),
-                    )
-                  : null),
+                      color: Theme.of(context).colorScheme.outline,
+                    )),
         ),
       ),
     );

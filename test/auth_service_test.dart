@@ -145,9 +145,7 @@ void main() {
     },
   );
 
-  testWidgets('iOS shows Apple and Google while keeping Guest visible', (
-    tester,
-  ) async {
+  testWidgets('iOS shows Apple and Google with a welcome exit', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
@@ -162,11 +160,11 @@ void main() {
 
     expect(find.text('Continue with Apple'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue as guest'), findsOneWidget);
+    expect(find.text('Back to welcome'), findsOneWidget);
     expect(find.text('Continue with Facebook'), findsNothing);
   });
 
-  testWidgets('Android hides Apple and keeps Google and Guest visible', (
+  testWidgets('Android hides Apple and keeps Google with a welcome exit', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -183,6 +181,6 @@ void main() {
 
     expect(find.text('Continue with Apple'), findsNothing);
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue as guest'), findsOneWidget);
+    expect(find.text('Back to welcome'), findsOneWidget);
   });
 }

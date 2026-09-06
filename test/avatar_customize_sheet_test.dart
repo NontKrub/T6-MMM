@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mix_match_mood/core/theme/app_theme.dart';
+import 'package:mix_match_mood/features/home/home_screen.dart';
+import 'package:mix_match_mood/features/home/widgets/avatar_viewer.dart';
+
+void main() {
+  testWidgets('home does not build an avatar viewer', (tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(theme: AppTheme.dark(), home: const HomeScreen()),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.byType(AvatarViewer), findsNothing);
+  });
+}

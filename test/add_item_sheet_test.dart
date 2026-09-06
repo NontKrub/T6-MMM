@@ -10,6 +10,7 @@ import 'package:mix_match_mood/core/services/clothing_analysis_service.dart';
 import 'package:mix_match_mood/core/services/image_pick_service.dart';
 import 'package:mix_match_mood/features/wardrobe/add_item_sheet.dart';
 import 'package:mix_match_mood/shared/models/clothing_item.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeImagePickerClient implements ImagePickerClient {
   XFile? pickResult;
@@ -119,6 +120,8 @@ class _TestWardrobeNotifier extends WardrobeNotifier {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   Future<void> pumpSheet(
     WidgetTester tester, {
     required ImagePickService imagePickService,
@@ -174,11 +177,26 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byKey(const Key('add-item-preview-image')), findsOneWidget);
+    final image = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const Key('add-item-preview-image')),
+        matching: find.byType(Image),
+      ),
+    );
+    expect(image.fit, BoxFit.contain);
+    final preview = tester.getRect(
+      find.byKey(const Key('add-item-image-picker')),
+    );
+    expect(preview.width, greaterThan(preview.height));
+    expect(preview.height, greaterThan(160));
   });
 
   testWidgets('android lost data returns an image and preview appears', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({
+      'mmm_pending_image_pick_purpose': ImagePickPurpose.wardrobeItem.name,
+    });
     final lostFile = XFile('/tmp/lost-preview.jpg');
     final pickerClient = _FakeImagePickerClient()
       ..lostDataResponse = LostDataResponse(
@@ -213,7 +231,7 @@ void main() {
     await tester.tap(find.byKey(const Key('add-item-image-picker')));
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.textContaining('Camera permission is denied'), findsOneWidget);
+    expect(find.textContaining('Camera access is off'), findsOneWidget);
     expect(find.byKey(const Key('add-item-preview-image')), findsNothing);
   });
 

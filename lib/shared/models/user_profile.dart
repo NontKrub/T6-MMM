@@ -4,6 +4,8 @@ enum AvatarType { human, dog, cat }
 
 enum AvatarBodyShape { male, female }
 
+enum ProfileAvatarMode { provider, custom, none }
+
 AvatarBodyShape avatarBodyShapeFromString(String value) {
   return AvatarBodyShape.values.firstWhere(
     (s) => s.name == value.toLowerCase(),
@@ -22,6 +24,19 @@ AvatarType avatarTypeFromString(String value) {
   return AvatarType.values.firstWhere(
     (type) => type.name == value.toLowerCase(),
     orElse: () => AvatarType.human,
+  );
+}
+
+ProfileAvatarMode profileAvatarModeFromString(
+  String? value, {
+  String? providerUrl,
+}) {
+  final normalized = value?.toLowerCase();
+  return ProfileAvatarMode.values.firstWhere(
+    (mode) => mode.name == normalized,
+    orElse: () => providerUrl != null && providerUrl.trim().isNotEmpty
+        ? ProfileAvatarMode.provider
+        : ProfileAvatarMode.none,
   );
 }
 
@@ -57,6 +72,11 @@ class UserProfile {
   final String id;
   final String name;
   final String? avatarUrl;
+  final String? avatarPath;
+  final ProfileAvatarMode avatarMode;
+
+  /// A transient, signed URL or local file path used only for rendering.
+  final String? avatarDisplayUrl;
   final ColorSeason colorSeason;
   final AvatarType avatarType;
   final List<String> stylePreferences;
@@ -75,6 +95,9 @@ class UserProfile {
     required this.id,
     required this.name,
     this.avatarUrl,
+    this.avatarPath,
+    ProfileAvatarMode? avatarMode,
+    this.avatarDisplayUrl,
     this.colorSeason = ColorSeason.spring,
     this.avatarType = AvatarType.human,
     this.stylePreferences = const [],
@@ -88,17 +111,37 @@ class UserProfile {
     this.skinToneIndex = 1,
     this.hairColorIndex = 1,
     this.hairStyleIndex = 3,
-  });
+  }) : avatarMode =
+           avatarMode ??
+           (avatarPath != null
+               ? ProfileAvatarMode.custom
+               : avatarUrl != null
+               ? ProfileAvatarMode.provider
+               : ProfileAvatarMode.none);
 
   factory UserProfile.fromJson(
     Map<String, dynamic> json, {
     List<String> styles = const [],
     List<String> occasions = const [],
   }) {
+    final avatarUrl = json['avatar_url'] as String?;
+    final avatarPath = json['avatar_path'] as String?;
+    final avatarMode = profileAvatarModeFromString(
+      json['avatar_mode'] as String?,
+      providerUrl: avatarUrl,
+    );
     return UserProfile(
       id: json['id'] as String,
       name: json['display_name'] as String? ?? 'MMM User',
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: avatarUrl,
+      avatarPath: avatarPath,
+      avatarMode: avatarMode,
+      avatarDisplayUrl:
+          avatarMode == ProfileAvatarMode.custom &&
+              avatarPath != null &&
+              (avatarPath.startsWith('/') || avatarPath.startsWith('file://'))
+          ? avatarPath
+          : null,
       colorSeason: colorSeasonFromString(
         json['color_season'] as String? ?? 'spring',
       ),
@@ -132,6 +175,8 @@ class UserProfile {
       'id': id,
       'display_name': name,
       'avatar_url': avatarUrl,
+      'avatar_path': avatarPath,
+      'avatar_mode': avatarMode.name,
       'color_season': colorSeason.name,
       'avatar_type': avatarType.name,
       'onboarding_complete': onboardingComplete,
@@ -155,35 +200,45 @@ class UserProfile {
   }
 
   UserProfile copyWith({
+    String? id,
     String? name,
-    String? avatarUrl,
+    Object? avatarUrl = _copyWithUnset,
+    Object? avatarPath = _copyWithUnset,
+    ProfileAvatarMode? avatarMode,
+    Object? avatarDisplayUrl = _copyWithUnset,
     ColorSeason? colorSeason,
     AvatarType? avatarType,
     List<String>? stylePreferences,
     List<String>? occasions,
     bool? onboardingComplete,
-    String? bodyType,
+    Object? bodyType = _copyWithUnset,
     double? brandTier,
-    DateTime? birthDate,
-    int? birthWeekday,
+    Object? birthDate = _copyWithUnset,
+    Object? birthWeekday = _copyWithUnset,
     AvatarBodyShape? bodyShape,
     int? skinToneIndex,
     int? hairColorIndex,
     int? hairStyleIndex,
   }) {
     return UserProfile(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarUrl: _copyWithNullable(avatarUrl, this.avatarUrl),
+      avatarPath: _copyWithNullable(avatarPath, this.avatarPath),
+      avatarMode: avatarMode ?? this.avatarMode,
+      avatarDisplayUrl: _copyWithNullable(
+        avatarDisplayUrl,
+        this.avatarDisplayUrl,
+      ),
       colorSeason: colorSeason ?? this.colorSeason,
       avatarType: avatarType ?? this.avatarType,
       stylePreferences: stylePreferences ?? this.stylePreferences,
       occasions: occasions ?? this.occasions,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
-      bodyType: bodyType ?? this.bodyType,
+      bodyType: _copyWithNullable(bodyType, this.bodyType),
       brandTier: brandTier ?? this.brandTier,
-      birthDate: birthDate ?? this.birthDate,
-      birthWeekday: birthWeekday ?? this.birthWeekday,
+      birthDate: _copyWithNullable(birthDate, this.birthDate),
+      birthWeekday: _copyWithNullable(birthWeekday, this.birthWeekday),
       bodyShape: bodyShape ?? this.bodyShape,
       skinToneIndex: skinToneIndex ?? this.skinToneIndex,
       hairColorIndex: hairColorIndex ?? this.hairColorIndex,
@@ -191,3 +246,8 @@ class UserProfile {
     );
   }
 }
+
+const _copyWithUnset = Object();
+
+T? _copyWithNullable<T>(Object? value, T? current) =>
+    identical(value, _copyWithUnset) ? current : value as T?;

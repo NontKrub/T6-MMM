@@ -1,93 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/providers/app_settings_provider.dart';
 import '../../../core/providers/repetition_insight_provider.dart';
 import '../../../core/providers/wardrobe_provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/glass_container.dart';
+import '../../../core/theme/app_brand_theme.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/mmm_surface_card.dart';
 
 class RepetitionInsightCard extends ConsumerWidget {
   const RepetitionInsightCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(appSettingsProvider);
-    if (!settings.repetitionAlerts) return const SizedBox.shrink();
+    if (!ref.watch(appSettingsProvider).repetitionAlerts) {
+      return const SizedBox.shrink();
+    }
 
     final backendInsight = ref.watch(repetitionInsightProvider);
     final signedInInsight = backendInsight.maybeWhen(
       data: (value) => value,
       orElse: () => null,
     );
-    final signedInError = backendInsight.hasError;
-    final isSignedIn =
-        backendInsight.isLoading || signedInInsight != null || signedInError;
+    final signedIn =
+        backendInsight.isLoading ||
+        signedInInsight != null ||
+        backendInsight.hasError;
 
-    String? dominantColor;
-    String? dominantStyle;
     var showAlert = false;
-
+    String? tone;
     if (signedInInsight != null) {
       showAlert = signedInInsight.alert;
-      dominantColor = signedInInsight.dominantColor;
-      dominantStyle = signedInInsight.dominantStyle;
-    } else if (!isSignedIn || signedInError) {
-      dominantColor = ref
-          .watch(wardrobeProvider.notifier)
-          .dominantRecentColor();
-      showAlert = dominantColor != null;
+      tone = signedInInsight.dominantColor ?? signedInInsight.dominantStyle;
+    } else if (!signedIn || backendInsight.hasError) {
+      tone = ref.watch(wardrobeProvider.notifier).dominantRecentColor();
+      showAlert = tone != null;
     }
     if (!showAlert) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
-    final tone = dominantColor ?? dominantStyle ?? 'similar';
-    return GlassContainer(
-      borderRadius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    final messageTone = tone ?? 'similar';
+    final brand = MmmBrandTheme.of(context);
+    return MmmSurfaceCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.accentGold.withValues(alpha: 0.15),
+              color: brand.subtleAccentSurface,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.lightbulb_rounded,
-              color: AppColors.accentGold,
+            child: Icon(
+              Icons.lightbulb_outline_rounded,
+              color: brand.primaryGradient.colors.first,
               size: 20,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n?.repetitionStyleReminder ?? 'Style reminder',
-                  style: TextStyle(
-                    color: AppColors.accentGold,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  style: Theme.of(context).textTheme.labelLarge,
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  l10n?.repetitionMessage(tone) ??
-                      'You\'ve been wearing $tone tones frequently. Try mixing in something different today!',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(height: 1.4),
+                  l10n?.repetitionMessage(messageTone) ??
+                      'You’ve been wearing $messageTone tones frequently. Try mixing in something different today!',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 600.ms, duration: 500.ms).slideY(begin: 0.3, end: 0);
+    );
   }
 }

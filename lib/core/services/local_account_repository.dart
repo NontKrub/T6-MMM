@@ -8,6 +8,7 @@ import '../../shared/models/outfit_intelligence.dart';
 import '../../shared/models/recommendation_event.dart';
 import '../../shared/models/user_profile.dart';
 import 'recommendation_feedback_service.dart';
+import 'profile_image_storage_service.dart';
 
 const _uuid = Uuid();
 
@@ -118,6 +119,10 @@ class LocalAccountRepository {
     // Destructive: call only after an explicit local-account deletion or a
     // verified guest-to-cloud migration.
     final prefs = await SharedPreferences.getInstance();
+    final profile = await fetchProfile();
+    if (profile?.avatarPath != null) {
+      await ProfileImageStorageService().deleteOwned(profile!.avatarPath!);
+    }
     await prefs.remove(_guestEnabledKey);
     await prefs.remove(_profileKey);
     await prefs.remove(_wardrobeKey);
@@ -278,7 +283,7 @@ class LocalAccountRepository {
       _wearEventsKey,
       jsonEncode(
         events.reversed
-            .take(100)
+            .take(1000)
             .toList()
             .reversed
             .map(_wearEventToJson)

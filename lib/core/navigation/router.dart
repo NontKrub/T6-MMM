@@ -3,14 +3,18 @@ import 'package:go_router/go_router.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/language/language_screen.dart';
 import '../../features/auth/auth_screen.dart';
+import '../../features/auth/auth_entry.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/welcome/welcome_screen.dart';
 import '../../features/shell/main_shell.dart';
-import '../../features/home/home_screen.dart';
+import '../../features/home/flatlay_home_screen.dart';
 import '../../features/wardrobe/wardrobe_screen.dart';
 import '../../features/missing_pieces/missing_pieces_screen.dart';
 import '../../features/chatbot/chatbot_screen.dart';
 import '../../features/item_detail/item_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/edit_profile_screen.dart';
+import '../../features/profile/profile_insights_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -19,7 +23,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
-  onException: (_, __, router) => router.go('/auth'),
+  onException: (_, __, router) => router.go('/welcome'),
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
     GoRoute(
@@ -30,19 +34,46 @@ final appRouter = GoRouter(
             false,
       ),
     ),
-    GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
+    GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
+    GoRoute(
+      path: '/auth',
+      builder: (_, state) => AuthScreen(
+        entry: state.extra is AuthEntry
+            ? state.extra as AuthEntry
+            : const AuthEntry.signIn(),
+      ),
+    ),
     GoRoute(
       path: '/onboarding',
-      builder: (_, state) => OnboardingScreen(
-        isGuest:
-            (state.extra as Map<String, dynamic>?)?['isGuest'] as bool? ??
-            false,
-      ),
+      builder: (_, state) {
+        final extra = state.extra;
+        final map = extra is Map ? extra : const <Object?, Object?>{};
+        final rawReturnLocation = map['returnLocation'];
+        final returnLocation =
+            rawReturnLocation is String &&
+                AuthEntry.allowedReturnLocations.contains(rawReturnLocation)
+            ? rawReturnLocation
+            : null;
+        return OnboardingScreen(
+          isGuest: map['isGuest'] as bool? ?? false,
+          returnLocation: returnLocation,
+        );
+      },
     ),
     GoRoute(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (_, __) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (_, __) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/insights',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (_, __) => const ProfileInsightsScreen(),
     ),
     GoRoute(
       path: '/settings',

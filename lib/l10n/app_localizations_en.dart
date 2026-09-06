@@ -15,6 +15,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTagline => 'match your wardrobe to your mood';
 
   @override
+  String get welcomeLanguageTooltip => 'Choose language';
+
+  @override
+  String get welcomeTitle => 'Mix Match Mood';
+
+  @override
+  String get welcomeSubtitle => 'Your wardrobe, mixed around your mood.';
+
+  @override
+  String get welcomeValueProp =>
+      'Build outfits from the clothes you already own.';
+
+  @override
+  String get welcomeCreate => 'Create my wardrobe';
+
+  @override
+  String get welcomeSignIn => 'Sign in';
+
+  @override
+  String get welcomeLocalNote =>
+      'Your local wardrobe stays on this device until you choose to sign in.';
+
+  @override
+  String get welcomeAuthTitle => 'Welcome back';
+
+  @override
+  String get welcomeAuthSubtitle => 'Your wardrobe is waiting.';
+
+  @override
+  String get welcomeNewToMmm => 'New to MMM? Create a wardrobe';
+
+  @override
+  String get welcomeTerms => 'Terms';
+
+  @override
+  String get welcomePrivacy => 'Privacy';
+
+  @override
+  String get legalLinkOpenFailed =>
+      'This link could not be opened. Check your connection and try again.';
+
+  @override
+  String get authSignInTitle => 'Sign in to MMM';
+
+  @override
+  String get authSignInSubtitle =>
+      'Access your wardrobe across supported cloud features.';
+
+  @override
+  String get authUnlockAiTitle => 'Sign in to use Fashion AI';
+
+  @override
+  String get authUnlockAiSubtitle =>
+      'Connect an account to use MMM Stylist with cloud AI features.';
+
+  @override
+  String get authBackToChat => 'Back to Chat';
+
+  @override
+  String get authBackToWelcome => 'Back to welcome';
+
+  @override
+  String get authBack => 'Back';
+
+  @override
+  String get authExternalPending =>
+      'Continue in the browser to finish signing in.';
+
+  @override
+  String get authImportWarningsTitle => 'Wardrobe imported with warnings';
+
+  @override
+  String get authImportingGuest => 'Importing local wardrobe…';
+
+  @override
+  String get authRetryMessage =>
+      'Sign in could not be completed. Please try again.';
+
+  @override
+  String get splashLoading => 'Loading Mix Match Mood';
+
+  @override
   String get languageScreenTitle => 'Choose your language';
 
   @override
@@ -28,6 +110,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageThai => 'ภาษาไทย';
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get commonSettings => 'Settings';
+
+  @override
+  String get commonProfile => 'Open profile';
+
+  @override
+  String get commonAddItem => 'Add item';
+
+  @override
+  String get commonClearSearch => 'Clear search';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonClose => 'Close';
 
   @override
   String get authHeroTitle => 'Your wardrobe,\nreimagined.';
@@ -234,6 +340,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGenerateOutfit => 'Generate Outfit';
 
   @override
+  String homeGreeting(String name) {
+    return 'Good morning, $name';
+  }
+
+  @override
+  String get homeGreetingGeneric => 'Good morning';
+
+  @override
+  String get homePrompt => 'What are we wearing today?';
+
+  @override
+  String homeGreetingMorning(String name) {
+    return 'Good morning, $name';
+  }
+
+  @override
+  String homeGreetingAfternoon(String name) {
+    return 'Good afternoon, $name';
+  }
+
+  @override
+  String get homeGreetingAfternoonGeneric => 'Good afternoon';
+
+  @override
+  String homeGreetingEvening(String name) {
+    return 'Good evening, $name';
+  }
+
+  @override
+  String get homeGreetingEveningGeneric => 'Good evening';
+
+  @override
+  String get homeTodaysLook => 'Today\'s Look';
+
+  @override
+  String get homeTryAnother => 'Try another';
+
+  @override
+  String get homeGenerateTodaysLook => 'Generate today\'s look';
+
+  @override
+  String get homeWhyThisWorks => 'Why this works';
+
+  @override
+  String get homeQuickActions => 'Quick actions';
+
+  @override
+  String get homeWardrobePulse => 'Wardrobe Pulse';
+
+  @override
+  String get homeRecentlyAdded => 'Recently added';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String get homeEmptyWardrobeTitle => 'Your wardrobe starts here.';
+
+  @override
+  String get homeEmptyWardrobeMessage =>
+      'Add a few pieces and MMM can start building looks.';
+
+  @override
+  String get homeAddClothing => 'Add clothing';
+
+  @override
   String get wardrobeTitle => 'Wardrobe';
 
   @override
@@ -252,6 +424,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wardrobeNoResults => 'No items found';
+
+  @override
+  String get wardrobeNoResultsHint => 'Try a different name, brand, or tag.';
+
+  @override
+  String get wardrobeEmptyMessage =>
+      'Your wardrobe is ready for its first piece.';
+
+  @override
+  String get wardrobeEmptyAdd => 'Add an item';
+
+  @override
+  String get wardrobeAll => 'All';
 
   @override
   String get missingTitle => 'Your wardrobe needs...';
@@ -288,6 +473,90 @@ class AppLocalizationsEn extends AppLocalizations {
   String get missingWhyCollapse => 'Hide reason';
 
   @override
+  String get missingTop => 'Top';
+
+  @override
+  String get missingBottom => 'Bottom';
+
+  @override
+  String missingChoose(String label) {
+    return 'Choose $label';
+  }
+
+  @override
+  String get missingAnalyze => 'Analyze the gap';
+
+  @override
+  String get missingLoading => 'Finding the gap…';
+
+  @override
+  String get missingTryAgain => 'Try again in a moment.';
+
+  @override
+  String missingAddCategory(String category) {
+    return 'Add $category';
+  }
+
+  @override
+  String get missingSelectionShoesTitle => 'Add neutral shoes';
+
+  @override
+  String get missingReasonCategory =>
+      'Your wardrobe needs this category for complete outfits.';
+
+  @override
+  String get missingSuggestionNeutral =>
+      'Choose a versatile neutral piece you will wear often.';
+
+  @override
+  String get missingSelectionShoesReason =>
+      'Your selected top and pants need shoes to complete the outfit.';
+
+  @override
+  String get missingSelectionShoesSuggestion =>
+      'Try white, black, gray, beige, or brown footwear.';
+
+  @override
+  String get missingReasonPattern =>
+      'A simple piece balances the selected patterns.';
+
+  @override
+  String get missingReasonColors =>
+      'Its colors and style fit the selected top and pants.';
+
+  @override
+  String get missingSuggestionBalanced =>
+      'This neutral piece keeps the outfit balanced.';
+
+  @override
+  String get missingSuggestionAccent => 'Use this piece as the outfit accent.';
+
+  @override
+  String get missingAccessoryReason =>
+      'Your base wardrobe is complete but has no finishing piece.';
+
+  @override
+  String get missingAccessorySuggestion =>
+      'Try a neutral belt, bag, watch, or scarf.';
+
+  @override
+  String missingTryItem(String name) {
+    return 'Try $name';
+  }
+
+  @override
+  String get missingPriorityEssential => 'Essential';
+
+  @override
+  String get missingPriorityRecommended => 'Recommended';
+
+  @override
+  String get missingPriorityNiceToHave => 'Nice to have';
+
+  @override
+  String get missingPriorityHighImpact => 'High impact';
+
+  @override
   String get chatTitle => 'Fashion AI';
 
   @override
@@ -310,9 +579,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Chat uses your saved wardrobe and backend AI. Continue with Google after Supabase is configured.';
 
   @override
-  String get authImportingGuest => 'Importing local wardrobe…';
-
-  @override
   String get chatConsentTitle => 'Fashion AI needs your consent';
 
   @override
@@ -333,6 +599,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatPrompt5 => 'Quiet luxury look';
+
+  @override
+  String get chatSend => 'Send message';
+
+  @override
+  String get chatRetry => 'Retry';
+
+  @override
+  String get chatThinking => 'MMM is thinking…';
+
+  @override
+  String get chatSignIn => 'Sign in';
+
+  @override
+  String get chatReviewConsent => 'Review AI permissions';
 
   @override
   String get profileTitle => 'Profile';
@@ -370,6 +651,224 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileDeleteAccountFailed => 'Account deletion failed';
+
+  @override
+  String get profileAccount => 'Account';
+
+  @override
+  String get profileDangerZone => 'Danger zone';
+
+  @override
+  String get profileEdit => 'Edit profile';
+
+  @override
+  String get profileEditTitle => 'Edit profile';
+
+  @override
+  String get profileChangePhoto => 'Change photo';
+
+  @override
+  String get profileChooseFromPhotos => 'Choose from Photos';
+
+  @override
+  String get profileTakePhoto => 'Take photo';
+
+  @override
+  String get profileUseAccountPhoto => 'Use account photo';
+
+  @override
+  String get profileRemovePhoto => 'Remove photo';
+
+  @override
+  String get profileDisplayName => 'Display name';
+
+  @override
+  String get profileSave => 'Save';
+
+  @override
+  String get profileThisMonth => 'This month';
+
+  @override
+  String get profileWardrobeUtilized => 'Wardrobe utilized';
+
+  @override
+  String get profileLooksWorn => 'Looks worn';
+
+  @override
+  String get profilePiecesWorn => 'Pieces worn';
+
+  @override
+  String get profileViewInsights => 'View insights';
+
+  @override
+  String get profileStyleDNA => 'Style DNA';
+
+  @override
+  String get profileWardrobeInsights => 'Wardrobe insights';
+
+  @override
+  String get profileMostWorn => 'Most worn';
+
+  @override
+  String get profileNotWornRecently => 'Not worn recently';
+
+  @override
+  String get profileMostRepeatedLook => 'Most repeated look';
+
+  @override
+  String get profileRecentLooks => 'Recent looks';
+
+  @override
+  String get profilePreferences => 'Preferences';
+
+  @override
+  String get profileOccasions => 'Occasions';
+
+  @override
+  String get profileNoStylePreferences => 'No style preferences yet.';
+
+  @override
+  String get profileNoOccasions => 'No occasions selected yet.';
+
+  @override
+  String get profileInsightsTitle => 'Style insights';
+
+  @override
+  String get profileRangeMonthToDate => 'MTD';
+
+  @override
+  String get profileRange7Days => '7D';
+
+  @override
+  String get profileRange30Days => '30D';
+
+  @override
+  String get profileRange90Days => '90D';
+
+  @override
+  String get profileRange1Year => '1Y';
+
+  @override
+  String get profileNoWearHistory =>
+      'Wear something to unlock your style patterns.';
+
+  @override
+  String get profileNoRepeatedLooks => 'No repeated looks in this period.';
+
+  @override
+  String get profileNoStyleDNA =>
+      'Add and analyze a few wardrobe pieces to see your style DNA.';
+
+  @override
+  String get profileEmptyWardrobe =>
+      'Your wardrobe is ready for its first piece.';
+
+  @override
+  String get profileEmptyWardrobeMessage =>
+      'Add a few pieces and MMM will show how you wear them.';
+
+  @override
+  String get profileInsightsLoadFailed => 'Insights could not load.';
+
+  @override
+  String get profileIdentitySaveFailed => 'Profile changes could not be saved.';
+
+  @override
+  String get profilePreferencesSaveFailed =>
+      'Couldn\'t save your preferences. Check your connection and try again.';
+
+  @override
+  String get profileChangePhotoFailed =>
+      'That photo could not be used. Try another image.';
+
+  @override
+  String get profileDiscardTitle => 'Discard changes?';
+
+  @override
+  String get profileDiscardMessage => 'Your profile edits have not been saved.';
+
+  @override
+  String get profileKeepEditing => 'Keep editing';
+
+  @override
+  String get profileDiscard => 'Discard';
+
+  @override
+  String get profileDisplayNameRequired => 'Enter a display name.';
+
+  @override
+  String get profileDisplayNameInvalid =>
+      'Use 50 characters or fewer without control characters.';
+
+  @override
+  String get profilePhoto => 'Profile photo';
+
+  @override
+  String profilePhotoFor(String name) {
+    return 'Profile photo for $name';
+  }
+
+  @override
+  String profileActivitySummary(String day, int count) {
+    return 'Most active on $day: $count looks';
+  }
+
+  @override
+  String profileUtilizationSummary(int used, int total) {
+    return '$used of $total active pieces worn';
+  }
+
+  @override
+  String profileUtilizationAccessibility(int percent, int used, int total) {
+    return '$percent% utilized; $used of $total active pieces worn';
+  }
+
+  @override
+  String profileColorSwatch(String hex, int count) {
+    return '$hex, $count items';
+  }
+
+  @override
+  String get profileNoUnwornItems => 'Nothing has been unworn for 30+ days.';
+
+  @override
+  String get profileNoRecentLooks => 'No looks recorded in this period.';
+
+  @override
+  String get profileCategoryMix => 'Category mix';
+
+  @override
+  String get profileColorPalette => 'Color palette';
+
+  @override
+  String get profilePreviousPeriod => 'vs previous period';
+
+  @override
+  String profileRepeatedCount(int count) {
+    return 'Repeated $count times';
+  }
+
+  @override
+  String get profileAccountSettings => 'Account & settings';
+
+  @override
+  String get profileStyleBusiness => 'Business';
+
+  @override
+  String get profileStyleSport => 'Sport';
+
+  @override
+  String get profileStyleSmartCasual => 'Smart casual';
+
+  @override
+  String profilePaletteSubtitle(String season) {
+    return '$season palette';
+  }
+
+  @override
+  String profileIdentitySubtitle(String style, String season) {
+    return '$style · $season palette';
+  }
 
   @override
   String get settingsTitle => 'Settings';
@@ -462,6 +961,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAIConsentAccept => 'Allow AI analysis';
 
   @override
+  String get settingsAIConsentFailed =>
+      'AI permission could not be updated. Please try again.';
+
+  @override
   String get settingsAbout => 'About';
 
   @override
@@ -474,14 +977,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacy => 'Privacy Policy';
 
   @override
-  String get settingsPrivacyNotConfigured =>
-      'A public HTTPS privacy-policy URL has not been configured yet.';
+  String get settingsTerms => 'Terms of Service';
+
+  @override
+  String get legalLinkNotConfigured =>
+      'A public HTTPS legal-document URL has not been configured yet.';
 
   @override
   String get settingsLanguage => 'Language';
 
   @override
   String get settingsLanguageValue => 'English';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get settingsAccountEmail => 'Email';
+
+  @override
+  String get settingsAccountProvider => 'Signed in with';
+
+  @override
+  String get settingsGuestAccount => 'Local guest account';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsDeleteAccount => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get settingsDeleteAccountMessage =>
+      'This permanently removes your profile, wardrobe images, outfits, and activity from MMM.';
+
+  @override
+  String get settingsDeleteAccountConfirm => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountFailed => 'Account deletion failed';
+
+  @override
+  String get settingsSignOutFailed => 'Sign out failed';
 
   @override
   String get avatarTitle => 'Your Avatar';
@@ -640,6 +1180,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outfitStyleDate => 'Date';
 
   @override
+  String get outfitRepeatTitle => 'Repeat outfit';
+
+  @override
+  String outfitRepeatMessage(int count) {
+    return 'You\'ve worn this combination $count times.';
+  }
+
+  @override
+  String get outfitGenerateAnother => 'Generate another';
+
+  @override
+  String get outfitWearAnyway => 'Wear anyway';
+
+  @override
+  String get outfitWear => 'Wear';
+
+  @override
+  String get outfitTargetColorLabel => 'Optional outfit color (HEX)';
+
+  @override
+  String get outfitTargetColorInvalid =>
+      'Enter a valid HEX color such as #3366FF.';
+
+  @override
+  String get outfitSignInColor => 'Sign in to use profile color season';
+
+  @override
   String get rushTitle => 'In a Rush';
 
   @override
@@ -726,6 +1293,103 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get addItemAnalysisReading => 'MMM is reading this piece…';
+
+  @override
+  String get addItemAnalysisFailed =>
+      'Image analysis failed. You can still tag this item manually.';
+
+  @override
+  String get addItemPhotoRequired => 'Please add a photo before saving.';
+
+  @override
+  String get addItemCategoryRequired => 'Select a category before saving.';
+
+  @override
+  String get addItemDetectedColors => 'Detected colors';
+
+  @override
+  String get addItemNoColors => 'No colors selected';
+
+  @override
+  String get addItemAddHex => 'Add custom HEX';
+
+  @override
+  String get addItemPattern => 'Pattern';
+
+  @override
+  String get addItemSilhouette => 'Silhouette';
+
+  @override
+  String get addItemSaveFailed => 'Could not save item. Try again.';
+
+  @override
+  String get addItemInvalidHex => 'Enter a valid HEX color such as #3366FF.';
+
+  @override
+  String get addItemRecoveryFailed =>
+      'We couldn\'t recover the last photo. Please choose it again.';
+
+  @override
+  String get addItemCameraOpenFailed =>
+      'Couldn\'t open the camera. Try again or choose a photo.';
+
+  @override
+  String get addItemPhotoLibraryOpenFailed =>
+      'Couldn\'t open your photo library. Try again.';
+
+  @override
+  String get addItemImagePathUnavailable =>
+      'This image isn\'t available. Please try again.';
+
+  @override
+  String get addItemPhotoUnavailable =>
+      'That photo is no longer available. Please choose another.';
+
+  @override
+  String get addItemCameraPermissionDenied =>
+      'Camera access is off. Enable it in Settings or choose a photo instead.';
+
+  @override
+  String get addItemPhotoPermissionDenied =>
+      'Photo access is off. Enable it in Settings or choose another photo.';
+
+  @override
+  String get addItemCaptureFailed =>
+      'Couldn\'t capture a photo. Please try again.';
+
+  @override
+  String get addItemSelectionFailed =>
+      'Couldn\'t select that photo. Please try again.';
+
+  @override
+  String get clothingCategoryHat => 'Hat';
+
+  @override
+  String get clothingCategoryTop => 'Top';
+
+  @override
+  String get clothingCategoryPants => 'Pants';
+
+  @override
+  String get clothingCategoryShoes => 'Shoes';
+
+  @override
+  String get clothingCategoryOuterwear => 'Outerwear';
+
+  @override
+  String get clothingCategoryDress => 'Dress';
+
+  @override
+  String get clothingCategoryBag => 'Bag';
+
+  @override
+  String get clothingCategoryAccessory => 'Accessory';
+
+  @override
+  String get clothingCategoryUnknown => 'Unknown';
+
+  @override
   String get tagCasual => 'casual';
 
   @override
@@ -801,6 +1465,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itemDeleteConfirm => 'Remove';
+
+  @override
+  String get itemMoreActions => 'More actions';
+
+  @override
+  String get itemRetryAnalysis => 'Retry analysis';
+
+  @override
+  String get itemAnalysisUpdated => 'Analysis updated.';
+
+  @override
+  String get itemAnalysisRetryFailed => 'Could not retry analysis. Try again.';
+
+  @override
+  String get itemDetails => 'Details';
+
+  @override
+  String get itemColors => 'Colors';
+
+  @override
+  String get itemPattern => 'Pattern';
+
+  @override
+  String get itemSilhouette => 'Silhouette';
+
+  @override
+  String get itemAnalysisFailed => 'Analysis failed. Your item is still saved.';
+
+  @override
+  String get itemAnalysisPartial => 'Some details may be incomplete.';
+
+  @override
+  String get onboardingBack => 'Back';
+
+  @override
+  String get onboardingProgress => 'Onboarding progress';
 
   @override
   String get settingsLuckyColorBirthProfile => 'Birth profile';

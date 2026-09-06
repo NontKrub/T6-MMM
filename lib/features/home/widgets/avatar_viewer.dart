@@ -1,8 +1,15 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import '../../../core/services/avatar_outfit_resolver.dart';
 import '../../../shared/models/user_profile.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../shared/models/wearable_asset.dart';
+import '../../../shared/models/avatar_scene.dart';
+import '../../../core/theme/app_brand_theme.dart';
+import '../../../core/theme/app_motion.dart';
+import 'glb_avatar_renderer.dart';
 
 class AvatarViewer extends StatefulWidget {
   final AvatarType avatarType;
@@ -10,6 +17,8 @@ class AvatarViewer extends StatefulWidget {
   final int skinToneIndex;
   final int hairColorIndex;
   final int hairStyleIndex;
+  final AvatarOutfitLook? outfitLook;
+  final AvatarSceneState? sceneState;
 
   const AvatarViewer({
     super.key,
@@ -18,6 +27,8 @@ class AvatarViewer extends StatefulWidget {
     this.skinToneIndex = 1,
     this.hairColorIndex = 1,
     this.hairStyleIndex = 3,
+    this.outfitLook,
+    this.sceneState,
   });
 
   @override
@@ -26,6 +37,8 @@ class AvatarViewer extends StatefulWidget {
 
 class _AvatarViewerState extends State<AvatarViewer>
     with TickerProviderStateMixin {
+  static const _autoSpinArc = pi / 5;
+
   late final AnimationController _spinController;
   late final AnimationController _glowController;
   late final AnimationController _entryController;
@@ -33,6 +46,8 @@ class _AvatarViewerState extends State<AvatarViewer>
 
   double _yAngle = 0.0;
   bool _isDragging = false;
+  bool _reduceMotion = false;
+  bool _glbFailed = false;
 
   @override
   void initState() {
@@ -44,7 +59,12 @@ class _AvatarViewerState extends State<AvatarViewer>
     )..repeat();
     _spinController.addListener(() {
       if (!_isDragging) {
-        setState(() => _yAngle = _spinController.value * 2 * pi);
+        // Keep the automatic motion in a flattering three-quarter view. A
+        // full turn makes the perspective collapse to a paper-thin profile;
+        // dragging still allows the user to inspect the complete rotation.
+        setState(
+          () => _yAngle = sin(_spinController.value * 2 * pi) * _autoSpinArc,
+        );
       }
     });
 
@@ -55,13 +75,31 @@ class _AvatarViewerState extends State<AvatarViewer>
 
     _entryController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 950),
+      duration: AppMotion.transition,
     )..forward();
 
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3400),
     )..repeat(reverse: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = AppMotion.reduceMotion(context);
+    if (reduceMotion == _reduceMotion) return;
+    _reduceMotion = reduceMotion;
+    if (reduceMotion) {
+      _spinController.stop();
+      _glowController.stop();
+      _floatController.stop();
+      _entryController.value = 1;
+      return;
+    }
+    if (!_spinController.isAnimating) _spinController.repeat();
+    if (!_glowController.isAnimating) _glowController.repeat(reverse: true);
+    if (!_floatController.isAnimating) _floatController.repeat(reverse: true);
   }
 
   @override
@@ -79,13 +117,48 @@ class _AvatarViewerState extends State<AvatarViewer>
     _spinController.repeat();
   }
 
+  @override
+  void didUpdateWidget(covariant AvatarViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldPath =
+        oldWidget.sceneState?.modelPath ?? oldWidget.outfitLook?.baseModelPath;
+    final newPath =
+        widget.sceneState?.modelPath ?? widget.outfitLook?.baseModelPath;
+    if (oldPath != newPath) _glbFailed = false;
+  }
+
   static Matrix4 _perspective(double yAngle) => Matrix4.identity()
     ..setEntry(3, 2, 0.0016)
     ..rotateY(yAngle);
 
   @override
   Widget build(BuildContext context) {
+    final outfitLook = widget.outfitLook;
+    final modelPath = widget.sceneState?.modelPath ?? outfitLook?.baseModelPath;
+    final supportsGlb =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+    if (supportsGlb &&
+        WebViewPlatform.instance != null &&
+        modelPath != null &&
+        modelPath.trim().isNotEmpty &&
+        !_glbFailed) {
+      return GlbAvatarRenderer(
+        modelPath: modelPath,
+        semanticLabel:
+            outfitLook?.semanticsLabel ??
+            widget.sceneState?.semanticsLabel ??
+            'Avatar',
+        sceneState: widget.sceneState,
+        posterPath: widget.sceneState?.posterPath,
+        onRenderError: () {
+          if (mounted) setState(() => _glbFailed = true);
+        },
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -96,164 +169,96 @@ class _AvatarViewerState extends State<AvatarViewer>
       builder: (context, _) {
         final floatOffset = _floatController.value * 7.0 - 3.5;
 
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onHorizontalDragStart: (_) {
-            _isDragging = true;
-            _spinController.stop();
-          },
-          onHorizontalDragUpdate: (d) {
-            setState(() => _yAngle += d.delta.dx * 0.016);
-          },
-          onHorizontalDragEnd: (_) {
-            _isDragging = false;
-            _resumeAutoSpin();
-          },
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final h = constraints.maxHeight;
-              final figureH = h * 0.80;
-              final figureW = figureH * 0.55;
+        return Semantics(
+          container: true,
+          label: outfitLook?.semanticsLabel ?? 'Avatar',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: (_) {
+              _isDragging = true;
+              _spinController.stop();
+            },
+            onHorizontalDragUpdate: (d) {
+              setState(() => _yAngle += d.delta.dx * 0.016);
+            },
+            onHorizontalDragEnd: (_) {
+              _isDragging = false;
+              if (_reduceMotion) return;
+              _resumeAutoSpin();
+            },
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final figureH = h * 0.80;
+                final figureW = figureH * 0.55;
 
-              return Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  // Ambient glow
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(0, -0.20),
-                          radius: 0.88,
-                          colors: [
-                            AppColors.seedColor.withValues(
-                              alpha: isDark
-                                  ? 0.11 + _glowController.value * 0.08
-                                  : 0.05 + _glowController.value * 0.03,
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
+                return Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Platform rings
+                    Positioned(
+                      bottom: h * 0.010,
+                      child: _PlatformRings(
+                        width: w * 0.58,
+                        glow: _glowController.value,
+                        isDark: isDark,
+                        primary: brand.primaryGradient.colors.first,
+                        accent: brand.primaryGradient.colors.last,
                       ),
                     ),
-                  ),
 
-                  // Secondary accent glow
-                  Positioned(
-                    right: -w * 0.1,
-                    top: h * 0.2,
-                    child: Container(
-                      width: w * 0.5,
-                      height: w * 0.5,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.gradientEnd.withValues(
-                              alpha: isDark
-                                  ? 0.07 + _glowController.value * 0.04
-                                  : 0.03,
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Shimmer particles
-                  ..._buildParticles(w, h, isDark),
-
-                  // Platform rings
-                  Positioned(
-                    bottom: h * 0.010,
-                    child: _PlatformRings(
-                      width: w * 0.58,
-                      glow: _glowController.value,
-                      isDark: isDark,
-                    ),
-                  ),
-
-                  // Figure
-                  Positioned(
-                    top: h * 0.015 + floatOffset,
-                    child:
-                        Transform(
-                              transform: _perspective(_yAngle),
-                              alignment: Alignment.center,
-                              child: SizedBox(
-                                width: figureW,
-                                height: figureH,
-                                child: CustomPaint(
-                                  painter: _FashionFigurePainter(
-                                    avatarType: widget.avatarType,
-                                    bodyShape: widget.bodyShape,
-                                    yAngle: _yAngle,
-                                    isDark: isDark,
-                                    skinToneIndex: widget.skinToneIndex,
-                                    hairColorIndex: widget.hairColorIndex,
-                                    hairStyleIndex: widget.hairStyleIndex,
+                    // Figure
+                    Positioned(
+                      top: h * 0.015 + floatOffset,
+                      child:
+                          Transform(
+                                transform: _perspective(_yAngle),
+                                alignment: Alignment.center,
+                                child: SizedBox(
+                                  width: figureW,
+                                  height: figureH,
+                                  child: CustomPaint(
+                                    painter: _FashionFigurePainter(
+                                      avatarType: widget.avatarType,
+                                      bodyShape: widget.bodyShape,
+                                      yAngle: _yAngle,
+                                      isDark: isDark,
+                                      skinToneIndex: widget.skinToneIndex,
+                                      hairColorIndex: widget.hairColorIndex,
+                                      hairStyleIndex: widget.hairStyleIndex,
+                                      outfitLook: outfitLook,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )
-                            .animate(controller: _entryController)
-                            .scale(
-                              begin: const Offset(0.70, 0.70),
-                              end: const Offset(1, 1),
-                              curve: Curves.elasticOut,
-                            )
-                            .fadeIn(duration: 500.ms),
-                  ),
-
-                  // Drag hint
-                  Positioned(
-                    bottom: h * 0.085,
-                    child: _DragHint(
-                      opacity:
-                          (1.0 - (_yAngle.abs() / (pi * 1.5)).clamp(0.0, 1.0))
-                              .clamp(0.0, 1.0),
+                              )
+                              .animate(controller: _entryController)
+                              .scale(
+                                begin: const Offset(0.70, 0.70),
+                                end: const Offset(1, 1),
+                                curve: AppMotion.curve,
+                              )
+                              .fadeIn(duration: AppMotion.transition),
                     ),
-                  ),
-                ],
-              );
-            },
+
+                    // Drag hint
+                    Positioned(
+                      bottom: h * 0.085,
+                      child: _DragHint(
+                        opacity:
+                            (1.0 - (_yAngle.abs() / (pi * 1.5)).clamp(0.0, 1.0))
+                                .clamp(0.0, 1.0),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         );
       },
     );
-  }
-
-  List<Widget> _buildParticles(double w, double h, bool isDark) {
-    const positions = [
-      [0.10, 0.12],
-      [0.88, 0.20],
-      [0.06, 0.52],
-      [0.94, 0.58],
-      [0.18, 0.76],
-      [0.82, 0.38],
-    ];
-    const phases = [0.0, 0.28, 0.55, 0.12, 0.72, 0.44];
-
-    return List.generate(positions.length, (i) {
-      final phase = (_glowController.value + phases[i]) % 1.0;
-      final alpha = sin(phase * pi).clamp(0.0, 1.0);
-      return Positioned(
-        left: w * positions[i][0],
-        top: h * positions[i][1],
-        child: Container(
-          width: i.isEven ? 3 : 2,
-          height: i.isEven ? 3 : 2,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: (i.isEven ? AppColors.seedColor : AppColors.gradientEnd)
-                .withValues(alpha: isDark ? alpha * 0.55 : alpha * 0.28),
-          ),
-        ),
-      );
-    });
   }
 }
 
@@ -263,11 +268,15 @@ class _PlatformRings extends StatelessWidget {
   final double width;
   final double glow;
   final bool isDark;
+  final Color primary;
+  final Color accent;
 
   const _PlatformRings({
     required this.width,
     required this.glow,
     required this.isDark,
+    required this.primary,
+    required this.accent,
   });
 
   @override
@@ -276,7 +285,12 @@ class _PlatformRings extends StatelessWidget {
       width: width,
       height: width * 0.20,
       child: CustomPaint(
-        painter: _PlatformPainter(glow: glow, isDark: isDark),
+        painter: _PlatformPainter(
+          glow: glow,
+          isDark: isDark,
+          primary: primary,
+          accent: accent,
+        ),
       ),
     );
   }
@@ -285,8 +299,15 @@ class _PlatformRings extends StatelessWidget {
 class _PlatformPainter extends CustomPainter {
   final double glow;
   final bool isDark;
+  final Color primary;
+  final Color accent;
 
-  const _PlatformPainter({required this.glow, required this.isDark});
+  const _PlatformPainter({
+    required this.glow,
+    required this.isDark,
+    required this.primary,
+    required this.accent,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -306,8 +327,8 @@ class _PlatformPainter extends CustomPainter {
         Paint()
           ..shader = RadialGradient(
             colors: [
-              AppColors.seedColor.withValues(alpha: ringAlpha * 1.6),
-              AppColors.gradientEnd.withValues(alpha: ringAlpha * 0.4),
+              primary.withValues(alpha: ringAlpha * 1.6),
+              accent.withValues(alpha: ringAlpha * 0.4),
             ],
           ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
           ..style = PaintingStyle.stroke
@@ -324,7 +345,7 @@ class _PlatformPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            AppColors.seedColor.withValues(alpha: 0.22 + glow * 0.14),
+            primary.withValues(alpha: 0.22 + glow * 0.14),
             Colors.transparent,
           ],
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
@@ -332,7 +353,8 @@ class _PlatformPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PlatformPainter old) => old.glow != glow;
+  bool shouldRepaint(_PlatformPainter old) =>
+      old.glow != glow || old.primary != primary || old.accent != accent;
 }
 
 // ─── Drag Hint ────────────────────────────────────────────────────────────────
@@ -383,6 +405,7 @@ class _FashionFigurePainter extends CustomPainter {
   final int skinToneIndex;
   final int hairColorIndex;
   final int hairStyleIndex;
+  final AvatarOutfitLook? outfitLook;
 
   static const _skinPalette = [
     Color(0xFFF5E6D3), // 0: porcelain
@@ -411,6 +434,7 @@ class _FashionFigurePainter extends CustomPainter {
     required this.skinToneIndex,
     required this.hairColorIndex,
     required this.hairStyleIndex,
+    this.outfitLook,
   });
 
   double get _rightFactor => cos(yAngle - pi / 6).clamp(0.0, 1.0);
@@ -437,6 +461,20 @@ class _FashionFigurePainter extends CustomPainter {
       (c.b * 255 * f).round().clamp(0, 255),
     );
   }
+
+  Color _garmentColor(AvatarSlot slot, Color fallback) {
+    final wearables = outfitLook?.wearables ?? const <WearableAsset>[];
+    for (final wearable in wearables) {
+      if (wearable.slot != slot || wearable.baseColorHex == null) continue;
+      final hex = wearable.baseColorHex!.replaceFirst('#', '');
+      final value = int.tryParse(hex, radix: 16);
+      if (value != null) return Color(0xFF000000 | value);
+    }
+    return fallback;
+  }
+
+  bool _hasSlot(AvatarSlot slot) =>
+      outfitLook?.wearables.any((wearable) => wearable.slot == slot) ?? false;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -530,7 +568,7 @@ class _FashionFigurePainter extends CustomPainter {
   }
 
   void _drawFemaleBody(Canvas canvas, double w, double h) {
-    final topBase = const Color(0xFFD4C5F5);
+    final topBase = _garmentColor(AvatarSlot.top, const Color(0xFFD4C5F5));
     final topL = _lit(topBase, boost: 0.10);
     final topD = _shadowed(topBase, darken: 0.22);
     final bodyTop = h * 0.46;
@@ -571,7 +609,10 @@ class _FashionFigurePainter extends CustomPainter {
     );
 
     // Skirt
-    final skirtBase = const Color(0xFFB8A0E8);
+    final skirtBase = _garmentColor(
+      _hasSlot(AvatarSlot.dress) ? AvatarSlot.dress : AvatarSlot.bottom,
+      const Color(0xFFB8A0E8),
+    );
     final skirtL = _lit(skirtBase, boost: 0.08);
     final skirtD = _shadowed(skirtBase, darken: 0.25);
     final skirtTop = bodyTop + h * 0.21;
@@ -632,10 +673,10 @@ class _FashionFigurePainter extends CustomPainter {
   }
 
   void _drawMaleBody(Canvas canvas, double w, double h) {
-    final topBase = const Color(0xFFF0E4D4);
+    final topBase = _garmentColor(AvatarSlot.top, const Color(0xFFF0E4D4));
     final topL = _lit(topBase, boost: 0.10);
     final topD = _shadowed(topBase, darken: 0.22);
-    final pantsBase = const Color(0xFFB8946A);
+    final pantsBase = _garmentColor(AvatarSlot.bottom, const Color(0xFFB8946A));
     final pantsL = _lit(pantsBase, boost: 0.10);
     final pantsD = _shadowed(pantsBase, darken: 0.28);
     final bodyTop = h * 0.46;
@@ -706,7 +747,10 @@ class _FashionFigurePainter extends CustomPainter {
     double shoeTop, {
     required bool narrow,
   }) {
-    final shoeColor = _shadowed(const Color(0xFF2C1A0E), darken: 0.10);
+    final shoeColor = _shadowed(
+      _garmentColor(AvatarSlot.shoes, const Color(0xFF2C1A0E)),
+      darken: 0.10,
+    );
     final shoeW = narrow ? w * 0.22 : w * 0.26;
     for (final isLeft in [true, false]) {
       final sx = isLeft ? w * 0.12 : (narrow ? w * 0.50 : w * 0.53);

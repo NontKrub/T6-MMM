@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "normalization": {
+    "scale": 1.0,
+    "origin": "floor_center"
+  },
+  "templates": [
+    "hat",
+    "regular_tee",
+    "fitted_top",
+    "oversized_top",
+    "shirt_blouse",
+    "sweater_hoodie",
+    "jacket",
+    "blazer",
+    "coat",
+    "regular_pants",
+    "slim_pants",
+    "wide_leg_pants",
+    "shorts",
+    "skirt",
+    "straight_dress",
+    "a_line_dress",
+    "sneaker",
+    "dress_shoe",
+    "boot",
+    "bag",
+    "accessory"
+  ],
+  "frontDecalRect": {
+    "regular_tee": [0.18, 0.15, 0.64, 0.55],
+    "fitted_top": [0.18, 0.15, 0.64, 0.55],
+    "oversized_top": [0.18, 0.15, 0.64, 0.55],
+    "shirt_blouse": [0.18, 0.15, 0.64, 0.55],
+    "sweater_hoodie": [0.18, 0.15, 0.64, 0.55]
+  }
+}

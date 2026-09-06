@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_brand_theme.dart';
 import '../models/clothing_item.dart';
 
 class WardrobeImage extends StatelessWidget {
@@ -54,9 +55,9 @@ class _Fallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = MmmBrandTheme.of(context);
     return Container(
-      color: isDark ? const Color(0xFF1E1B2E) : const Color(0xFFEDE9FF),
+      color: brand.neutralSurface,
       child: Center(
         child: Icon(
           item.category.icon,

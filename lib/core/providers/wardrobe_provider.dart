@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/wardrobe_repository.dart';
 import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
+import '../services/wearable_asset_cache.dart';
+import '../config/avatar_feature_flags.dart';
 
 final wardrobeProvider =
     StateNotifierProvider<WardrobeNotifier, List<ClothingItem>>((ref) {
@@ -18,6 +21,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   }
 
   final WardrobeRepository _repository;
+  final _wearableCache = WearableAssetCache();
 
   Future<void> load() async {
     try {
@@ -29,6 +33,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   Future<void> addItem(ClothingItem item) async {
     final persisted = await _repository.insertItem(item);
     state = [...state, persisted];
+    unawaited(_rebuildWearable(persisted));
   }
 
   Future<void> addUploadedItem({
@@ -67,12 +72,14 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     );
     if (item != null) {
       state = [...state, item];
+      unawaited(_rebuildWearable(item, sourceBytes: bytes));
     }
   }
 
   Future<void> removeItem(String id) async {
     await _repository.archiveItem(id);
     state = state.where((item) => item.id != id).toList();
+    unawaited(_wearableCache.remove(id));
   }
 
   Future<void> markWorn(String id) async {
@@ -111,6 +118,14 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     final updated = await _repository.reanalyzeItem(id);
     if (updated == null) return;
     state = state.map((item) => item.id == id ? updated : item).toList();
+    unawaited(_rebuildWearable(updated));
+  }
+
+  Future<void> _rebuildWearable(ClothingItem item, {Uint8List? sourceBytes}) {
+    if (AvatarFeatureFlags.enableV2WearableTextures) {
+      return _wearableCache.rebuildV2(item, sourceBytes: sourceBytes);
+    }
+    return _wearableCache.rebuild(item);
   }
 
   List<ClothingItem> byCategory(ClothingCategory category) {

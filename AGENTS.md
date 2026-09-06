@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a Flutter app named `Mix Match Mood` (`MMM` for short). The Dart package is `mix_match_mood`. App code lives in `lib/`: `features/` contains screen-level flows, `core/` contains shared services, providers, navigation, config, and theme, and `shared/` contains reusable models, widgets, and mock data. Tests live in `test/`, currently starting with `widget_test.dart`. Static app assets are declared in `pubspec.yaml` under `assets/avatars/`, `assets/images/`, and `assets/images/mock_clothes/`. Native shells are in `android/` and `ios/`. Supabase backend code lives in `supabase/`, with SQL migrations in `supabase/migrations/` and Edge Functions in `supabase/functions/`.
+This is a Flutter app named `Mix Match Mood` (`MMM` for short). The Dart package is `mix_match_mood`. App code lives in `lib/`: `features/` contains screen-level flows, `core/` contains shared services, providers, navigation, config, and theme, and `shared/` contains reusable models, widgets, and mock data. Tests live in `test/`, currently starting with `widget_test.dart`. Static app assets are declared in `pubspec.yaml` under `assets/avatars/`, `assets/images/`, `assets/images/mock_clothes/`, and the approved brand assets in `assets/branding/`. Native shells are in `android/` and `ios/`. Supabase backend code lives in `supabase/`, with SQL migrations in `supabase/migrations/` and Edge Functions in `supabase/functions/`.
 
 ## Build, Test, and Development Commands
 
@@ -18,6 +18,14 @@ This is a Flutter app named `Mix Match Mood` (`MMM` for short). The Dart package
 ## Coding Style & Naming Conventions
 
 Follow `package:flutter_lints/flutter.yaml`; this repo only overrides `unnecessary_underscores`. Use two-space Dart formatting via `dart format`. Name Dart files with `snake_case.dart`, classes and widgets with `PascalCase`, and providers/services with descriptive suffixes such as `WardrobeProvider` or `AuthService`. Keep feature UI under `lib/features/<feature>/`, cross-feature widgets under `lib/shared/widgets/`, and backend access behind `lib/core/services/`.
+
+## MMM Design System v1
+
+Use the neutral-canvas, blue-to-violet-to-pink MMM system in
+`docs/design/MMM_DESIGN_SYSTEM_V1.md`. Reuse central theme tokens and shared
+MMM widgets; do not introduce feature-level brand colors, arbitrary radii, or
+general-purpose glass cards. Glass is reserved for contextual overlays;
+semantic amber, green, and red remain state-only.
 
 ## Testing Guidelines
 

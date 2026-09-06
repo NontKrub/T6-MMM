@@ -66,18 +66,18 @@ class AuthService {
 
   User? get currentUser => _client?.auth.currentUser;
 
-  Future<void> signInWithGoogle() async {
-    await _signInWithOAuth(OAuthProvider.google);
+  Future<bool> signInWithGoogle() async {
+    return _signInWithOAuth(OAuthProvider.google);
   }
 
-  Future<void> signInWithFacebook() async {
+  Future<bool> signInWithFacebook() async {
     if (!AppConfig.enableFacebookAuth) {
       throw StateError('Facebook sign-in is not enabled.');
     }
-    await _signInWithOAuth(OAuthProvider.facebook);
+    return _signInWithOAuth(OAuthProvider.facebook);
   }
 
-  Future<void> signInWithApple() async {
+  Future<bool> signInWithApple() async {
     final client = _client;
     if (client == null) {
       throw StateError(
@@ -116,16 +116,17 @@ class AuthService {
       );
       await _profiles.updateDisplayNameIfDefault(displayName);
     }
+    return true;
   }
 
-  Future<void> _signInWithOAuth(OAuthProvider provider) async {
+  Future<bool> _signInWithOAuth(OAuthProvider provider) async {
     final client = _client;
     if (client == null) {
       throw StateError(
         'Supabase is not configured. Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.',
       );
     }
-    await client.auth.signInWithOAuth(
+    return client.auth.signInWithOAuth(
       provider,
       redirectTo: AppConfig.authRedirectUrl,
       authScreenLaunchMode: LaunchMode.externalApplication,

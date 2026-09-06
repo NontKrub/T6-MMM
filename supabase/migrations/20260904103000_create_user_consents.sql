@@ -9,23 +9,11 @@ create table if not exists public.user_consents (
 
 alter table public.user_consents enable row level security;
 
-drop policy if exists mmm_user_consents_select_own on public.user_consents;
-drop policy if exists mmm_user_consents_insert_own on public.user_consents;
-drop policy if exists mmm_user_consents_update_own on public.user_consents;
-drop policy if exists mmm_user_consents_delete_own on public.user_consents;
-create policy mmm_user_consents_select_own on public.user_consents
-for select to authenticated
-using ((select auth.uid()) is not null and user_id = (select auth.uid()));
-create policy mmm_user_consents_insert_own on public.user_consents
-for insert to authenticated
-with check ((select auth.uid()) is not null and user_id = (select auth.uid()));
-create policy mmm_user_consents_update_own on public.user_consents
-for update to authenticated
-using ((select auth.uid()) is not null and user_id = (select auth.uid()))
-with check ((select auth.uid()) is not null and user_id = (select auth.uid()));
-create policy mmm_user_consents_delete_own on public.user_consents
-for delete to authenticated
-using ((select auth.uid()) is not null and user_id = (select auth.uid()));
+drop policy if exists mmm_user_consents_manage_own on public.user_consents;
+create policy mmm_user_consents_manage_own on public.user_consents
+for all to authenticated
+using (user_id = (select auth.uid()))
+with check (user_id = (select auth.uid()));
 
 revoke all on table public.user_consents from public, anon, authenticated;
 grant select, insert, update, delete on table public.user_consents to authenticated;
