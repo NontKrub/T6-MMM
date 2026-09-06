@@ -16,6 +16,8 @@ import '../../shared/widgets/mmm_loading_indicator.dart';
 import '../../shared/widgets/mmm_secondary_button.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
+enum _RushRepeatOutfitAction { generateAnother, wearAnyway }
+
 class InARushModal extends ConsumerStatefulWidget {
   final WidgetRef ref;
   const InARushModal({super.key, required this.ref});
@@ -96,30 +98,34 @@ class _InARushModalState extends ConsumerState<InARushModal> {
           .repeatCountFor(outfit);
       if (!mounted) return;
       if (count > 0) {
-        final action = await MmmDialog.show<String>(
+        final action = await MmmDialog.show<_RushRepeatOutfitAction>(
           context: context,
           title: Text(l10n?.outfitRepeatTitle ?? 'Repeat outfit'),
           content: Text(
             l10n?.outfitRepeatMessage(count) ??
                 "You've worn this combination $count times.",
           ),
-          actions: [
+          actionsBuilder: (dialogContext) => [
             TextButton(
-              onPressed: () => Navigator.pop(context, 'another'),
+              onPressed: () => Navigator.of(
+                dialogContext,
+              ).pop(_RushRepeatOutfitAction.generateAnother),
               child: Text(l10n?.outfitGenerateAnother ?? 'Generate another'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(context, 'wear'),
+              onPressed: () => Navigator.of(
+                dialogContext,
+              ).pop(_RushRepeatOutfitAction.wearAnyway),
               child: Text(l10n?.outfitWearAnyway ?? 'Wear anyway'),
             ),
           ],
         );
         if (!mounted) return;
-        if (action == 'another') {
+        if (action == _RushRepeatOutfitAction.generateAnother) {
           await _loadOutfit();
           return;
         }
-        if (action != 'wear') return;
+        if (action != _RushRepeatOutfitAction.wearAnyway) return;
       }
       await ref
           .read(outfitsProvider.notifier)
