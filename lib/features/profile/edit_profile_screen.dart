@@ -33,6 +33,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Uint8List? _avatarBytes;
   String _avatarName = 'profile.png';
   bool _saving = false;
+  bool _exitApproved = false;
+  bool _confirmingDiscard = false;
 
   UserProfile get _profile => ref.read(userProfileProvider);
 
@@ -77,22 +79,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           : null,
     );
     return PopScope<void>(
-      canPop: !_dirty || _saving,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop || _saving || !_dirty) return;
-        if (!await _confirmDiscard()) return;
-        if (!mounted || !context.mounted) return;
-        context.pop();
+      canPop: _exitApproved || (!_dirty && !_saving),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _saving) return;
+        unawaited(_requestExit());
       },
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
             tooltip: l10n?.commonBack ?? 'Back',
-            onPressed: () async {
-              if (await _confirmDiscard()) {
-                if (context.mounted) context.pop();
-              }
-            },
+            onPressed: _saving ? null : () => unawaited(_requestExit()),
             icon: const Icon(Icons.arrow_back_rounded),
           ),
           title: Text(l10n?.profileEditTitle ?? 'Edit profile'),
@@ -235,7 +231,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final file = await ref
           .read(imagePickServiceProvider)
-          .pickImage(source: source, imageQuality: 90);
+          .pickImage(
+            source: source,
+            imageQuality: 90,
+            purpose: ImagePickPurpose.profileAvatar,
+          );
       if (file == null) return;
       final bytes = await file.readAsBytes();
       if (!mounted) return;
@@ -261,7 +261,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _restoreLostPhoto() async {
     try {
-      final file = await ref.read(imagePickServiceProvider).retrieveLostImage();
+      final file = await ref
+          .read(imagePickServiceProvider)
+          .retrieveLostImage(purpose: ImagePickPurpose.profileAvatar);
       if (file == null || !mounted) return;
       final bytes = await file.readAsBytes();
       if (!mounted) return;
@@ -297,7 +299,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             customAvatarBytes: _avatarBytes,
             customAvatarName: _avatarName,
           );
-      if (mounted) context.pop();
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _exitApproved = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && context.mounted) context.pop();
+      });
     } catch (error) {
       debugPrint('Profile identity update failed: $error');
       if (!mounted) return;
@@ -325,28 +334,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return null;
   }
 
-  Future<bool> _confirmDiscard() async {
-    if (!_dirty || _saving || !mounted) return true;
+  Future<void> _requestExit() async {
+    if (!mounted || _saving || _confirmingDiscard) return;
+    if (!_dirty) {
+      context.pop();
+      return;
+    }
+
+    setState(() => _confirmingDiscard = true);
     final l10n = AppLocalizations.of(context);
-    final discard = await MmmDialog.show<bool>(
-      context: context,
-      title: Text(l10n?.profileDiscardTitle ?? 'Discard changes?'),
-      content: Text(
-        l10n?.profileDiscardMessage ??
-            'Your profile edits have not been saved.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(l10n?.profileKeepEditing ?? 'Keep editing'),
+    bool? discard;
+    try {
+      discard = await MmmDialog.show<bool>(
+        context: context,
+        title: Text(l10n?.profileDiscardTitle ?? 'Discard changes?'),
+        content: Text(
+          l10n?.profileDiscardMessage ??
+              'Your profile edits have not been saved.',
         ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: Text(l10n?.profileDiscard ?? 'Discard'),
-        ),
-      ],
-    );
-    return discard == true;
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n?.profileKeepEditing ?? 'Keep editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n?.profileDiscard ?? 'Discard'),
+          ),
+        ],
+      );
+    } finally {
+      if (mounted) setState(() => _confirmingDiscard = false);
+    }
+    if (!mounted || discard != true) return;
+
+    setState(() => _exitApproved = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.mounted) context.pop();
+    });
   }
 }
 
