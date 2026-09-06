@@ -1,4 +1,5 @@
 class AppConfig {
+  static const legalPagesBaseUrl = 'https://nontkrub.github.io/T6-MMM';
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const supabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
@@ -7,9 +8,13 @@ class AppConfig {
     'AUTH_REDIRECT_URL',
     defaultValue: 'mmm://login-callback',
   );
-  static const privacyPolicyUrl = String.fromEnvironment('PRIVACY_POLICY_URL');
+  static const privacyPolicyUrl = String.fromEnvironment(
+    'PRIVACY_POLICY_URL',
+    defaultValue: '$legalPagesBaseUrl/privacy/',
+  );
   static const termsOfServiceUrl = String.fromEnvironment(
     'TERMS_OF_SERVICE_URL',
+    defaultValue: '$legalPagesBaseUrl/terms/',
   );
   static const enableFacebookAuth = bool.fromEnvironment(
     'ENABLE_FACEBOOK_AUTH',

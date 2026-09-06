@@ -117,9 +117,14 @@ supabase secrets set WEATHER_API_URL=https://api.open-meteo.com/v1/forecast
 not require a weather API key. `OPENAI_API_KEY` and `OPENAI_MODEL` are still
 supported as a fallback if `OPENROUTER_API_KEY` is not set.
 
-The public privacy-policy URL is a build-time Flutter value. Set
-`PRIVACY_POLICY_URL` to a real HTTPS page in the untracked production runtime
-file before release; the example intentionally leaves it empty.
+The public legal-document URLs are build-time Flutter values. They default to
+the reviewed GitHub Pages documents. Keep these production values unless the
+documents move to another reviewed public HTTPS host:
+
+```txt
+PRIVACY_POLICY_URL=https://nontkrub.github.io/T6-MMM/privacy/
+TERMS_OF_SERVICE_URL=https://nontkrub.github.io/T6-MMM/terms/
+```
 
 ## Facebook OAuth
 

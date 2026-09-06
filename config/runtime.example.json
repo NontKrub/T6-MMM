@@ -2,7 +2,7 @@
   "SUPABASE_URL": "",
   "SUPABASE_PUBLISHABLE_KEY": "",
   "AUTH_REDIRECT_URL": "mmm://login-callback",
-  "PRIVACY_POLICY_URL": "",
-  "TERMS_OF_SERVICE_URL": "",
+  "PRIVACY_POLICY_URL": "https://nontkrub.github.io/T6-MMM/privacy/",
+  "TERMS_OF_SERVICE_URL": "https://nontkrub.github.io/T6-MMM/terms/",
   "ENABLE_FACEBOOK_AUTH": "false"
 }
