@@ -462,26 +462,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n?.profileColorSeason ?? 'Color Season',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: ColorSeason.values
-                    .map(
-                      (season) => MmmChoiceChip(
-                        label: profileSeasonLabel(l10n, season),
-                        selected: profile.colorSeason == season,
-                        onSelected: (_) => ref
-                            .read(userProfileProvider.notifier)
-                            .updateColorSeason(season),
-                      ),
-                    )
-                    .toList(growable: false),
-              ),
+              const _ColorSeasonPreference(),
               ...[
                 const SizedBox(height: AppSpacing.md),
                 Wrap(
@@ -556,6 +537,8 @@ class ProfileScreen extends ConsumerWidget {
 
   void _editStyles(BuildContext context, WidgetRef ref, UserProfile profile) {
     final selected = {...profile.stylePreferences};
+    var saving = false;
+    String? errorMessage;
     MmmBottomSheet.show<void>(
       context: context,
       builder: (sheetContext) => StatefulBuilder(
@@ -582,28 +565,66 @@ class ProfileScreen extends ConsumerWidget {
                         style,
                       ),
                       selected: selected.contains(style),
-                      onSelected: (_) => setModalState(() {
-                        if (!selected.add(style)) selected.remove(style);
-                      }),
+                      onSelected: saving
+                          ? null
+                          : (_) => setModalState(() {
+                              if (!selected.add(style)) selected.remove(style);
+                            }),
                     ),
                   )
                   .toList(growable: false),
             ),
+            if (errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  errorMessage!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
-                  ref
-                      .read(userProfileProvider.notifier)
-                      .updateStylePreferences(
-                        _styleOptions.where(selected.contains).toList(),
-                      );
-                  Navigator.pop(sheetContext);
-                },
-                child: Text(
-                  AppLocalizations.of(context)?.profileSave ?? 'Save',
-                ),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setModalState(() {
+                          saving = true;
+                          errorMessage = null;
+                        });
+                        try {
+                          await ref
+                              .read(userProfileProvider.notifier)
+                              .saveStylePreferences(
+                                _styleOptions.where(selected.contains).toList(),
+                              );
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                        } catch (error) {
+                          debugPrint('Style preference save failed: $error');
+                          if (!sheetContext.mounted) return;
+                          setModalState(() {
+                            saving = false;
+                            errorMessage =
+                                AppLocalizations.of(
+                                  context,
+                                )?.profilePreferencesSaveFailed ??
+                                "Couldn't save your preferences. Check your connection and try again.";
+                          });
+                        }
+                      },
+                child: saving
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(AppLocalizations.of(context)?.profileSave ?? 'Save'),
               ),
             ),
           ],
@@ -618,6 +639,8 @@ class ProfileScreen extends ConsumerWidget {
     UserProfile profile,
   ) {
     final selected = {...profile.occasions};
+    var saving = false;
+    String? errorMessage;
     MmmBottomSheet.show<void>(
       context: context,
       builder: (sheetContext) => StatefulBuilder(
@@ -643,28 +666,70 @@ class ProfileScreen extends ConsumerWidget {
                         occasion,
                       ),
                       selected: selected.contains(occasion),
-                      onSelected: (_) => setModalState(() {
-                        if (!selected.add(occasion)) selected.remove(occasion);
-                      }),
+                      onSelected: saving
+                          ? null
+                          : (_) => setModalState(() {
+                              if (!selected.add(occasion)) {
+                                selected.remove(occasion);
+                              }
+                            }),
                     ),
                   )
                   .toList(growable: false),
             ),
+            if (errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  errorMessage!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
-                  ref
-                      .read(userProfileProvider.notifier)
-                      .updateOccasions(
-                        _occasionOptions.where(selected.contains).toList(),
-                      );
-                  Navigator.pop(sheetContext);
-                },
-                child: Text(
-                  AppLocalizations.of(context)?.profileSave ?? 'Save',
-                ),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setModalState(() {
+                          saving = true;
+                          errorMessage = null;
+                        });
+                        try {
+                          await ref
+                              .read(userProfileProvider.notifier)
+                              .saveOccasions(
+                                _occasionOptions
+                                    .where(selected.contains)
+                                    .toList(),
+                              );
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                        } catch (error) {
+                          debugPrint('Occasion preference save failed: $error');
+                          if (!sheetContext.mounted) return;
+                          setModalState(() {
+                            saving = false;
+                            errorMessage =
+                                AppLocalizations.of(
+                                  context,
+                                )?.profilePreferencesSaveFailed ??
+                                "Couldn't save your preferences. Check your connection and try again.";
+                          });
+                        }
+                      },
+                child: saving
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(AppLocalizations.of(context)?.profileSave ?? 'Save'),
               ),
             ),
           ],
@@ -675,6 +740,97 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _sectionTitle(BuildContext context, String title) =>
       Text(title, style: Theme.of(context).textTheme.titleMedium);
+}
+
+class _ColorSeasonPreference extends ConsumerStatefulWidget {
+  const _ColorSeasonPreference();
+
+  @override
+  ConsumerState<_ColorSeasonPreference> createState() =>
+      _ColorSeasonPreferenceState();
+}
+
+class _ColorSeasonPreferenceState
+    extends ConsumerState<_ColorSeasonPreference> {
+  bool _saving = false;
+  String? _errorMessage;
+
+  Future<void> _save(ColorSeason season) async {
+    setState(() {
+      _saving = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(userProfileProvider.notifier).saveColorSeason(season);
+      if (!mounted) return;
+      setState(() => _saving = false);
+    } catch (error) {
+      debugPrint('Color season save failed: $error');
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _errorMessage =
+            AppLocalizations.of(context)?.profilePreferencesSaveFailed ??
+            "Couldn't save your preferences. Check your connection and try again.";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final profile = ref.watch(userProfileProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n?.profileColorSeason ?? 'Color Season',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            if (_saving)
+              Semantics(
+                liveRegion: true,
+                label: 'Saving',
+                child: const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: ColorSeason.values
+              .map(
+                (season) => MmmChoiceChip(
+                  label: profileSeasonLabel(l10n, season),
+                  selected: profile.colorSeason == season,
+                  onSelected: _saving ? null : (_) => _save(season),
+                ),
+              )
+              .toList(growable: false),
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _errorMessage!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _ProfileHeader extends StatelessWidget {

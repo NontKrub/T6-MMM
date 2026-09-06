@@ -283,6 +283,7 @@
   "profileEmptyWardrobeMessage": "Add a few pieces and MMM will show how you wear them.",
   "profileInsightsLoadFailed": "Insights could not load.",
   "profileIdentitySaveFailed": "Profile changes could not be saved.",
+  "profilePreferencesSaveFailed": "Couldn't save your preferences. Check your connection and try again.",
   "profileChangePhotoFailed": "That photo could not be used. Try another image.",
   "profileDiscardTitle": "Discard changes?",
   "profileDiscardMessage": "Your profile edits have not been saved.",

@@ -774,6 +774,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileIdentitySaveFailed => 'Profile changes could not be saved.';
 
   @override
+  String get profilePreferencesSaveFailed =>
+      'Couldn\'t save your preferences. Check your connection and try again.';
+
+  @override
   String get profileChangePhotoFailed =>
       'That photo could not be used. Try another image.';
 

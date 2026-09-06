@@ -764,6 +764,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'บันทึกการเปลี่ยนแปลงโปรไฟล์ไม่สำเร็จ';
 
   @override
+  String get profilePreferencesSaveFailed =>
+      'บันทึกความชอบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง';
+
+  @override
   String get profileChangePhotoFailed => 'ใช้รูปนี้ไม่ได้ ลองเลือกรูปอื่น';
 
   @override

@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'Profile changes could not be saved.'**
   String get profileIdentitySaveFailed;
 
+  /// No description provided for @profilePreferencesSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your preferences. Check your connection and try again.'**
+  String get profilePreferencesSaveFailed;
+
   /// No description provided for @profileChangePhotoFailed.
   ///
   /// In en, this message translates to:

@@ -277,6 +277,7 @@
   "profileEmptyWardrobeMessage": "เพิ่มเสื้อผ้าแล้ว MMM จะแสดงรูปแบบการสวมใส่ของคุณ",
   "profileInsightsLoadFailed": "โหลดอินไซต์ไม่สำเร็จ",
   "profileIdentitySaveFailed": "บันทึกการเปลี่ยนแปลงโปรไฟล์ไม่สำเร็จ",
+  "profilePreferencesSaveFailed": "บันทึกความชอบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
   "profileChangePhotoFailed": "ใช้รูปนี้ไม่ได้ ลองเลือกรูปอื่น",
   "profileDiscardTitle": "ละทิ้งการเปลี่ยนแปลงหรือไม่?",
   "profileDiscardMessage": "การแก้ไขโปรไฟล์ยังไม่ได้บันทึก",
