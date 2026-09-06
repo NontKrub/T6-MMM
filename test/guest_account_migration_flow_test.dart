@@ -97,6 +97,11 @@ void main() {
     expect(second.skippedRecommendationEvents, 1);
     expect(await local.hasGuestAccount(), isFalse);
     expect(api.uploadedItemIds, contains(itemId));
+    expect(api.rpcCalls, hasLength(2));
+    expect(api.rpcCalls.last['p_styles'], isA<List>());
+    expect(api.rpcCalls.last['p_occasions'], isA<List>());
+    expect(api.directProfileWrites, 0);
+    expect(api.directPreferenceWrites, 0);
   });
 }
 
@@ -108,6 +113,9 @@ class _MigrationApi {
   bool profileExists = false;
   Map<String, dynamic>? clothingItem;
   final uploadedItemIds = <String>[];
+  final rpcCalls = <Map<String, dynamic>>[];
+  var directProfileWrites = 0;
+  var directPreferenceWrites = 0;
 
   Future<void> handle(HttpRequest request) async {
     final body = await utf8.decoder.bind(request).join();
@@ -122,6 +130,9 @@ class _MigrationApi {
       });
     }
     if (path.startsWith('/rest/v1/')) {
+      if (path.endsWith('/rpc/save_profile_with_preferences')) {
+        return _rpcResponse(request, body);
+      }
       return _restResponse(request, body);
     }
     if (path.startsWith('/storage/v1/object/')) {
@@ -162,10 +173,11 @@ class _MigrationApi {
       final payload = body.isEmpty ? <String, dynamic>{} : jsonDecode(body);
       switch (table) {
         case 'profiles':
-          profileExists = true;
-          return _jsonResponse(request, 201, []);
+          directProfileWrites++;
+          return _jsonResponse(request, 500, {'message': 'use profile RPC'});
         case 'style_preferences':
-          return _jsonResponse(request, 201, []);
+          directPreferenceWrites++;
+          return _jsonResponse(request, 500, {'message': 'use profile RPC'});
         case 'clothing_items':
           final row = Map<String, dynamic>.from(payload as Map)
             ..['image_url'] = '';
@@ -178,6 +190,13 @@ class _MigrationApi {
     }
 
     return _jsonResponse(request, 200, []);
+  }
+
+  Future<void> _rpcResponse(HttpRequest request, String body) async {
+    final payload = Map<String, dynamic>.from(jsonDecode(body) as Map);
+    rpcCalls.add(payload);
+    profileExists = true;
+    return _jsonResponse(request, 200, {});
   }
 
   Future<void> _jsonResponse(

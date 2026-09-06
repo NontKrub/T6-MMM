@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/providers/user_profile_provider.dart';
 import 'package:mix_match_mood/core/services/profile_repository.dart';
@@ -20,6 +22,23 @@ class _FakeProfileRepository extends ProfileRepository {
     nextError = null;
     if (error != null) throw error;
     profile = value;
+  }
+}
+
+class _DelayedProfileRepository extends ProfileRepository {
+  final fetches = <Completer<UserProfile?>>[];
+  final writes = <UserProfile>[];
+
+  @override
+  Future<UserProfile?> fetchProfile() {
+    final fetch = Completer<UserProfile?>();
+    fetches.add(fetch);
+    return fetch.future;
+  }
+
+  @override
+  Future<void> upsertProfile(UserProfile value) async {
+    writes.add(value);
   }
 }
 
@@ -111,5 +130,47 @@ void main() {
     expect(notifier.state.occasions, ['Dates']);
     expect(repository.writes.last.stylePreferences, ['Streetwear']);
     expect(repository.writes.last.occasions, ['Dates']);
+  });
+
+  test('initial load cannot overwrite a local mutation', () async {
+    final repository = _DelayedProfileRepository();
+    final notifier = UserProfileNotifier(null, repository);
+    addTearDown(notifier.dispose);
+
+    notifier.updateName('Fresh');
+    repository.fetches.single.complete(initial.copyWith(name: 'Stale'));
+    await notifier.flush();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.state.name, 'Fresh');
+  });
+
+  test('an explicit reload supersedes the constructor load', () async {
+    final repository = _DelayedProfileRepository();
+    final notifier = UserProfileNotifier(null, repository);
+    addTearDown(notifier.dispose);
+
+    final reload = notifier.load();
+    expect(repository.fetches, hasLength(2));
+    repository.fetches[1].complete(initial.copyWith(name: 'Reloaded'));
+    await reload;
+    repository.fetches[0].complete(initial.copyWith(name: 'Stale'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.state.name, 'Reloaded');
+  });
+
+  test('disposing during a load prevents post-dispose application', () async {
+    final repository = _DelayedProfileRepository();
+    final notifier = UserProfileNotifier(null, repository);
+    final reload = notifier.load();
+    notifier.dispose();
+
+    repository.fetches[1].complete(initial.copyWith(name: 'Reloaded'));
+    await expectLater(reload, completes);
+    repository.fetches[0].complete(initial.copyWith(name: 'Stale'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.mounted, isFalse);
   });
 }

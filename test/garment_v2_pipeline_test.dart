@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/services/garment_segmentation_service.dart';
 import 'package:mix_match_mood/core/services/garment_texture_composer.dart';
@@ -11,6 +11,74 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'segmentation sends image bytes inside the platform argument map',
+    () async {
+      const channel = MethodChannel('mmm/test_clothing_analysis');
+      MethodCall? call;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (methodCall) async {
+            call = methodCall;
+            return {
+              'width': 2,
+              'height': 1,
+              'mask': Uint8List.fromList([255, 0]),
+              'confidence': .75,
+              'boundingBox': [0.0, 0.0, 0.5, 1.0],
+            };
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+
+      final bytes = Uint8List.fromList([1, 2, 3]);
+      final result = await GarmentSegmentationService(
+        channel: channel,
+      ).segment(bytes);
+
+      expect(call?.method, 'segmentForeground');
+      expect(call?.arguments, isA<Map>());
+      expect((call?.arguments as Map)['bytes'], bytes);
+      expect(result?.width, 2);
+      expect(result?.height, 1);
+      expect(result?.alpha, [255, 0]);
+      expect(result?.confidence, .75);
+      expect(result?.boundingBox, [0.0, 0.0, 0.5, 1.0]);
+    },
+  );
+
+  test(
+    'segmentation returns null for platform failures and malformed payloads',
+    () async {
+      const channel = MethodChannel('mmm/test_clothing_analysis_failures');
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (methodCall) async {
+            throw PlatformException(code: 'vision_failed');
+          });
+      final service = GarmentSegmentationService(channel: channel);
+      expect(await service.segment(Uint8List.fromList([1])), isNull);
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (methodCall) async {
+            throw MissingPluginException();
+          });
+      expect(await service.segment(Uint8List.fromList([1])), isNull);
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            channel,
+            (methodCall) async => {'width': 1},
+          );
+      expect(await service.segment(Uint8List.fromList([1])), isNull);
+    },
+  );
 
   test('classifies the supported garment visual cases', () {
     final composer = GarmentTextureComposer();
