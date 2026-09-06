@@ -26,6 +26,8 @@ void main() {
     expect(find.text('Sign in to MMM'), findsOneWidget);
     expect(find.text('Continue with Apple'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Terms'), findsOneWidget);
+    expect(find.text('Privacy'), findsOneWidget);
     expect(find.text('Back to welcome'), findsOneWidget);
     expect(
       tester.getSize(find.text('Continue with Apple')).height,

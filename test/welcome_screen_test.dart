@@ -19,6 +19,8 @@ void main() {
 
     expect(find.text('Create my wardrobe'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Terms'), findsOneWidget);
+    expect(find.text('Privacy'), findsOneWidget);
     expect(find.byTooltip('Choose language'), findsOneWidget);
   });
 }
