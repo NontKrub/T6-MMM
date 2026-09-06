@@ -1,0 +1,287 @@
+{
+  "version": 2,
+  "generator": "tools/avatar/production/build_avatar_v2.py",
+  "models": {
+    "female": "assets/avatar/human_female_v2.glb",
+    "male": "assets/avatar/human_male_v2.glb"
+  },
+  "posters": {
+    "female": "assets/avatar/posters/human_female_v2.png",
+    "male": "assets/avatar/posters/human_male_v2.png"
+  },
+  "templates": [
+    "hat",
+    "regular_tee",
+    "fitted_top",
+    "oversized_top",
+    "shirt_blouse",
+    "sweater_hoodie",
+    "jacket",
+    "blazer",
+    "coat",
+    "regular_pants",
+    "slim_pants",
+    "wide_leg_pants",
+    "shorts",
+    "skirt",
+    "straight_dress",
+    "a_line_dress",
+    "sneaker",
+    "dress_shoe",
+    "boot",
+    "bag",
+    "accessory"
+  ],
+  "templateMetadata": {
+    "hat": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "regular_tee": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "fitted_top": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "oversized_top": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "shirt_blouse": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "sweater_hoodie": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "jacket": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "blazer": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "coat": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "regular_pants": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "slim_pants": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "wide_leg_pants": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "shorts": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "skirt": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": false
+    },
+    "straight_dress": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "a_line_dress": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": true,
+      "supportsFrontDecal": true
+    },
+    "sneaker": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": false,
+      "supportsFrontDecal": false
+    },
+    "dress_shoe": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": false,
+      "supportsFrontDecal": false
+    },
+    "boot": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": false,
+      "supportsFrontDecal": false
+    },
+    "bag": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": false,
+      "supportsFrontDecal": false
+    },
+    "accessory": {
+      "textureSize": 512,
+      "frontDecalRect": [
+        0.18,
+        0.15,
+        0.64,
+        0.55
+      ],
+      "supportsRepeatPattern": false,
+      "supportsFrontDecal": false
+    }
+  },
+  "animations": [
+    "idle",
+    "blink",
+    "wave",
+    "look",
+    "outfit_reveal"
+  ],
+  "hairStyles": 6,
+  "skinTones": 7,
+  "hairColors": 6,
+  "materials": {
+    "body": "MMM_BODY__skin",
+    "hair": "MMM_HAIR__style_{style}__base",
+    "garment": "MMM_GARMENT__{template}__base"
+  },
+  "sha256": {
+    "female": "351eba0997674759cdff126f850eef90dd2c7dbce89f66a5e47cebe645617cf0",
+    "male": "b001369fc064013bd15c44f616ba733b6933aecd1f08f29bdc6a2d36fff29272"
+  }
+}
