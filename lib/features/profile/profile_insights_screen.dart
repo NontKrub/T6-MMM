@@ -70,8 +70,9 @@ class _ProfileInsightsScreenState extends ConsumerState<ProfileInsightsScreen> {
       );
     }
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(profileAnalyticsProvider(_range)),
+      onRefresh: () => ref.refresh(profileAnalyticsProvider(_range).future),
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         children: [
           _rangeSelector(context),
