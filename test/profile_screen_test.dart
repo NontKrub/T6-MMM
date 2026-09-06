@@ -81,6 +81,10 @@ void main() {
     final styleEdit = find.widgetWithText(TextButton, 'Edit profile').first;
     await tester.ensureVisible(styleEdit);
     await tester.pumpAndSettle();
+    final styleTitle = tester.getRect(find.text('Style Preferences'));
+    final styleEditRect = tester.getRect(styleEdit);
+    expect(styleEditRect.center.dy, closeTo(styleTitle.center.dy, 1));
+
     await tester.tap(styleEdit);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Streetwear'));

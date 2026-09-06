@@ -16,7 +16,6 @@ import '../../shared/models/chat_message.dart';
 import '../../shared/widgets/mmm_brand_mark.dart';
 import '../../shared/widgets/mmm_choice_chip.dart';
 import '../../shared/widgets/mmm_gradient_button.dart';
-import '../../shared/widgets/mmm_loading_indicator.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
 class ChatbotScreen extends ConsumerStatefulWidget {
@@ -192,18 +191,20 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   AppSpacing.lg,
                   AppSpacing.xs,
                   AppSpacing.lg,
-                  AppSpacing.md,
+                  AppSpacing.xxl + 10,
                 ),
                 child: MmmSurfaceCard(
                   key: const ValueKey('chat-composer'),
-                  padding: const EdgeInsets.all(AppSpacing.xs),
+                  padding: const EdgeInsets.all(AppSpacing.xxs),
                   child: Row(
                     children: [
                       Expanded(
                         child: TextField(
                           controller: _controller,
                           onSubmitted: (_) => _send(),
+                          minLines: 1,
                           maxLines: 4,
+                          textAlignVertical: TextAlignVertical.center,
                           textInputAction: TextInputAction.send,
                           decoration: InputDecoration(
                             hintText:
@@ -211,9 +212,10 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                                 'Ask about your wardrobe…',
                             filled: false,
                             isDense: true,
+                            isCollapsed: true,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.sm,
+                              vertical: AppSpacing.xxs,
                             ),
                             border: InputBorder.none,
                           ),
@@ -225,13 +227,13 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           borderRadius: AppRadii.controlBorder,
                         ),
                         child: SizedBox.square(
-                          dimension: 48,
+                          dimension: 44,
                           child: IconButton(
                             tooltip: l10n?.chatSend ?? 'Send message',
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints.tightFor(
-                              width: 48,
-                              height: 48,
+                              width: 44,
+                              height: 44,
                             ),
                             onPressed: _send,
                             icon: const Icon(
@@ -378,13 +380,100 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-class _TypingBubble extends StatelessWidget {
+class _TypingBubble extends StatefulWidget {
   const _TypingBubble();
+
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: MmmLoadingIndicator(
-      label: AppLocalizations.of(context)?.chatThinking ?? 'MMM is thinking…',
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduceMotion(context)) {
+      _controller.stop();
+      _controller.value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = MmmBrandTheme.of(context);
+    final label =
+        AppLocalizations.of(context)?.chatThinking ?? 'MMM is thinking…';
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Semantics(
+        key: const ValueKey('chat-typing-indicator'),
+        liveRegion: true,
+        label: label,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: brand.raisedSurface,
+            border: Border.all(color: brand.subtleBorder),
+            borderRadius: const BorderRadius.only(
+              topLeft: AppRadii.control,
+              topRight: AppRadii.control,
+              bottomRight: AppRadii.control,
+              bottomLeft: Radius.circular(4),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                3,
+                (index) => _TypingDot(
+                  key: ValueKey('chat-typing-dot-$index'),
+                  animation: CurvedAnimation(
+                    parent: _controller,
+                    curve: Interval(index * .16, .68 + index * .16),
+                  ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TypingDot extends StatelessWidget {
+  const _TypingDot({super.key, required this.animation, required this.color});
+
+  final Animation<double> animation;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 2),
+    child: ScaleTransition(
+      scale: Tween<double>(begin: .65, end: 1).animate(animation),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        child: const SizedBox.square(dimension: 7),
+      ),
     ),
   );
 }

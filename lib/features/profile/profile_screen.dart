@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/profile_analytics_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/theme/app_brand_theme.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/profile_analytics.dart';
@@ -465,19 +466,11 @@ class ProfileScreen extends ConsumerWidget {
               const _ColorSeasonPreference(),
               ...[
                 const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  runSpacing: AppSpacing.xs,
-                  children: [
-                    Text(
-                      l10n?.profileStylePreferences ?? 'Style Preferences',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    TextButton(
-                      onPressed: () => _editStyles(context, ref, profile),
-                      child: Text(l10n?.profileEdit ?? 'Edit profile'),
-                    ),
-                  ],
+                _editablePreferenceHeader(
+                  context,
+                  title: l10n?.profileStylePreferences ?? 'Style Preferences',
+                  editLabel: l10n?.profileEdit ?? 'Edit profile',
+                  onEdit: () => _editStyles(context, ref, profile),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 if (profile.stylePreferences.isEmpty)
@@ -499,19 +492,11 @@ class ProfileScreen extends ConsumerWidget {
               ],
               ...[
                 const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  runSpacing: AppSpacing.xs,
-                  children: [
-                    Text(
-                      l10n?.profileOccasions ?? 'Occasions',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    TextButton(
-                      onPressed: () => _editOccasions(context, ref, profile),
-                      child: Text(l10n?.profileEdit ?? 'Edit profile'),
-                    ),
-                  ],
+                _editablePreferenceHeader(
+                  context,
+                  title: l10n?.profileOccasions ?? 'Occasions',
+                  editLabel: l10n?.profileEdit ?? 'Edit profile',
+                  onEdit: () => _editOccasions(context, ref, profile),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 if (profile.occasions.isEmpty)
@@ -531,6 +516,34 @@ class ProfileScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _editablePreferenceHeader(
+    BuildContext context, {
+    required String title,
+    required String editLabel,
+    required VoidCallback onEdit,
+  }) {
+    final titleWidget = Text(
+      title,
+      style: Theme.of(context).textTheme.titleSmall,
+    );
+    final editButton = TextButton(onPressed: onEdit, child: Text(editLabel));
+    if (AppBreakpoints.largeText(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleWidget,
+          Align(alignment: Alignment.centerRight, child: editButton),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: titleWidget),
+        editButton,
       ],
     );
   }
