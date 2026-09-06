@@ -102,58 +102,52 @@ class _GlbAvatarRendererState extends State<GlbAvatarRenderer> {
     return Semantics(
       container: true,
       label: widget.semanticLabel,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (widget.posterPath != null)
-            Image.asset(
-              widget.posterPath!,
-              fit: BoxFit.contain,
-              semanticLabel: widget.semanticLabel,
-            ),
-          ModelViewer(
-            key: ValueKey(widget.modelPath),
-            id: 'mmm-avatar',
-            src: widget.modelPath,
-            alt: widget.semanticLabel,
-            backgroundColor: Colors.transparent,
-            cameraControls: true,
-            disablePan: true,
-            disableZoom: true,
-            touchAction: TouchAction.panY,
-            autoRotate: false,
-            autoPlay: false,
-            animationCrossfadeDuration: AppMotion.transition.inMilliseconds,
-            interactionPrompt: InteractionPrompt.whenFocused,
-            loading: Loading.eager,
-            reveal: Reveal.auto,
-            shadowIntensity: 0.28,
-            shadowSoftness: 0.8,
-            exposure: 1.05,
-            cameraTarget: '0m 0m 2.05m',
-            fieldOfView: '30deg',
-            debugLogging: false,
-            relatedJs: AvatarRenderBridge.script,
-            javascriptChannels: {
-              JavascriptChannel(
-                'MMMAvatarReady',
-                onMessageReceived: (message) =>
-                    _onBridgeMessage('MMMAvatarReady', message),
-              ),
-              JavascriptChannel(
-                'MMMAvatarError',
-                onMessageReceived: (message) =>
-                    _onBridgeMessage('MMMAvatarError', message),
-              ),
-              JavascriptChannel(
-                'MMMAvatarMaterialTap',
-                onMessageReceived: (message) =>
-                    _onBridgeMessage('MMMAvatarMaterialTap', message),
-              ),
-            },
-            onWebViewCreated: _onWebViewCreated,
+      child: ModelViewer(
+        key: ValueKey(widget.modelPath),
+        id: 'mmm-avatar',
+        src: widget.modelPath,
+        alt: widget.semanticLabel,
+        poster: widget.posterPath,
+        relatedCss: '--poster-color: transparent;',
+        backgroundColor: Colors.transparent,
+        cameraControls: true,
+        disablePan: true,
+        disableZoom: true,
+        touchAction: TouchAction.panY,
+        cameraOrbit: '0deg 90deg 3.4m',
+        minCameraOrbit: '-40deg 75deg 3.4m',
+        maxCameraOrbit: '40deg 105deg 3.4m',
+        autoRotate: false,
+        autoPlay: false,
+        animationCrossfadeDuration: AppMotion.transition.inMilliseconds,
+        interactionPrompt: InteractionPrompt.whenFocused,
+        loading: Loading.eager,
+        reveal: Reveal.auto,
+        shadowIntensity: 0.28,
+        shadowSoftness: 0.8,
+        exposure: 1.05,
+        cameraTarget: '0m 0m 2.05m',
+        fieldOfView: '30deg',
+        debugLogging: false,
+        relatedJs: AvatarRenderBridge.script,
+        javascriptChannels: {
+          JavascriptChannel(
+            'MMMAvatarReady',
+            onMessageReceived: (message) =>
+                _onBridgeMessage('MMMAvatarReady', message),
           ),
-        ],
+          JavascriptChannel(
+            'MMMAvatarError',
+            onMessageReceived: (message) =>
+                _onBridgeMessage('MMMAvatarError', message),
+          ),
+          JavascriptChannel(
+            'MMMAvatarMaterialTap',
+            onMessageReceived: (message) =>
+                _onBridgeMessage('MMMAvatarMaterialTap', message),
+          ),
+        },
+        onWebViewCreated: _onWebViewCreated,
       ),
     );
   }
