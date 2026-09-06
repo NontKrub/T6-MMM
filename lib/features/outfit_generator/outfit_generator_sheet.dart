@@ -19,6 +19,8 @@ import '../../shared/widgets/mmm_dialog.dart';
 import '../../shared/widgets/mmm_gradient_button.dart';
 import '../../shared/widgets/mmm_surface_card.dart';
 
+enum _RepeatOutfitAction { generateAnother, wearAnyway }
+
 class OutfitGeneratorSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
   const OutfitGeneratorSheet({super.key, required this.ref});
@@ -104,30 +106,34 @@ class _OutfitGeneratorSheetState extends ConsumerState<OutfitGeneratorSheet> {
           .repeatCountFor(outfit);
       if (!mounted) return;
       if (count > 0) {
-        final action = await MmmDialog.show<String>(
+        final action = await MmmDialog.show<_RepeatOutfitAction>(
           context: context,
           title: Text(l10n?.outfitRepeatTitle ?? 'Repeat outfit'),
           content: Text(
             l10n?.outfitRepeatMessage(count) ??
                 "You've worn this combination $count times.",
           ),
-          actions: [
+          actionsBuilder: (dialogContext) => [
             TextButton(
-              onPressed: () => Navigator.pop(context, 'another'),
+              onPressed: () => Navigator.of(
+                dialogContext,
+              ).pop(_RepeatOutfitAction.generateAnother),
               child: Text(l10n?.outfitGenerateAnother ?? 'Generate another'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(context, 'wear'),
+              onPressed: () => Navigator.of(
+                dialogContext,
+              ).pop(_RepeatOutfitAction.wearAnyway),
               child: Text(l10n?.outfitWearAnyway ?? 'Wear anyway'),
             ),
           ],
         );
         if (!mounted) return;
-        if (action == 'another') {
+        if (action == _RepeatOutfitAction.generateAnother) {
           await _generate();
           return;
         }
-        if (action != 'wear') return;
+        if (action != _RepeatOutfitAction.wearAnyway) return;
       }
       await ref
           .read(outfitsProvider.notifier)
