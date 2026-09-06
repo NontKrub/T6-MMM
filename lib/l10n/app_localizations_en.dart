@@ -351,6 +351,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homePrompt => 'What are we wearing today?';
 
   @override
+  String homeGreetingMorning(String name) {
+    return 'Good morning, $name';
+  }
+
+  @override
+  String homeGreetingAfternoon(String name) {
+    return 'Good afternoon, $name';
+  }
+
+  @override
+  String get homeGreetingAfternoonGeneric => 'Good afternoon';
+
+  @override
+  String homeGreetingEvening(String name) {
+    return 'Good evening, $name';
+  }
+
+  @override
+  String get homeGreetingEveningGeneric => 'Good evening';
+
+  @override
+  String get homeTodaysLook => 'Today\'s Look';
+
+  @override
+  String get homeTryAnother => 'Try another';
+
+  @override
+  String get homeGenerateTodaysLook => 'Generate today\'s look';
+
+  @override
+  String get homeWhyThisWorks => 'Why this works';
+
+  @override
+  String get homeQuickActions => 'Quick actions';
+
+  @override
+  String get homeWardrobePulse => 'Wardrobe Pulse';
+
+  @override
+  String get homeRecentlyAdded => 'Recently added';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String get homeEmptyWardrobeTitle => 'Your wardrobe starts here.';
+
+  @override
+  String get homeEmptyWardrobeMessage =>
+      'Add a few pieces and MMM can start building looks.';
+
+  @override
+  String get homeAddClothing => 'Add clothing';
+
+  @override
   String get wardrobeTitle => 'Wardrobe';
 
   @override
@@ -710,8 +765,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacy => 'Privacy Policy';
 
   @override
-  String get settingsPrivacyNotConfigured =>
-      'A public HTTPS privacy-policy URL has not been configured yet.';
+  String get settingsTerms => 'Terms of Service';
+
+  @override
+  String get legalLinkNotConfigured =>
+      'A public HTTPS legal-document URL has not been configured yet.';
 
   @override
   String get settingsLanguage => 'Language';

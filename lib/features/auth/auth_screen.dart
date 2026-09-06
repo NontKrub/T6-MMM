@@ -13,6 +13,7 @@ import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/guest_account_migration_service.dart';
+import '../../core/services/legal_links_service.dart';
 import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -313,13 +314,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ],
           ],
         ),
-        footer: TextButton(
-          onPressed: isBusy ? null : _goBack,
-          child: Text(
-            unlockAi
-                ? (l10n?.authBackToChat ?? 'Back to Chat')
-                : (l10n?.authBackToWelcome ?? 'Back to welcome'),
-          ),
+        footer: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (LegalLinksService.uri(LegalDocument.terms) != null ||
+                LegalLinksService.uri(LegalDocument.privacy) != null)
+              _AuthLegalLinks(isBusy: isBusy),
+            TextButton(
+              onPressed: isBusy ? null : _goBack,
+              child: Text(
+                unlockAi
+                    ? (l10n?.authBackToChat ?? 'Back to Chat')
+                    : (l10n?.authBackToWelcome ?? 'Back to welcome'),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -339,6 +348,52 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } else {
       context.go('/welcome');
     }
+  }
+}
+
+class _AuthLegalLinks extends StatelessWidget {
+  const _AuthLegalLinks({required this.isBusy});
+
+  final bool isBusy;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final terms = LegalLinksService.uri(LegalDocument.terms);
+    final privacy = LegalLinksService.uri(LegalDocument.privacy);
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (terms != null)
+          TextButton(
+            onPressed: isBusy
+                ? null
+                : () => _open(context, LegalDocument.terms),
+            child: Text(l10n?.welcomeTerms ?? 'Terms'),
+          ),
+        if (terms != null && privacy != null) const Text('·'),
+        if (privacy != null)
+          TextButton(
+            onPressed: isBusy
+                ? null
+                : () => _open(context, LegalDocument.privacy),
+            child: Text(l10n?.welcomePrivacy ?? 'Privacy'),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _open(BuildContext context, LegalDocument document) async {
+    if (await LegalLinksService.open(document) || !context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)?.legalLinkOpenFailed ??
+              'This link could not be opened. Check your connection and try again.',
+        ),
+      ),
+    );
   }
 }
 

@@ -3,5 +3,6 @@
   "SUPABASE_PUBLISHABLE_KEY": "",
   "AUTH_REDIRECT_URL": "mmm://login-callback",
   "PRIVACY_POLICY_URL": "",
+  "TERMS_OF_SERVICE_URL": "",
   "ENABLE_FACEBOOK_AUTH": "false"
 }

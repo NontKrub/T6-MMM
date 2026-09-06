@@ -186,7 +186,15 @@ class SettingsScreen extends ConsumerWidget {
             iconColor: Colors.grey,
             title: l10n?.settingsPrivacy ?? 'Privacy Policy',
             subtitle: l10n?.settingsPrivacy ?? 'Privacy Policy',
-            onTap: () => _openPrivacyPolicy(context, l10n),
+            onTap: () =>
+                _openLegalDocument(context, l10n, LegalDocument.privacy),
+          ),
+          _SettingsTile(
+            icon: Icons.article_outlined,
+            iconColor: Colors.grey,
+            title: l10n?.settingsTerms ?? 'Terms of Service',
+            subtitle: l10n?.settingsTerms ?? 'Terms of Service',
+            onTap: () => _openLegalDocument(context, l10n, LegalDocument.terms),
           ),
         ],
       ),
@@ -315,18 +323,22 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openPrivacyPolicy(
+  Future<void> _openLegalDocument(
     BuildContext context,
     AppLocalizations? l10n,
+    LegalDocument document,
   ) async {
-    if (LegalLinksService.uri(LegalDocument.privacy) == null) {
+    final title = document == LegalDocument.privacy
+        ? (l10n?.settingsPrivacy ?? 'Privacy Policy')
+        : (l10n?.settingsTerms ?? 'Terms of Service');
+    if (LegalLinksService.uri(document) == null) {
       if (!context.mounted) return;
       await MmmDialog.show<void>(
         context: context,
-        title: Text(l10n?.settingsPrivacy ?? 'Privacy Policy'),
+        title: Text(title),
         content: Text(
-          l10n?.settingsPrivacyNotConfigured ??
-              'A public HTTPS privacy-policy URL has not been configured yet.',
+          l10n?.legalLinkNotConfigured ??
+              'A public HTTPS legal-document URL has not been configured yet.',
         ),
         actions: [
           TextButton(
@@ -338,7 +350,7 @@ class SettingsScreen extends ConsumerWidget {
       return;
     }
 
-    if (await LegalLinksService.open(LegalDocument.privacy)) return;
+    if (await LegalLinksService.open(document)) return;
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

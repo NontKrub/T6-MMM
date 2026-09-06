@@ -10,7 +10,7 @@ An adaptive native wardrobe app: neutral off-white or near-black canvas, fashion
 
 ## Composition
 
-Screens use clear vertical task hierarchy, generous but purposeful negative space, 20–24pt gutters, soft rectangular surfaces, and a single strong primary CTA. Content cards are neutral. Forms and settings retain native Material affordances. The four-destination shell stays visibly labeled.
+Screens use clear vertical task hierarchy, generous but purposeful negative space, 20–24pt gutters, soft rectangular surfaces, and a single strong primary CTA. Home uses a neutral wardrobe-photo flatlay for today's look, not an avatar hero. Content cards are neutral. Forms and settings retain native Material affordances. The four-destination shell stays visibly labeled.
 
 ## Typography and icons
 

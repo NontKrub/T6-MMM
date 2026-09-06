@@ -24,7 +24,9 @@ visual, network, or physical-device evidence.
 
 ## Backend and security
 
-- [NOT RUN] Apply all new migrations to the hosted project.
+- [BLOCKED] Apply all new migrations to the hosted project, including
+  `20260904103000_create_user_consents.sql`; the app will report PGRST205 until
+  the `public.user_consents` table is present in the hosted database.
 - [BLOCKED] Run the two-user RLS and Storage isolation tests against the hosted
   project with disposable users.
 - [PASS] Verify Edge Function JWT enforcement and that request-body `user_id`
@@ -42,8 +44,10 @@ visual, network, or physical-device evidence.
   iPhone.
 - [PASS] Gate Facebook behind `ENABLE_FACEBOOK_AUTH=true`; otherwise
   keep the button hidden.
-- [BLOCKED] Set `PRIVACY_POLICY_URL` to a real public HTTPS policy and verify it from
-  Settings and App Store metadata.
+- [BLOCKED] Publish reviewed Privacy Policy and Terms of Service pages for the
+  operating legal entity, then set `PRIVACY_POLICY_URL` and
+  `TERMS_OF_SERVICE_URL` to their real public HTTPS URLs and verify them from
+  Welcome, Sign in, Settings, and App Store metadata.
 - [PASS] Automated migration retry mapping, tombstone, warning, and local-data
   preservation checks; [BLOCKED] hosted/interrupted-upload verification.
 - [PASS] Confirm Sign Out preserves pending local data.

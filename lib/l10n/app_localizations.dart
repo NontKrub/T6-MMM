@@ -746,6 +746,102 @@ abstract class AppLocalizations {
   /// **'What are we wearing today?'**
   String get homePrompt;
 
+  /// No description provided for @homeGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}'**
+  String homeGreetingMorning(String name);
+
+  /// No description provided for @homeGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon, {name}'**
+  String homeGreetingAfternoon(String name);
+
+  /// No description provided for @homeGreetingAfternoonGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoonGeneric;
+
+  /// No description provided for @homeGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening, {name}'**
+  String homeGreetingEvening(String name);
+
+  /// No description provided for @homeGreetingEveningGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEveningGeneric;
+
+  /// No description provided for @homeTodaysLook.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Look'**
+  String get homeTodaysLook;
+
+  /// No description provided for @homeTryAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another'**
+  String get homeTryAnother;
+
+  /// No description provided for @homeGenerateTodaysLook.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate today\'s look'**
+  String get homeGenerateTodaysLook;
+
+  /// No description provided for @homeWhyThisWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this works'**
+  String get homeWhyThisWorks;
+
+  /// No description provided for @homeQuickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get homeQuickActions;
+
+  /// No description provided for @homeWardrobePulse.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe Pulse'**
+  String get homeWardrobePulse;
+
+  /// No description provided for @homeRecentlyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently added'**
+  String get homeRecentlyAdded;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get homeSeeAll;
+
+  /// No description provided for @homeEmptyWardrobeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe starts here.'**
+  String get homeEmptyWardrobeTitle;
+
+  /// No description provided for @homeEmptyWardrobeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few pieces and MMM can start building looks.'**
+  String get homeEmptyWardrobeMessage;
+
+  /// No description provided for @homeAddClothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Add clothing'**
+  String get homeAddClothing;
+
   /// No description provided for @wardrobeTitle.
   ///
   /// In en, this message translates to:
@@ -1400,11 +1496,17 @@ abstract class AppLocalizations {
   /// **'Privacy Policy'**
   String get settingsPrivacy;
 
-  /// No description provided for @settingsPrivacyNotConfigured.
+  /// No description provided for @settingsTerms.
   ///
   /// In en, this message translates to:
-  /// **'A public HTTPS privacy-policy URL has not been configured yet.'**
-  String get settingsPrivacyNotConfigured;
+  /// **'Terms of Service'**
+  String get settingsTerms;
+
+  /// No description provided for @legalLinkNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'A public HTTPS legal-document URL has not been configured yet.'**
+  String get legalLinkNotConfigured;
 
   /// No description provided for @settingsLanguage.
   ///

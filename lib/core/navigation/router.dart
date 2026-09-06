@@ -7,7 +7,7 @@ import '../../features/auth/auth_entry.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/welcome/welcome_screen.dart';
 import '../../features/shell/main_shell.dart';
-import '../../features/home/home_screen.dart';
+import '../../features/home/flatlay_home_screen.dart';
 import '../../features/wardrobe/wardrobe_screen.dart';
 import '../../features/missing_pieces/missing_pieces_screen.dart';
 import '../../features/chatbot/chatbot_screen.dart';

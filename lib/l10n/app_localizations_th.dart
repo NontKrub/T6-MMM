@@ -347,6 +347,61 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homePrompt => 'วันนี้จะแต่งตัวแบบไหนดี?';
 
   @override
+  String homeGreetingMorning(String name) {
+    return 'สวัสดีตอนเช้า $name';
+  }
+
+  @override
+  String homeGreetingAfternoon(String name) {
+    return 'สวัสดีตอนบ่าย $name';
+  }
+
+  @override
+  String get homeGreetingAfternoonGeneric => 'สวัสดีตอนบ่าย';
+
+  @override
+  String homeGreetingEvening(String name) {
+    return 'สวัสดีตอนเย็น $name';
+  }
+
+  @override
+  String get homeGreetingEveningGeneric => 'สวัสดีตอนเย็น';
+
+  @override
+  String get homeTodaysLook => 'ลุคของวันนี้';
+
+  @override
+  String get homeTryAnother => 'ลองอีกลุค';
+
+  @override
+  String get homeGenerateTodaysLook => 'สร้างลุคของวันนี้';
+
+  @override
+  String get homeWhyThisWorks => 'ทำไมลุคนี้ถึงเข้ากัน';
+
+  @override
+  String get homeQuickActions => 'การทำงานด่วน';
+
+  @override
+  String get homeWardrobePulse => 'สรุปตู้เสื้อผ้า';
+
+  @override
+  String get homeRecentlyAdded => 'เพิ่มล่าสุด';
+
+  @override
+  String get homeSeeAll => 'ดูทั้งหมด';
+
+  @override
+  String get homeEmptyWardrobeTitle => 'เริ่มตู้เสื้อผ้าของคุณที่นี่';
+
+  @override
+  String get homeEmptyWardrobeMessage =>
+      'เพิ่มสักสองสามชิ้น แล้ว MMM จะเริ่มจัดลุคให้คุณได้';
+
+  @override
+  String get homeAddClothing => 'เพิ่มเสื้อผ้า';
+
+  @override
   String get wardrobeTitle => 'ตู้เสื้อผ้า';
 
   @override
@@ -700,8 +755,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsPrivacy => 'นโยบายความเป็นส่วนตัว';
 
   @override
-  String get settingsPrivacyNotConfigured =>
-      'ยังไม่ได้ตั้งค่าลิงก์นโยบายความเป็นส่วนตัวแบบ HTTPS สาธารณะ';
+  String get settingsTerms => 'ข้อกำหนดการให้บริการ';
+
+  @override
+  String get legalLinkNotConfigured =>
+      'ยังไม่ได้ตั้งค่าลิงก์เอกสารทางกฎหมายแบบ HTTPS สาธารณะ';
 
   @override
   String get settingsLanguage => 'ภาษา';

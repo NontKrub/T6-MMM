@@ -43,7 +43,7 @@ The approved visual principle is neutral canvas, expressive blue-violet-pink MMM
 
 1. Let users create value from a local wardrobe before sign-in.
 2. Keep automatic intelligence reviewable and recoverable with manual correction.
-3. Make fashion content and garment imagery more prominent than interface decoration.
+3. Make fashion content and garment imagery more prominent than interface decoration; Home centers today's wardrobe look rather than an avatar.
 4. Keep destructive, permission, consent, and authentication actions explicit.
 5. Use one coherent design system across every product state.
 

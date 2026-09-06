@@ -24,8 +24,11 @@ import 'widgets/repetition_insight_card.dart';
 import '../outfit_generator/outfit_generator_sheet.dart';
 import '../outfit_generator/in_a_rush_modal.dart';
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+export 'flatlay_home_screen.dart' show HomeScreen;
+
+/// Retained avatar entry point. Home now uses `FlatlayHomeScreen`.
+class AvatarHomeScreen extends ConsumerWidget {
+  const AvatarHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
