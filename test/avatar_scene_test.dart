@@ -12,6 +12,25 @@ import 'package:mix_match_mood/shared/models/user_profile.dart';
 import 'package:mix_match_mood/shared/models/wearable_asset.dart';
 
 void main() {
+  test('keeps V1 active while exposing an explicit V2 catalog', () {
+    expect(AvatarAssetCatalog.activeVersion, AvatarAssetVersion.v1);
+    expect(
+      AvatarAssetCatalog.forVersion(AvatarAssetVersion.v1).femaleModelPath,
+      'assets/avatar/human_female_v1.glb',
+    );
+    expect(
+      AvatarAssetCatalog.forVersion(AvatarAssetVersion.v2).femaleModelPath,
+      'assets/avatar/human_female_v2.glb',
+    );
+    expect(
+      AvatarAssetCatalog.modelPathFor(
+        AvatarBodyShape.male,
+        version: AvatarAssetVersion.v1,
+      ),
+      AvatarAssetCatalog.maleModelPath,
+    );
+  });
+
   test('maps wardrobe garments to a safe renderer payload', () {
     final item = ClothingItem(
       id: 'item-1',

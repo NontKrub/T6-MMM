@@ -1,17 +1,69 @@
 import 'user_profile.dart';
 import 'wearable_asset.dart';
 
+enum AvatarAssetVersion { v1, v2 }
+
+class AvatarAssetCatalogVersion {
+  final String femaleModelPath;
+  final String maleModelPath;
+  final String femalePosterPath;
+  final String malePosterPath;
+
+  const AvatarAssetCatalogVersion({
+    required this.femaleModelPath,
+    required this.maleModelPath,
+    required this.femalePosterPath,
+    required this.malePosterPath,
+  });
+}
+
 abstract final class AvatarAssetCatalog {
+  static const activeVersion = AvatarAssetVersion.v1;
+
+  static const v1 = AvatarAssetCatalogVersion(
+    femaleModelPath: 'assets/avatar/human_female_v1.glb',
+    maleModelPath: 'assets/avatar/human_male_v1.glb',
+    femalePosterPath: 'assets/avatar/posters/human_female.png',
+    malePosterPath: 'assets/avatar/posters/human_male.png',
+  );
+
+  static const v2 = AvatarAssetCatalogVersion(
+    femaleModelPath: 'assets/avatar/human_female_v2.glb',
+    maleModelPath: 'assets/avatar/human_male_v2.glb',
+    femalePosterPath: 'assets/avatar/posters/human_female_v2.png',
+    malePosterPath: 'assets/avatar/posters/human_male_v2.png',
+  );
+
   static const femaleModelPath = 'assets/avatar/human_female_v1.glb';
   static const maleModelPath = 'assets/avatar/human_male_v1.glb';
   static const femalePosterPath = 'assets/avatar/posters/human_female.png';
   static const malePosterPath = 'assets/avatar/posters/human_male.png';
 
-  static String modelPathFor(AvatarBodyShape bodyShape) =>
-      bodyShape == AvatarBodyShape.male ? maleModelPath : femaleModelPath;
+  static AvatarAssetCatalogVersion forVersion(AvatarAssetVersion version) =>
+      switch (version) {
+        AvatarAssetVersion.v1 => v1,
+        AvatarAssetVersion.v2 => v2,
+      };
 
-  static String posterPathFor(AvatarBodyShape bodyShape) =>
-      bodyShape == AvatarBodyShape.male ? malePosterPath : femalePosterPath;
+  static String modelPathFor(
+    AvatarBodyShape bodyShape, {
+    AvatarAssetVersion? version,
+  }) {
+    final catalog = forVersion(version ?? activeVersion);
+    return bodyShape == AvatarBodyShape.male
+        ? catalog.maleModelPath
+        : catalog.femaleModelPath;
+  }
+
+  static String posterPathFor(
+    AvatarBodyShape bodyShape, {
+    AvatarAssetVersion? version,
+  }) {
+    final catalog = forVersion(version ?? activeVersion);
+    return bodyShape == AvatarBodyShape.male
+        ? catalog.malePosterPath
+        : catalog.femalePosterPath;
+  }
 }
 
 enum AvatarSceneAnimation { idle, blink, wave, look, outfitReveal }
