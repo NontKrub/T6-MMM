@@ -44,11 +44,13 @@ visual, network, or physical-device evidence.
   iPhone.
 - [PASS] Gate Facebook behind `ENABLE_FACEBOOK_AUTH=true`; otherwise
   keep the button hidden.
-- [IN PROGRESS] Reviewed Privacy Policy and Terms of Service deploy to
+- [PASS] Reviewed Privacy Policy and Terms of Service are publicly reachable at
   `https://nontkrub.github.io/T6-MMM/privacy/` and
-  `https://nontkrub.github.io/T6-MMM/terms/`; their legal-entity name, address,
-  and contact placeholders must be completed and App Store metadata must be
-  checked before release.
+  `https://nontkrub.github.io/T6-MMM/terms/`; Welcome, Sign in, and Settings
+  render both configured links in focused widget tests.
+- [BLOCKED] Complete the operating legal entity's name, address, and legal/
+  privacy contact in the published documents, then check App Store metadata
+  before release.
 - [PASS] Automated migration retry mapping, tombstone, warning, and local-data
   preservation checks; [BLOCKED] hosted/interrupted-upload verification.
 - [PASS] Confirm Sign Out preserves pending local data.
