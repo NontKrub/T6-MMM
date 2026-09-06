@@ -6,6 +6,7 @@ import '../services/wardrobe_repository.dart';
 import '../../shared/models/clothing_analysis.dart';
 import '../../shared/models/clothing_item.dart';
 import '../services/wearable_asset_cache.dart';
+import '../config/avatar_feature_flags.dart';
 
 final wardrobeProvider =
     StateNotifierProvider<WardrobeNotifier, List<ClothingItem>>((ref) {
@@ -32,7 +33,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
   Future<void> addItem(ClothingItem item) async {
     final persisted = await _repository.insertItem(item);
     state = [...state, persisted];
-    unawaited(_wearableCache.rebuild(persisted));
+    unawaited(_rebuildWearable(persisted));
   }
 
   Future<void> addUploadedItem({
@@ -71,7 +72,7 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     );
     if (item != null) {
       state = [...state, item];
-      unawaited(_wearableCache.rebuild(item));
+      unawaited(_rebuildWearable(item, sourceBytes: bytes));
     }
   }
 
@@ -117,7 +118,14 @@ class WardrobeNotifier extends StateNotifier<List<ClothingItem>> {
     final updated = await _repository.reanalyzeItem(id);
     if (updated == null) return;
     state = state.map((item) => item.id == id ? updated : item).toList();
-    unawaited(_wearableCache.rebuild(updated));
+    unawaited(_rebuildWearable(updated));
+  }
+
+  Future<void> _rebuildWearable(ClothingItem item, {Uint8List? sourceBytes}) {
+    if (AvatarFeatureFlags.enableV2WearableTextures) {
+      return _wearableCache.rebuildV2(item, sourceBytes: sourceBytes);
+    }
+    return _wearableCache.rebuild(item);
   }
 
   List<ClothingItem> byCategory(ClothingCategory category) {

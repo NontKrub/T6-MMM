@@ -1,4 +1,5 @@
 import 'user_profile.dart';
+import 'garment_visual_fingerprint.dart';
 import 'wearable_asset.dart';
 
 enum AvatarAssetVersion { v1, v2 }
@@ -84,6 +85,10 @@ class AvatarRenderedGarment {
   final String templateKey;
   final String? colorHex;
   final String? texturePath;
+  final String? textureDigest;
+  final String? textureDataUri;
+  final GarmentTextureKind textureKind;
+  final List<double>? frontGraphicRect;
   final String materialKey;
   final String patternKey;
   final double roughness;
@@ -96,6 +101,10 @@ class AvatarRenderedGarment {
     required this.templateKey,
     this.colorHex,
     this.texturePath,
+    this.textureDigest,
+    this.textureDataUri,
+    this.textureKind = GarmentTextureKind.solid,
+    this.frontGraphicRect,
     this.materialKey = 'synthetic',
     this.patternKey = 'solid',
     this.roughness = 0.65,
@@ -109,6 +118,10 @@ class AvatarRenderedGarment {
     'template': templateKey,
     'color': colorHex,
     'texture': texturePath,
+    'textureDigest': textureDigest,
+    'textureDataUri': textureDataUri,
+    'textureKind': textureKind.name,
+    'frontGraphicRect': frontGraphicRect,
     'material': materialKey,
     'pattern': patternKey,
     'roughness': roughness,
@@ -128,6 +141,8 @@ class AvatarSceneState {
   final AvatarSceneAnimation animation;
   final bool hasSelectedOutfit;
   final String semanticsLabel;
+  final int schemaVersion;
+  final bool texturesEnabled;
 
   const AvatarSceneState({
     required this.modelPath,
@@ -140,9 +155,12 @@ class AvatarSceneState {
     this.animation = AvatarSceneAnimation.idle,
     this.hasSelectedOutfit = false,
     this.semanticsLabel = 'Avatar',
+    this.schemaVersion = 2,
+    this.texturesEnabled = false,
   });
 
   Map<String, dynamic> toJson({bool reduceMotion = false}) => {
+    'schemaVersion': schemaVersion,
     'bodyShape': bodyShape.name,
     'skinToneIndex': skinToneIndex.clamp(0, 6),
     'hairColorIndex': hairColorIndex.clamp(0, 5),
@@ -151,5 +169,6 @@ class AvatarSceneState {
     'animation': animation.jsonName,
     'reduceMotion': reduceMotion,
     'hasSelectedOutfit': hasSelectedOutfit,
+    'texturesEnabled': texturesEnabled,
   };
 }

@@ -1,6 +1,7 @@
 import '../../shared/models/avatar_scene.dart';
 import '../../shared/models/user_profile.dart';
 import '../../shared/models/wearable_asset.dart';
+import '../config/avatar_feature_flags.dart';
 import 'avatar_outfit_resolver.dart';
 
 class AvatarMaterialProfile {
@@ -57,6 +58,7 @@ class AvatarSceneMapper {
           .toList(growable: false),
       hasSelectedOutfit: outfitLook?.hasSelectedOutfit ?? false,
       semanticsLabel: outfitLook?.semanticsLabel ?? 'Avatar',
+      texturesEnabled: AvatarFeatureFlags.enableV2WearableTextures,
     );
   }
 
@@ -68,6 +70,10 @@ class AvatarSceneMapper {
       templateKey: wearable.templateKey,
       colorHex: wearable.baseColorHex,
       texturePath: wearable.texturePath,
+      textureDigest: wearable.textureDigest,
+      textureDataUri: wearable.textureDataUri,
+      textureKind: wearable.textureKind,
+      frontGraphicRect: wearable.frontGraphicRect,
       materialKey: wearable.materialVariant ?? 'synthetic',
       patternKey: wearable.patternKey,
       roughness: profile.roughness,

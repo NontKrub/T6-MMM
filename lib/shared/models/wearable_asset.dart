@@ -1,3 +1,5 @@
+import 'garment_visual_fingerprint.dart';
+
 enum WearableStatus { pending, processing, ready, unsupported, failed }
 
 enum AvatarSlot { head, top, outerwear, bottom, dress, shoes, bag, accessory }
@@ -21,6 +23,11 @@ class WearableAsset {
   final Map<String, double> fitParameters;
   final int assetVersion;
   final bool isFallback;
+  final GarmentTextureKind textureKind;
+  final String? textureDigest;
+  final String? textureDataUri;
+  final String? fallbackReason;
+  final List<double>? frontGraphicRect;
 
   const WearableAsset({
     required this.clothingItemId,
@@ -36,6 +43,11 @@ class WearableAsset {
     this.fitParameters = const {},
     this.assetVersion = 1,
     this.isFallback = false,
+    this.textureKind = GarmentTextureKind.solid,
+    this.textureDigest,
+    this.textureDataUri,
+    this.fallbackReason,
+    this.frontGraphicRect,
   });
 
   bool get isUsable => slot != null && status == WearableStatus.ready;
@@ -54,6 +66,12 @@ class WearableAsset {
             orElse: () => AvatarSlot.accessory,
           );
     final fit = json['fitParameters'];
+    final textureKindName = json['textureKind'] as String?;
+    final textureKind = GarmentTextureKind.values.firstWhere(
+      (value) => value.name == textureKindName,
+      orElse: () => GarmentTextureKind.solid,
+    );
+    final graphicRect = json['frontGraphicRect'];
     return WearableAsset(
       clothingItemId: json['clothingItemId'] as String? ?? '',
       itemName: json['itemName'] as String? ?? '',
@@ -73,6 +91,16 @@ class WearableAsset {
           : const {},
       assetVersion: (json['assetVersion'] as num?)?.toInt() ?? 1,
       isFallback: json['isFallback'] as bool? ?? false,
+      textureKind: textureKind,
+      textureDigest: json['textureDigest'] as String?,
+      textureDataUri: json['textureDataUri'] as String?,
+      fallbackReason: json['fallbackReason'] as String?,
+      frontGraphicRect: graphicRect is List
+          ? graphicRect
+                .whereType<num>()
+                .map((value) => value.toDouble())
+                .toList(growable: false)
+          : null,
     );
   }
 
@@ -90,5 +118,9 @@ class WearableAsset {
     'fitParameters': fitParameters,
     'assetVersion': assetVersion,
     'isFallback': isFallback,
+    'textureKind': textureKind.name,
+    'textureDigest': textureDigest,
+    'fallbackReason': fallbackReason,
+    'frontGraphicRect': frontGraphicRect,
   };
 }
