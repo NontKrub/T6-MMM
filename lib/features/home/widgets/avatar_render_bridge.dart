@@ -15,6 +15,9 @@ abstract final class AvatarRenderBridge {
   const materialCache = new Map();
   const textureCache = new Map();
   let lastLook = null;
+  let lastLookFingerprint = null;
+  let interactionTimer = null;
+  let applyToken = 0;
 
   const send = (channel, value) => {
     const bridge = window[channel];
@@ -27,6 +30,12 @@ abstract final class AvatarRenderBridge {
     typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)
       ? value
       : fallback;
+
+  const validTextureDataUri = (value) =>
+    typeof value === 'string' && value.length <= 4 * 1024 * 1024 &&
+    /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value)
+      ? value
+      : null;
 
   const hexToRgb = (value) => {
     const hex = validHex(value, '#D9DCE5').slice(1);
@@ -111,18 +120,85 @@ abstract final class AvatarRenderBridge {
     return texture;
   };
 
-  const applyGarment = async (garment) => {
+  const dataUriTexture = async (dataUri) => {
+    const valid = validTextureDataUri(dataUri);
+    if (!valid || typeof viewer.createCanvasTexture !== 'function') return null;
+    if (textureCache.has(valid)) return textureCache.get(valid);
+    const texture = viewer.createCanvasTexture();
+    const canvas = texture && texture.source && texture.source.element;
+    const context = canvas && canvas.getContext && canvas.getContext('2d');
+    if (!context) return null;
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = valid;
+    });
+    canvas.width = 256;
+    canvas.height = 256;
+    context.clearRect(0, 0, 256, 256);
+    context.drawImage(image, 0, 0, 256, 256);
+    texture.source.update();
+    textureCache.set(valid, texture);
+    return texture;
+  };
+
+  const applyGarment = async (garment, look) => {
     if (!garment || !garment.template || !garmentTemplates.includes(garment.template)) return;
     const material = materialFor(`MMM_GARMENT__${garment.template}__base`);
     if (!material) return;
     const color = validHex(garment.color, '#D9DCE5');
     setMaterial(material, color, 1, garment.roughness, garment.metallic);
     const pbr = material.pbrMetallicRoughness;
-    if (pbr && pbr.baseColorTexture) {
-      const texture = await patternTexture(garment.pattern, color);
-      pbr.baseColorTexture.setTexture(texture);
-      if (texture) pbr.setBaseColorFactor([1, 1, 1, 1]);
+    if (!pbr || !pbr.baseColorTexture) return;
+    pbr.baseColorTexture.setTexture(null);
+    let texture = null;
+    if (look.schemaVersion >= 2 && look.texturesEnabled && garment.textureDataUri) {
+      try {
+        texture = await dataUriTexture(garment.textureDataUri);
+      } catch (_) {
+        send('MMMAvatarTextureError', {
+          clothingItemId: garment.clothingItemId,
+          reason: 'texture_decode_failed'
+        });
+      }
     }
+    if (!texture) texture = await patternTexture(garment.pattern, color);
+    pbr.baseColorTexture.setTexture(texture);
+    if (texture) pbr.setBaseColorFactor([1, 1, 1, 1]);
+  };
+
+  const lookFingerprint = (look) => {
+    const garments = Array.isArray(look && look.garments) ? look.garments : [];
+    return JSON.stringify({
+      garments: garments.map((garment) => [
+        garment.clothingItemId,
+        garment.template,
+        garment.color,
+        garment.pattern,
+        garment.textureDigest
+      ]).sort(),
+      hairColorIndex: look && look.hairColorIndex,
+      hairStyleIndex: look && look.hairStyleIndex,
+      skinToneIndex: look && look.skinToneIndex
+    });
+  };
+
+  const returnToIdle = () => {
+    if (!lastLook || lastLook.reduceMotion) return;
+    viewer.animationName = 'idle';
+    viewer.timeScale = 1;
+    viewer.play();
+  };
+
+  const playInteraction = (name) => {
+    if (!viewer.model || !lastLook || lastLook.reduceMotion) return;
+    const interaction = ['wave', 'look'].includes(name) ? name : 'wave';
+    if (interactionTimer) clearTimeout(interactionTimer);
+    viewer.timeScale = 1;
+    viewer.animationName = interaction;
+    viewer.play({ repetitions: 1 });
+    interactionTimer = setTimeout(returnToIdle, interaction === 'wave' ? 1100 : 850);
   };
 
   const playAnimation = (look) => {
@@ -138,11 +214,21 @@ abstract final class AvatarRenderBridge {
       : 'idle';
     viewer.animationName = animation;
     if (animation === 'idle') viewer.play();
-    else viewer.play({ repetitions: 1 });
+    else {
+      viewer.play({ repetitions: 1 });
+      if (interactionTimer) clearTimeout(interactionTimer);
+      interactionTimer = setTimeout(returnToIdle, 900);
+    }
   };
 
   const applyLook = async (look) => {
-    lastLook = look || {};
+    const nextLook = look || {};
+    const nextFingerprint = lookFingerprint(nextLook);
+    const shouldReveal = lastLookFingerprint !== null &&
+      nextFingerprint !== lastLookFingerprint && !nextLook.reduceMotion;
+    lastLook = nextLook;
+    lastLookFingerprint = nextFingerprint;
+    const token = ++applyToken;
     if (!viewer.model) return;
     materialCache.clear();
     const skinTones = ['#F5E6D3', '#E8C4A0', '#C89B6E', '#B07840', '#9A6235', '#8B5A2B', '#4A2F1A'];
@@ -157,20 +243,23 @@ abstract final class AvatarRenderBridge {
     for (const template of garmentTemplates) {
       setMaterial(materialFor(`MMM_GARMENT__${template}__base`), '#D9DCE5', 0, 0.65, 0);
     }
-    const garments = Array.isArray(lastLook.garments) ? lastLook.garments : [];
-    const visibleGarments = lastLook.hasSelectedOutfit
+    const garments = Array.isArray(nextLook.garments) ? nextLook.garments : [];
+    const visibleGarments = nextLook.hasSelectedOutfit
       ? garments
       : [
           { template: 'regular_tee', color: '#D9DCE5', pattern: 'solid' },
           { template: 'regular_pants', color: '#B8C2D6', pattern: 'solid' },
           { template: 'sneaker', color: '#F3F4F6', pattern: 'solid' }
         ];
-    await Promise.all(visibleGarments.map(applyGarment));
-    playAnimation(lastLook);
+    await Promise.all(visibleGarments.map((garment) => applyGarment(garment, nextLook)));
+    if (token !== applyToken) return;
+    if (shouldReveal) playInteraction('look');
+    else playAnimation(nextLook);
   };
 
   window.mmmAvatar = window.mmmAvatar || {};
   window.mmmAvatar.applyLook = applyLook;
+  window.mmmAvatar.playInteraction = playInteraction;
   viewer.addEventListener('load', () => {
     send('MMMAvatarReady', { animations: viewer.availableAnimations || [] });
     if (lastLook) applyLook(lastLook);
@@ -178,6 +267,7 @@ abstract final class AvatarRenderBridge {
   viewer.addEventListener('error', () => send('MMMAvatarError', { reason: 'model_load_failed' }));
   viewer.addEventListener('pointerup', (event) => {
     if (!viewer.model || typeof viewer.materialFromPoint !== 'function') return;
+    playInteraction('wave');
     const material = viewer.materialFromPoint(event.offsetX, event.offsetY);
     if (material && material.name) send('MMMAvatarMaterialTap', { material: material.name });
   });

@@ -2,6 +2,7 @@ import '../../shared/models/outfit.dart';
 import '../../shared/models/outfit_intelligence.dart';
 import '../../shared/models/recommendation_event.dart';
 import 'local_account_repository.dart';
+import 'daily_outfit_variation.dart';
 import 'outfit_recommendation_service.dart';
 import 'recommendation_repository.dart';
 import 'supabase_service.dart';
@@ -12,17 +13,30 @@ class OutfitRepository {
   final WeatherContextRepository _weatherContext;
   final LocalAccountRepository _local;
   final OutfitRecommendationService _localRecommendations;
+  final DailyOutfitVariation _dailyVariation;
 
   OutfitRepository({
     RecommendationRepository? recommendations,
     WeatherContextRepository? weatherContext,
     LocalAccountRepository? local,
     OutfitRecommendationService? localRecommendations,
+    DailyOutfitVariation? dailyVariation,
   }) : _recommendations = recommendations ?? RecommendationRepository(),
        _weatherContext = weatherContext ?? WeatherContextRepository(),
        _local = local ?? LocalAccountRepository(),
        _localRecommendations =
-           localRecommendations ?? const OutfitRecommendationService();
+           localRecommendations ?? const OutfitRecommendationService(),
+       _dailyVariation = dailyVariation ?? DailyOutfitVariation();
+
+  Future<Outfit?> chooseDailyOutfit({
+    required DateTime date,
+    required Iterable<Outfit> candidates,
+    Outfit? explicitSelection,
+  }) => _dailyVariation.choose(
+    date: date,
+    candidates: candidates,
+    explicitSelection: explicitSelection,
+  );
 
   Future<List<Outfit>> fetchOutfits() async {
     final client = SupabaseService.client;

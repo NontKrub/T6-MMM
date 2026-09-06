@@ -70,6 +70,8 @@ class _GlbAvatarRendererState extends State<GlbAvatarRenderer> {
         _sendSceneState();
       } else if (channelName == 'MMMAvatarError') {
         _reportFailure();
+      } else if (channelName == 'MMMAvatarTextureError') {
+        debugPrint('MMM avatar texture fallback: ${payload['reason']}');
       }
     } on Object catch (error, stackTrace) {
       debugPrint('MMM avatar bridge message failed: $error\n$stackTrace');
@@ -145,6 +147,11 @@ class _GlbAvatarRendererState extends State<GlbAvatarRenderer> {
             'MMMAvatarMaterialTap',
             onMessageReceived: (message) =>
                 _onBridgeMessage('MMMAvatarMaterialTap', message),
+          ),
+          JavascriptChannel(
+            'MMMAvatarTextureError',
+            onMessageReceived: (message) =>
+                _onBridgeMessage('MMMAvatarTextureError', message),
           ),
         },
         onWebViewCreated: _onWebViewCreated,
