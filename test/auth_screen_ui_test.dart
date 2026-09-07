@@ -1,16 +1,73 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mix_match_mood/core/providers/user_profile_provider.dart';
+import 'package:mix_match_mood/core/services/profile_repository.dart';
 import 'package:mix_match_mood/core/theme/app_theme.dart';
 import 'package:mix_match_mood/features/auth/auth_entry.dart';
 import 'package:mix_match_mood/features/auth/auth_screen.dart';
+import 'package:mix_match_mood/shared/models/user_profile.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _DelayedProfileRepository extends ProfileRepository {
+  _DelayedProfileRepository(this.profile);
+
+  final UserProfile profile;
+  final load = Completer<UserProfile?>();
+  var fetchCount = 0;
+
+  @override
+  Future<UserProfile?> fetchProfile() {
+    fetchCount++;
+    return fetchCount == 1 ? Future.value(profile) : load.future;
+  }
+}
 
 void _expectNoFlutterError(WidgetTester tester) {
   expect(tester.takeException(), isNull);
 }
 
 void main() {
+  testWidgets('ignores a signed-in callback after auth is unmounted', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    const profile = UserProfile(
+      id: 'user-id',
+      name: 'MMM User',
+      onboardingComplete: true,
+    );
+    final authState = Completer<AuthState>();
+    final repository = _DelayedProfileRepository(profile);
+    final notifier = UserProfileNotifier(null, repository);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [userProfileProvider.overrideWith((_) => notifier)],
+        child: MaterialApp(
+          home: AuthScreen(authStateChanges: authState.future.asStream()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    authState.complete(const AuthState(AuthChangeEvent.signedIn, null));
+    await tester.pump();
+    expect(repository.fetchCount, 2);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    repository.load.complete(profile);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    _expectNoFlutterError(tester);
+  });
+
   testWidgets('auth presents equal provider choices and a guest-first exit', (
     tester,
   ) async {
