@@ -83,7 +83,9 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     return _enqueue(() async {
       final updated = mutation(state);
       await _repository.upsertProfile(updated);
-      if (mounted) state = updated;
+      // Persist the queued snapshot, then apply this field replacement to the
+      // current state so an edit made while awaiting the write is retained.
+      if (mounted) state = mutation(state);
     });
   }
 

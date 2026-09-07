@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/providers/theme_provider.dart';
+import 'package:mix_match_mood/core/providers/session_provider.dart';
 import 'package:mix_match_mood/core/theme/app_theme.dart';
 import 'package:mix_match_mood/features/settings/settings_screen.dart';
 import 'package:mix_match_mood/l10n/app_localizations.dart';
@@ -112,29 +113,55 @@ void main() {
     expect(preferences.getString('mmm_theme_mode'), 'dark');
     expect(tester.takeException(), isNull);
   });
-}
 
-Widget _settingsApp(double scale, {ThemeModeNotifier? notifier}) =>
-    ProviderScope(
-      key: ValueKey(scale),
-      overrides: [
-        if (notifier != null) themeModeProvider.overrideWith((_) => notifier),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(scale)),
-          child: child!,
+  testWidgets('guest account hides cloud-only actions', (tester) async {
+    await tester.pumpWidget(
+      _settingsApp(
+        1,
+        session: const AppSession(
+          hasGuestAccount: true,
+          isSupabaseAuthenticated: false,
         ),
-        home: const SettingsScreen(),
       ),
     );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Local guest account'), findsOneWidget);
+    expect(
+      find.text('Your wardrobe is stored locally on this device'),
+      findsOneWidget,
+    );
+    expect(find.text('Sign out'), findsNothing);
+    expect(find.text('Delete account'), findsNothing);
+    expect(find.text('Signed in with'), findsNothing);
+  });
+}
+
+Widget _settingsApp(
+  double scale, {
+  ThemeModeNotifier? notifier,
+  AppSession? session,
+}) => ProviderScope(
+  key: ValueKey(scale),
+  overrides: [
+    if (notifier != null) themeModeProvider.overrideWith((_) => notifier),
+    if (session != null) sessionProvider.overrideWith((_) async => session),
+  ],
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(scale)),
+      child: child!,
+    ),
+    home: const SettingsScreen(),
+  ),
+);

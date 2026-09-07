@@ -361,6 +361,7 @@
   "settingsAccountEmail": "อีเมล",
   "settingsAccountProvider": "เข้าสู่ระบบด้วย",
   "settingsGuestAccount": "บัญชีผู้เยี่ยมชมในเครื่อง",
+  "settingsGuestAccountSubtitle": "ตู้เสื้อผ้าของคุณเก็บไว้ในอุปกรณ์นี้",
   "settingsSignOut": "ออกจากระบบ",
   "settingsDeleteAccount": "ลบบัญชี",
   "settingsDeleteAccountTitle": "ต้องการลบบัญชีหรือไม่?",

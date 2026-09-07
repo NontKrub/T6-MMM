@@ -20,7 +20,9 @@ enum _RushRepeatOutfitAction { generateAnother, wearAnyway }
 
 class InARushModal extends ConsumerStatefulWidget {
   final WidgetRef ref;
-  const InARushModal({super.key, required this.ref});
+  final Future<Outfit> Function(WidgetRef ref)? rushOutfitLoader;
+
+  const InARushModal({super.key, required this.ref, this.rushOutfitLoader});
 
   @override
   ConsumerState<InARushModal> createState() => _InARushModalState();
@@ -41,9 +43,9 @@ class _InARushModalState extends ConsumerState<InARushModal> {
   Future<void> _loadOutfit() async {
     setState(() => _loading = true);
     try {
-      final outfit = await ref
-          .read(outfitsProvider.notifier)
-          .rushBackendOutfit(widget.ref);
+      final outfit =
+          await (widget.rushOutfitLoader?.call(widget.ref) ??
+              ref.read(outfitsProvider.notifier).rushBackendOutfit(widget.ref));
       if (!mounted) return;
       setState(() {
         _outfit = outfit;
@@ -309,6 +311,7 @@ class _InARushModalState extends ConsumerState<InARushModal> {
                   hasOutfit: _outfit != null,
                   onReshuffle: _reshuffle,
                   onWear: _outfit == null ? null : () => _wear(_outfit!),
+                  onDismiss: () => Navigator.of(context).pop(),
                   reshuffleLabel: l10n?.rushReshuffle ?? 'Reshuffle',
                   wearLabel: _outfit == null
                       ? (l10n?.rushGotIt ?? 'Got It')
@@ -330,6 +333,7 @@ class _RushActions extends StatelessWidget {
     required this.hasOutfit,
     required this.onReshuffle,
     required this.onWear,
+    required this.onDismiss,
     required this.reshuffleLabel,
     required this.wearLabel,
   });
@@ -339,6 +343,7 @@ class _RushActions extends StatelessWidget {
   final bool hasOutfit;
   final VoidCallback onReshuffle;
   final VoidCallback? onWear;
+  final VoidCallback onDismiss;
   final String reshuffleLabel;
   final String wearLabel;
 
@@ -350,7 +355,11 @@ class _RushActions extends StatelessWidget {
       label: reshuffleLabel,
     );
     final primary = MmmGradientButton(
-      onPressed: !hasOutfit || wearing ? null : onWear,
+      onPressed: loading || wearing
+          ? null
+          : hasOutfit
+          ? onWear
+          : onDismiss,
       icon: Icons.check_rounded,
       label: wearLabel,
     );

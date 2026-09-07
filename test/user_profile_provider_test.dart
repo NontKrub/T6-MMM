@@ -43,6 +43,33 @@ class _DelayedProfileRepository extends ProfileRepository {
   }
 }
 
+class _ControlledWrite {
+  _ControlledWrite(this.profile);
+
+  final UserProfile profile;
+  final result = Completer<void>();
+}
+
+class _ControlledProfileRepository extends _FakeProfileRepository {
+  _ControlledProfileRepository(super.profile);
+
+  final requests = <_ControlledWrite>[];
+  bool _blockNextWrite = true;
+
+  @override
+  Future<void> upsertProfile(UserProfile value) {
+    writes.add(value);
+    if (!_blockNextWrite) {
+      profile = value;
+      return Future.value();
+    }
+    _blockNextWrite = false;
+    final request = _ControlledWrite(value);
+    requests.add(request);
+    return request.result.future.then((_) => profile = value);
+  }
+}
+
 class _IdentityRequest {
   _IdentityRequest(this.displayName);
 
@@ -171,6 +198,89 @@ void main() {
     expect(repository.writes.last.stylePreferences, ['Streetwear']);
     expect(repository.writes.last.occasions, ['Dates']);
   });
+
+  test('color season save retains a newer name mutation', () async {
+    final repository = _ControlledProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final save = notifier.saveColorSeason(ColorSeason.winter);
+    await Future<void>.delayed(Duration.zero);
+    notifier.updateName('Nont');
+    repository.requests.single.result.complete();
+
+    await save;
+    await notifier.flush();
+
+    expect(notifier.state.name, 'Nont');
+    expect(notifier.state.colorSeason, ColorSeason.winter);
+    expect(repository.profile.name, 'Nont');
+    expect(repository.profile.colorSeason, ColorSeason.winter);
+  });
+
+  test('style save retains a newer unrelated mutation', () async {
+    final repository = _ControlledProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final save = notifier.saveStylePreferences(['Streetwear']);
+    await Future<void>.delayed(Duration.zero);
+    notifier.updateName('Nont');
+    repository.requests.single.result.complete();
+
+    await save;
+    await notifier.flush();
+
+    expect(notifier.state.name, 'Nont');
+    expect(notifier.state.stylePreferences, ['Streetwear']);
+    expect(repository.profile.name, 'Nont');
+    expect(repository.profile.stylePreferences, ['Streetwear']);
+  });
+
+  test('occasion save retains a newer unrelated mutation', () async {
+    final repository = _ControlledProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final save = notifier.saveOccasions(['Dates']);
+    await Future<void>.delayed(Duration.zero);
+    notifier.updateName('Nont');
+    repository.requests.single.result.complete();
+
+    await save;
+    await notifier.flush();
+
+    expect(notifier.state.name, 'Nont');
+    expect(notifier.state.occasions, ['Dates']);
+    expect(repository.profile.name, 'Nont');
+    expect(repository.profile.occasions, ['Dates']);
+  });
+
+  test(
+    'failed save keeps a newer edit and does not poison the queue',
+    () async {
+      final repository = _ControlledProfileRepository(initial);
+      final notifier = await createNotifier(repository);
+      addTearDown(notifier.dispose);
+
+      final save = notifier.saveColorSeason(ColorSeason.winter);
+      await Future<void>.delayed(Duration.zero);
+      notifier.updateName('Nont');
+      final failed = expectLater(save, throwsA(isA<StateError>()));
+      repository.requests.single.result.completeError(StateError('offline'));
+      await failed;
+      await notifier.flush();
+
+      await notifier.saveStylePreferences(['Streetwear']);
+
+      expect(notifier.state.name, 'Nont');
+      expect(notifier.state.colorSeason, ColorSeason.spring);
+      expect(notifier.state.stylePreferences, ['Streetwear']);
+      expect(repository.profile.name, 'Nont');
+      expect(repository.profile.colorSeason, ColorSeason.spring);
+      expect(repository.profile.stylePreferences, ['Streetwear']);
+    },
+  );
 
   test(
     'identity update preserves a newer optimistic profile mutation',

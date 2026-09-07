@@ -1970,6 +1970,12 @@ abstract class AppLocalizations {
   /// **'Local guest account'**
   String get settingsGuestAccount;
 
+  /// No description provided for @settingsGuestAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe is stored locally on this device'**
+  String get settingsGuestAccountSubtitle;
+
   /// No description provided for @settingsSignOut.
   ///
   /// In en, this message translates to:

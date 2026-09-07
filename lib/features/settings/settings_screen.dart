@@ -39,6 +39,11 @@ class SettingsScreen extends ConsumerWidget {
     final appSettings = ref.watch(appSettingsProvider);
     final pendingMigration = ref.watch(guestMigrationPendingProvider);
     final aiConsent = ref.watch(aiConsentProvider);
+    final session = ref
+        .watch(sessionProvider)
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final signedIn =
+        session?.isSupabaseAuthenticated ?? SupabaseService.isSignedIn;
     final brand = MmmBrandTheme.of(context);
 
     return Scaffold(
@@ -46,7 +51,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
-          _accountSection(context, ref, l10n, brand),
+          _accountSection(context, ref, l10n, brand, signedIn: signedIn),
           // Appearance
           _SectionHeader(title: l10n?.settingsAppearance ?? 'Appearance'),
           _SettingsTile(
@@ -205,42 +210,49 @@ class SettingsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations? l10n,
-    MmmBrandTheme brand,
-  ) {
+    MmmBrandTheme brand, {
+    required bool signedIn,
+  }) {
     final user = AuthService().currentUser;
-    final signedIn = SupabaseService.isSignedIn;
-    final provider = _providerLabel(user);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: l10n?.settingsAccount ?? 'Account'),
-        _SettingsTile(
-          icon: Icons.email_outlined,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsAccountEmail ?? 'Email',
-          subtitle:
-              user?.email ??
-              (l10n?.settingsGuestAccount ?? 'Local guest account'),
-        ),
-        _SettingsTile(
-          icon: Icons.verified_user_outlined,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsAccountProvider ?? 'Signed in with',
-          subtitle: provider,
-        ),
-        _SettingsTile(
-          icon: Icons.logout_rounded,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsSignOut ?? 'Sign out',
-          onTap: () => _signOut(context, ref, l10n),
-        ),
-        if (signedIn)
+        if (!signedIn)
+          _SettingsTile(
+            icon: Icons.person_outline_rounded,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsGuestAccount ?? 'Local guest account',
+            subtitle:
+                l10n?.settingsGuestAccountSubtitle ??
+                'Your wardrobe is stored locally on this device',
+          )
+        else ...[
+          _SettingsTile(
+            icon: Icons.email_outlined,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsAccountEmail ?? 'Email',
+            subtitle: user?.email ?? '—',
+          ),
+          _SettingsTile(
+            icon: Icons.verified_user_outlined,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsAccountProvider ?? 'Signed in with',
+            subtitle: _providerLabel(user),
+          ),
+          _SettingsTile(
+            icon: Icons.logout_rounded,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsSignOut ?? 'Sign out',
+            onTap: () => _signOut(context, ref, l10n),
+          ),
           _SettingsTile(
             icon: Icons.delete_forever_outlined,
             iconColor: brand.destructive,
             title: l10n?.settingsDeleteAccount ?? 'Delete account',
             onTap: () => _deleteAccount(context, ref, l10n),
           ),
+        ],
       ],
     );
   }

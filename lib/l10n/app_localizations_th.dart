@@ -1016,6 +1016,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsGuestAccount => 'บัญชีผู้เยี่ยมชมในเครื่อง';
 
   @override
+  String get settingsGuestAccountSubtitle =>
+      'ตู้เสื้อผ้าของคุณเก็บไว้ในอุปกรณ์นี้';
+
+  @override
   String get settingsSignOut => 'ออกจากระบบ';
 
   @override

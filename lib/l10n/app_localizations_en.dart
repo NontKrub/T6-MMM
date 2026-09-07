@@ -1026,6 +1026,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGuestAccount => 'Local guest account';
 
   @override
+  String get settingsGuestAccountSubtitle =>
+      'Your wardrobe is stored locally on this device';
+
+  @override
   String get settingsSignOut => 'Sign out';
 
   @override

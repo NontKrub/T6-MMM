@@ -367,6 +367,7 @@
   "settingsAccountEmail": "Email",
   "settingsAccountProvider": "Signed in with",
   "settingsGuestAccount": "Local guest account",
+  "settingsGuestAccountSubtitle": "Your wardrobe is stored locally on this device",
   "settingsSignOut": "Sign out",
   "settingsDeleteAccount": "Delete account",
   "settingsDeleteAccountTitle": "Delete your account?",
