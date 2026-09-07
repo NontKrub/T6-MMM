@@ -327,6 +327,7 @@
   "settingsThemeSystemSubtitle": "Follows your device appearance",
   "settingsThemeLightSubtitle": "Always use light appearance",
   "settingsThemeDarkSubtitle": "Always use dark appearance",
+  "settingsThemeSaveFailed": "Couldn't save the theme. Try again.",
   "settingsDarkMode": "Dark Mode",
   "settingsDarkModeOn": "On",
   "settingsDarkModeOff": "Off",

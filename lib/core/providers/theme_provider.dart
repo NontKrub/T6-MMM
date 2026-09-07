@@ -17,6 +17,8 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const _legacyDarkModeKey = 'isDarkMode';
 
   final Future<SharedPreferences> Function() _preferencesLoader;
+  Future<void> _writeQueue = Future.value();
+  ThemeMode _persistedMode = ThemeMode.system;
   int _revision = 0;
 
   Future<void> load() async {
@@ -35,6 +37,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
       if (!mounted || requestRevision != _revision) return;
       state = mode;
+      _persistedMode = mode;
 
       if (storedMode == null && legacyDarkMode != null) {
         try {
@@ -52,12 +55,29 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     }
   }
 
-  Future<void> setMode(ThemeMode mode) async {
+  Future<void> setMode(ThemeMode mode) {
     final selectionRevision = ++_revision;
     state = mode;
-    final prefs = await _preferencesLoader();
-    if (!mounted || selectionRevision != _revision) return;
-    await prefs.setString(_themeModeKey, _storedValue(mode));
+    final result = _writeQueue.then((_) async {
+      final prefs = await _preferencesLoader();
+      final persisted = await prefs.setString(
+        _themeModeKey,
+        _storedValue(mode),
+      );
+      if (!persisted) {
+        throw StateError('Theme mode could not be persisted.');
+      }
+      if (!mounted) return;
+      _persistedMode = mode;
+      if (selectionRevision == _revision) state = mode;
+    });
+    _writeQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stack) {
+        if (mounted && selectionRevision == _revision) state = _persistedMode;
+      },
+    );
+    return result;
   }
 
   Future<void> toggle() {

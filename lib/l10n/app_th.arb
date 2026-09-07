@@ -321,6 +321,7 @@
   "settingsThemeSystemSubtitle": "ทำตามการตั้งค่ารูปลักษณ์ของอุปกรณ์",
   "settingsThemeLightSubtitle": "ใช้รูปลักษณ์สว่างเสมอ",
   "settingsThemeDarkSubtitle": "ใช้รูปลักษณ์มืดเสมอ",
+  "settingsThemeSaveFailed": "บันทึกธีมไม่สำเร็จ กรุณาลองอีกครั้ง",
   "settingsDarkMode": "โหมดมืด",
   "settingsDarkModeOn": "เปิด",
   "settingsDarkModeOff": "ปิด",

@@ -115,4 +115,71 @@ void main() {
     expect(notifier.state, ThemeMode.dark);
     expect(preferences.getString('mmm_theme_mode'), 'dark');
   });
+
+  test(
+    'failed theme persistence restores the previous mode and can retry',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      var unavailable = true;
+      final notifier = ThemeModeNotifier(
+        preferencesLoader: () async {
+          if (unavailable) throw StateError('storage unavailable');
+          return preferences;
+        },
+      );
+      addTearDown(notifier.dispose);
+
+      await expectLater(
+        notifier.setMode(ThemeMode.dark),
+        throwsA(isA<StateError>()),
+      );
+      expect(notifier.state, ThemeMode.system);
+
+      unavailable = false;
+      await notifier.setMode(ThemeMode.light);
+
+      expect(notifier.state, ThemeMode.light);
+      expect(preferences.getString('mmm_theme_mode'), 'light');
+    },
+  );
+
+  test('rapid theme selections persist in request order', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    var loaderCalls = 0;
+    final writeGates = <Completer<SharedPreferences>>[];
+    final notifier = ThemeModeNotifier(
+      preferencesLoader: () {
+        loaderCalls++;
+        if (loaderCalls == 1) return Future.value(preferences);
+        final gate = Completer<SharedPreferences>();
+        writeGates.add(gate);
+        return gate.future;
+      },
+    );
+    addTearDown(notifier.dispose);
+
+    final first = notifier.setMode(ThemeMode.dark);
+    final second = notifier.setMode(ThemeMode.light);
+    final third = notifier.setMode(ThemeMode.system);
+    await Future<void>.delayed(Duration.zero);
+    expect(writeGates, hasLength(1));
+
+    writeGates[0].complete(preferences);
+    await first;
+    await Future<void>.delayed(Duration.zero);
+    expect(writeGates, hasLength(2));
+
+    writeGates[1].complete(preferences);
+    await second;
+    await Future<void>.delayed(Duration.zero);
+    expect(writeGates, hasLength(3));
+
+    writeGates[2].complete(preferences);
+    await third;
+
+    expect(notifier.state, ThemeMode.system);
+    expect(preferences.getString('mmm_theme_mode'), 'system');
+  });
 }

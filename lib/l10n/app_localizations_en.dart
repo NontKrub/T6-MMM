@@ -898,6 +898,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemeDarkSubtitle => 'Always use dark appearance';
 
   @override
+  String get settingsThemeSaveFailed => 'Couldn\'t save the theme. Try again.';
+
+  @override
   String get settingsDarkMode => 'Dark Mode';
 
   @override

@@ -379,6 +379,9 @@ class SettingsScreen extends ConsumerWidget {
           icon: Icons.dark_mode_rounded,
         ),
       ],
+      failureMessage:
+          l10n?.settingsThemeSaveFailed ??
+          "Couldn't save the theme. Try again.",
       onSelected: (value) => ref
           .read(themeModeProvider.notifier)
           .setMode(_themeModeFromValue(value)),
@@ -496,49 +499,129 @@ class SettingsScreen extends ConsumerWidget {
     required String currentValue,
     required List<_SettingsChoice> options,
     required FutureOr<void> Function(String) onSelected,
+    String? failureMessage,
   }) {
     MmmBottomSheet.show<void>(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          ...options.map((option) {
-            final selected = option.value == currentValue;
-            return ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadii.compactBorder,
-              ),
-              onTap: () async {
-                await onSelected(option.value);
-                if (context.mounted) Navigator.pop(context);
-              },
-              leading: option.icon == null
-                  ? null
-                  : Icon(
-                      option.icon,
-                      color: selected
-                          ? MmmBrandTheme.of(
-                              context,
-                            ).primaryGradient.colors.first
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+      builder: (context) {
+        var saving = false;
+        String? savingValue;
+        String? errorText;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Widget choiceTile(
+              _SettingsChoice option, {
+              required VoidCallback? onTap,
+              bool isSaving = false,
+            }) {
+              final selected = option.value == currentValue;
+              final brand = MmmBrandTheme.of(context);
+              final colorScheme = Theme.of(context).colorScheme;
+              return ListTile(
+                enabled: onTap != null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadii.compactBorder,
+                ),
+                onTap: onTap,
+                leading: option.icon == null
+                    ? null
+                    : Icon(
+                        option.icon,
+                        color: selected
+                            ? brand.primaryGradient.colors.first
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                title: Text(option.label),
+                subtitle: Text(option.subtitle),
+                trailing: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: isSaving
+                      ? const Padding(
+                          padding: EdgeInsets.all(3),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          selected
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: selected
+                              ? brand.primaryGradient.colors.first
+                              : colorScheme.outline,
+                        ),
+                ),
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                if (errorText != null)
+                  Semantics(
+                    liveRegion: true,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: Theme.of(context).colorScheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              errorText!,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-              title: Text(option.label),
-              subtitle: Text(option.subtitle),
-              trailing: Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? MmmBrandTheme.of(context).primaryGradient.colors.first
-                    : Theme.of(context).colorScheme.outline,
-              ),
+                  ),
+                ...options.map((option) {
+                  final isSaving = savingValue == option.value;
+                  return choiceTile(
+                    option,
+                    isSaving: saving && isSaving,
+                    onTap: saving
+                        ? null
+                        : () async {
+                            if (failureMessage != null) {
+                              setState(() {
+                                saving = true;
+                                savingValue = option.value;
+                                errorText = null;
+                              });
+                            }
+                            try {
+                              await onSelected(option.value);
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (_) {
+                              if (failureMessage == null) rethrow;
+                              if (!context.mounted) return;
+                              setState(() {
+                                saving = false;
+                                savingValue = null;
+                                errorText = failureMessage;
+                              });
+                            }
+                          },
+                  );
+                }),
+              ],
             );
-          }),
-        ],
-      ),
+          },
+        );
+      },
     );
   }
 

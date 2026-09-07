@@ -1730,6 +1730,12 @@ abstract class AppLocalizations {
   /// **'Always use dark appearance'**
   String get settingsThemeDarkSubtitle;
 
+  /// No description provided for @settingsThemeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the theme. Try again.'**
+  String get settingsThemeSaveFailed;
+
   /// No description provided for @settingsDarkMode.
   ///
   /// In en, this message translates to:

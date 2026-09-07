@@ -888,6 +888,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsThemeDarkSubtitle => 'ใช้รูปลักษณ์มืดเสมอ';
 
   @override
+  String get settingsThemeSaveFailed => 'บันทึกธีมไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
   String get settingsDarkMode => 'โหมดมืด';
 
   @override
