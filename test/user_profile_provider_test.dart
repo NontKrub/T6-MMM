@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mix_match_mood/core/providers/user_profile_provider.dart';
@@ -39,6 +40,45 @@ class _DelayedProfileRepository extends ProfileRepository {
   @override
   Future<void> upsertProfile(UserProfile value) async {
     writes.add(value);
+  }
+}
+
+class _IdentityRequest {
+  _IdentityRequest(this.displayName);
+
+  final String displayName;
+  final result = Completer<UserProfile>();
+}
+
+class _IdentityProfileRepository extends _FakeProfileRepository {
+  _IdentityProfileRepository(super.profile);
+
+  final requests = <_IdentityRequest>[];
+  final _startWaiters = <Completer<void>>[];
+
+  Future<void> waitForIdentityStart() {
+    final waiter = Completer<void>();
+    _startWaiters.add(waiter);
+    return waiter.future;
+  }
+
+  @override
+  Future<UserProfile> updateIdentity({
+    required String displayName,
+    required ProfileAvatarMode avatarMode,
+    String? avatarPath,
+    Uint8List? customAvatarBytes,
+    String customAvatarName = 'profile.png',
+  }) {
+    final request = _IdentityRequest(displayName);
+    requests.add(request);
+    if (_startWaiters.isNotEmpty) {
+      _startWaiters.removeAt(0).complete();
+    }
+    return request.result.future.then((updated) {
+      profile = updated;
+      return updated;
+    });
   }
 }
 
@@ -130,6 +170,117 @@ void main() {
     expect(notifier.state.occasions, ['Dates']);
     expect(repository.writes.last.stylePreferences, ['Streetwear']);
     expect(repository.writes.last.occasions, ['Dates']);
+  });
+
+  test(
+    'identity update preserves a newer optimistic profile mutation',
+    () async {
+      final repository = _IdentityProfileRepository(initial);
+      final notifier = await createNotifier(repository);
+      addTearDown(notifier.dispose);
+
+      final started = repository.waitForIdentityStart();
+      final identity = notifier.updateIdentity(
+        displayName: 'Nont',
+        avatarMode: ProfileAvatarMode.custom,
+        avatarPath: '/profile.png',
+      );
+      await started;
+
+      notifier.updateColorSeason(ColorSeason.winter);
+      repository.requests.single.result.complete(
+        initial.copyWith(
+          name: 'Nont',
+          avatarMode: ProfileAvatarMode.custom,
+          avatarPath: '/profile.png',
+          avatarDisplayUrl: '/profile.png',
+        ),
+      );
+
+      await identity;
+      await notifier.flush();
+
+      expect(notifier.state.name, 'Nont');
+      expect(notifier.state.avatarPath, '/profile.png');
+      expect(notifier.state.colorSeason, ColorSeason.winter);
+      expect(repository.profile.colorSeason, ColorSeason.winter);
+    },
+  );
+
+  test('preference save queues behind identity update', () async {
+    final repository = _IdentityProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final started = repository.waitForIdentityStart();
+    final identity = notifier.updateIdentity(
+      displayName: 'Nont',
+      avatarMode: ProfileAvatarMode.none,
+    );
+    await started;
+
+    final preferences = notifier.saveStylePreferences(['Streetwear']);
+    repository.requests.single.result.complete(initial.copyWith(name: 'Nont'));
+
+    await Future.wait([identity, preferences]);
+    await notifier.flush();
+
+    expect(notifier.state.name, 'Nont');
+    expect(notifier.state.stylePreferences, ['Streetwear']);
+    expect(repository.profile.stylePreferences, ['Streetwear']);
+  });
+
+  test('identity updates execute in request order', () async {
+    final repository = _IdentityProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final firstStarted = repository.waitForIdentityStart();
+    final first = notifier.updateIdentity(
+      displayName: 'First',
+      avatarMode: ProfileAvatarMode.none,
+    );
+    await firstStarted;
+
+    final secondStarted = repository.waitForIdentityStart();
+    final second = notifier.updateIdentity(
+      displayName: 'Second',
+      avatarMode: ProfileAvatarMode.none,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.requests, hasLength(1));
+
+    repository.requests[0].result.complete(initial.copyWith(name: 'First'));
+    await first;
+    await secondStarted;
+    expect(repository.requests.map((request) => request.displayName), [
+      'First',
+      'Second',
+    ]);
+
+    repository.requests[1].result.complete(initial.copyWith(name: 'Second'));
+    await second;
+    expect(notifier.state.name, 'Second');
+  });
+
+  test('failed identity update does not poison the write queue', () async {
+    final repository = _IdentityProfileRepository(initial);
+    final notifier = await createNotifier(repository);
+    addTearDown(notifier.dispose);
+
+    final started = repository.waitForIdentityStart();
+    final identity = notifier.updateIdentity(
+      displayName: 'Nont',
+      avatarMode: ProfileAvatarMode.none,
+    );
+    await started;
+    repository.requests.single.result.completeError(StateError('offline'));
+
+    await expectLater(identity, throwsA(isA<StateError>()));
+    await notifier.saveStylePreferences(['Streetwear']);
+
+    expect(notifier.state.name, 'Guest');
+    expect(notifier.state.stylePreferences, ['Streetwear']);
   });
 
   test('initial load cannot overwrite a local mutation', () async {

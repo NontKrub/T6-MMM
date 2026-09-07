@@ -106,17 +106,29 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     String? avatarPath,
     Uint8List? customAvatarBytes,
     String customAvatarName = 'profile.png',
-  }) async {
+  }) {
     _markMutation();
-    await flush();
-    final updated = await _repository.updateIdentity(
-      displayName: displayName,
-      avatarMode: avatarMode,
-      avatarPath: avatarPath,
-      customAvatarBytes: customAvatarBytes,
-      customAvatarName: customAvatarName,
+    return _enqueue(() async {
+      final updated = await _repository.updateIdentity(
+        displayName: displayName,
+        avatarMode: avatarMode,
+        avatarPath: avatarPath,
+        customAvatarBytes: customAvatarBytes,
+        customAvatarName: customAvatarName,
+      );
+      if (mounted) state = _mergeIdentity(state, updated);
+    });
+  }
+
+  UserProfile _mergeIdentity(UserProfile current, UserProfile identity) {
+    return current.copyWith(
+      id: identity.id,
+      name: identity.name,
+      avatarUrl: identity.avatarUrl,
+      avatarPath: identity.avatarPath,
+      avatarMode: identity.avatarMode,
+      avatarDisplayUrl: identity.avatarDisplayUrl,
     );
-    if (mounted) state = updated;
   }
 
   void updateColorSeason(ColorSeason season) {
