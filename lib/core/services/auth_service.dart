@@ -23,10 +23,23 @@ class AppleDeletionCredential {
 }
 
 class AccountDeletionException implements Exception {
-  const AccountDeletionException({required this.code, this.status});
+  const AccountDeletionException({
+    required this.code,
+    this.status,
+    this.message,
+  });
 
   final String code;
   final int? status;
+  final String? message;
+
+  @override
+  String toString() {
+    final statusText = status == null ? '' : 'status: $status, ';
+    final messageText = message == null ? '' : ', message: $message';
+    return 'AccountDeletionException($statusText'
+        'code: $code$messageText)';
+  }
 }
 
 class AccountDeletionCoordinator {
@@ -161,6 +174,7 @@ class AuthService {
         throw AccountDeletionException(
           code: _functionErrorCode(response.data) ?? 'account_deletion_failed',
           status: response.status,
+          message: _functionErrorMessage(response.data),
         );
       }
     } on AccountDeletionException {
@@ -169,6 +183,7 @@ class AuthService {
       throw AccountDeletionException(
         code: _functionErrorCode(error.details) ?? 'account_deletion_failed',
         status: error.status,
+        message: _functionErrorMessage(error.details) ?? error.reasonPhrase,
       );
     } catch (_) {
       throw const AccountDeletionException(code: 'account_deletion_failed');
@@ -178,6 +193,14 @@ class AuthService {
   String? _functionErrorCode(Object? value) {
     if (value is Map && value['code'] is String) {
       return value['code'] as String;
+    }
+    return null;
+  }
+
+  String? _functionErrorMessage(Object? value) {
+    if (value is Map && value['error'] is String) {
+      final message = value['error'] as String;
+      return message.isEmpty ? null : message;
     }
     return null;
   }
