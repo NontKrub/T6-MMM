@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mix_match_mood/core/providers/session_provider.dart';
 import 'package:mix_match_mood/core/providers/user_profile_provider.dart';
 import 'package:mix_match_mood/core/services/profile_repository.dart';
 import 'package:mix_match_mood/core/theme/app_theme.dart';
@@ -32,6 +33,65 @@ void _expectNoFlutterError(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('signed-in callback refreshes the cached app session', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    const profile = UserProfile(
+      id: 'user-id',
+      name: 'MMM User',
+      onboardingComplete: true,
+    );
+    final authState = Completer<AuthState>();
+    final repository = _DelayedProfileRepository(profile);
+    final notifier = UserProfileNotifier(null, repository);
+    var signedIn = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          userProfileProvider.overrideWith((_) => notifier),
+          sessionProvider.overrideWith(
+            (_) async => AppSession(
+              hasGuestAccount: false,
+              isSupabaseAuthenticated: signedIn,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          home: Stack(
+            children: [
+              AuthScreen(authStateChanges: authState.future.asStream()),
+              Positioned(
+                child: Consumer(
+                  builder: (_, ref, _) {
+                    final signedIn = ref
+                        .watch(sessionProvider)
+                        .maybeWhen(
+                          data: (session) => session.isSupabaseAuthenticated,
+                          orElse: () => false,
+                        );
+                    return Text(signedIn ? 'signed-in' : 'signed-out');
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('signed-out'), findsOneWidget);
+
+    signedIn = true;
+    authState.complete(const AuthState(AuthChangeEvent.signedIn, null));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('signed-in'), findsOneWidget);
+  });
+
   testWidgets('ignores a signed-in callback after auth is unmounted', (
     tester,
   ) async {

@@ -37,6 +37,9 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Supabase app_links handles OAuth callbacks without replacing the auth route. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Mix Match Mood uses your location only when you ask to match outfit suggestions to the local weather.</string>
 	<key>NSCameraUsageDescription</key>

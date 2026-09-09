@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
@@ -72,6 +73,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       });
     }
     ref.invalidate(aiConsentProvider);
+    ref.invalidate(sessionProvider);
     await ref.read(userProfileProvider.notifier).load();
     if (!mounted) return;
     final migration = GuestAccountMigrationService();
