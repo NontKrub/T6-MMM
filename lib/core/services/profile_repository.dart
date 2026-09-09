@@ -111,23 +111,7 @@ class ProfileRepository {
       return;
     }
 
-    await client.from('profiles').upsert({
-      ...profile.toProfileJson(),
-      'id': user.id,
-    });
-
-    await client.from('style_preferences').delete().eq('user_id', user.id);
-    final preferences = [
-      ...profile.stylePreferences.map(
-        (value) => {'user_id': user.id, 'kind': 'style', 'value': value},
-      ),
-      ...profile.occasions.map(
-        (value) => {'user_id': user.id, 'kind': 'occasion', 'value': value},
-      ),
-    ];
-    if (preferences.isNotEmpty) {
-      await client.from('style_preferences').insert(preferences);
-    }
+    await _saveCloudProfileWithPreferences(profile, client);
     try {
       await _cacheCloudProfile(profile, userId: user.id);
     } catch (_) {
@@ -354,33 +338,12 @@ class ProfileRepository {
     }
 
     try {
-      await client.from('profiles').upsert({
-        ...merged.toProfileJson(),
-        'id': user.id,
-      });
+      await _saveCloudProfileWithPreferences(merged, client);
     } catch (error) {
       if (uploadedCloudPath != null) {
         await _deleteCloudAvatar(client, uploadedCloudPath);
       }
       rethrow;
-    }
-
-    final preferences = [
-      ...merged.stylePreferences.map(
-        (value) => {'user_id': user.id, 'kind': 'style', 'value': value},
-      ),
-      ...merged.occasions.map(
-        (value) => {'user_id': user.id, 'kind': 'occasion', 'value': value},
-      ),
-    ];
-    if (preferences.isNotEmpty) {
-      await client
-          .from('style_preferences')
-          .upsert(
-            preferences,
-            onConflict: 'user_id,kind,value',
-            ignoreDuplicates: true,
-          );
     }
     try {
       await _cacheCloudProfile(merged, userId: user.id);
@@ -394,6 +357,35 @@ class ProfileRepository {
       ...first,
       ...second,
     }.where((value) => value.isNotEmpty).toList();
+  }
+
+  Future<void> _saveCloudProfileWithPreferences(
+    UserProfile profile,
+    SupabaseClient client,
+  ) async {
+    final json = profile.toProfileJson();
+    await client.rpc(
+      'save_profile_with_preferences',
+      params: {
+        'p_display_name': json['display_name'],
+        'p_avatar_url': json['avatar_url'],
+        'p_avatar_path': json['avatar_path'],
+        'p_avatar_mode': json['avatar_mode'],
+        'p_color_season': json['color_season'],
+        'p_avatar_type': json['avatar_type'],
+        'p_onboarding_complete': json['onboarding_complete'],
+        'p_body_type': json['body_type'],
+        'p_brand_tier': json['brand_tier'],
+        'p_birth_date': json['birth_date'],
+        'p_birth_weekday': json['birth_weekday'],
+        'p_body_shape': json['body_shape'],
+        'p_skin_tone_index': json['skin_tone_index'],
+        'p_hair_color_index': json['hair_color_index'],
+        'p_hair_style_index': json['hair_style_index'],
+        'p_styles': profile.stylePreferences,
+        'p_occasions': profile.occasions,
+      },
+    );
   }
 
   String _cloudAvatarPath(String userId) =>

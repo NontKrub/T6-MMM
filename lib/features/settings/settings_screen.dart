@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,11 +35,15 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
     final appSettings = ref.watch(appSettingsProvider);
     final pendingMigration = ref.watch(guestMigrationPendingProvider);
     final aiConsent = ref.watch(aiConsentProvider);
+    final session = ref
+        .watch(sessionProvider)
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final signedIn =
+        session?.isSupabaseAuthenticated ?? SupabaseService.isSignedIn;
     final brand = MmmBrandTheme.of(context);
 
     return Scaffold(
@@ -45,21 +51,15 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
-          _accountSection(context, ref, l10n, brand),
+          _accountSection(context, ref, l10n, brand, signedIn: signedIn),
           // Appearance
           _SectionHeader(title: l10n?.settingsAppearance ?? 'Appearance'),
           _SettingsTile(
-            icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            iconColor: brand.primaryGradient.colors.first,
-            title: l10n?.settingsDarkMode ?? 'Dark Mode',
-            subtitle: isDark
-                ? (l10n?.settingsDarkModeOn ?? 'On')
-                : (l10n?.settingsDarkModeOff ?? 'Off'),
-            trailing: Switch(
-              value: isDark,
-              onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-              activeThumbColor: brand.primaryGradient.colors.first,
-            ),
+            icon: _themeModeIcon(themeMode),
+            iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            title: l10n?.settingsTheme ?? 'Theme',
+            subtitle: _themeModeLabel(themeMode, l10n),
+            onTap: () => _showThemeModeSheet(context, ref, l10n),
           ),
 
           // Language
@@ -210,42 +210,49 @@ class SettingsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations? l10n,
-    MmmBrandTheme brand,
-  ) {
+    MmmBrandTheme brand, {
+    required bool signedIn,
+  }) {
     final user = AuthService().currentUser;
-    final signedIn = SupabaseService.isSignedIn;
-    final provider = _providerLabel(user);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: l10n?.settingsAccount ?? 'Account'),
-        _SettingsTile(
-          icon: Icons.email_outlined,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsAccountEmail ?? 'Email',
-          subtitle:
-              user?.email ??
-              (l10n?.settingsGuestAccount ?? 'Local guest account'),
-        ),
-        _SettingsTile(
-          icon: Icons.verified_user_outlined,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsAccountProvider ?? 'Signed in with',
-          subtitle: provider,
-        ),
-        _SettingsTile(
-          icon: Icons.logout_rounded,
-          iconColor: brand.primaryGradient.colors.first,
-          title: l10n?.settingsSignOut ?? 'Sign out',
-          onTap: () => _signOut(context, ref, l10n),
-        ),
-        if (signedIn)
+        if (!signedIn)
+          _SettingsTile(
+            icon: Icons.person_outline_rounded,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsGuestAccount ?? 'Local guest account',
+            subtitle:
+                l10n?.settingsGuestAccountSubtitle ??
+                'Your wardrobe is stored locally on this device',
+          )
+        else ...[
+          _SettingsTile(
+            icon: Icons.email_outlined,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsAccountEmail ?? 'Email',
+            subtitle: user?.email ?? '—',
+          ),
+          _SettingsTile(
+            icon: Icons.verified_user_outlined,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsAccountProvider ?? 'Signed in with',
+            subtitle: _providerLabel(user),
+          ),
+          _SettingsTile(
+            icon: Icons.logout_rounded,
+            iconColor: brand.primaryGradient.colors.first,
+            title: l10n?.settingsSignOut ?? 'Sign out',
+            onTap: () => _signOut(context, ref, l10n),
+          ),
           _SettingsTile(
             icon: Icons.delete_forever_outlined,
             iconColor: brand.destructive,
             title: l10n?.settingsDeleteAccount ?? 'Delete account',
             onTap: () => _deleteAccount(context, ref, l10n),
           ),
+        ],
       ],
     );
   }
@@ -350,6 +357,94 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
+  void _showThemeModeSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) {
+    final mode = ref.read(themeModeProvider);
+    _showChoiceSheet(
+      context: context,
+      title: l10n?.settingsTheme ?? 'Theme',
+      currentValue: _themeModeValue(mode),
+      options: [
+        _SettingsChoice(
+          value: 'system',
+          label: l10n?.settingsThemeSystem ?? 'System',
+          subtitle:
+              l10n?.settingsThemeSystemSubtitle ??
+              'Follows your device appearance',
+          icon: Icons.brightness_auto_rounded,
+        ),
+        _SettingsChoice(
+          value: 'light',
+          label: l10n?.settingsThemeLight ?? 'Light',
+          subtitle:
+              l10n?.settingsThemeLightSubtitle ?? 'Always use light appearance',
+          icon: Icons.light_mode_rounded,
+        ),
+        _SettingsChoice(
+          value: 'dark',
+          label: l10n?.settingsThemeDark ?? 'Dark',
+          subtitle:
+              l10n?.settingsThemeDarkSubtitle ?? 'Always use dark appearance',
+          icon: Icons.dark_mode_rounded,
+        ),
+      ],
+      failureMessage:
+          l10n?.settingsThemeSaveFailed ??
+          "Couldn't save the theme. Try again.",
+      onSelected: (value) => ref
+          .read(themeModeProvider.notifier)
+          .setMode(_themeModeFromValue(value)),
+    );
+  }
+
+  String _themeModeValue(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'system';
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+    }
+  }
+
+  ThemeMode _themeModeFromValue(String value) {
+    switch (value) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  String _themeModeLabel(ThemeMode mode, AppLocalizations? l10n) {
+    switch (mode) {
+      case ThemeMode.system:
+        return l10n?.settingsThemeSystem ?? 'System';
+      case ThemeMode.light:
+        return l10n?.settingsThemeLight ?? 'Light';
+      case ThemeMode.dark:
+        return l10n?.settingsThemeDark ?? 'Dark';
+    }
+  }
+
+  IconData _themeModeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto_rounded;
+      case ThemeMode.light:
+        return Icons.light_mode_rounded;
+      case ThemeMode.dark:
+        return Icons.dark_mode_rounded;
+    }
+  }
+
   void _showLuckyColorMethodSheet(
     BuildContext context,
     WidgetRef ref,
@@ -415,40 +510,130 @@ class SettingsScreen extends ConsumerWidget {
     required String title,
     required String currentValue,
     required List<_SettingsChoice> options,
-    required ValueChanged<String> onSelected,
+    required FutureOr<void> Function(String) onSelected,
+    String? failureMessage,
   }) {
     MmmBottomSheet.show<void>(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          ...options.map((option) {
-            final selected = option.value == currentValue;
-            return ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadii.compactBorder,
-              ),
-              onTap: () {
-                onSelected(option.value);
-                Navigator.pop(context);
-              },
-              title: Text(option.label),
-              subtitle: Text(option.subtitle),
-              trailing: Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? MmmBrandTheme.of(context).primaryGradient.colors.first
-                    : Theme.of(context).colorScheme.outline,
-              ),
+      builder: (context) {
+        var saving = false;
+        String? savingValue;
+        String? errorText;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Widget choiceTile(
+              _SettingsChoice option, {
+              required VoidCallback? onTap,
+              bool isSaving = false,
+            }) {
+              final selected = option.value == currentValue;
+              final brand = MmmBrandTheme.of(context);
+              final colorScheme = Theme.of(context).colorScheme;
+              return ListTile(
+                enabled: onTap != null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadii.compactBorder,
+                ),
+                onTap: onTap,
+                leading: option.icon == null
+                    ? null
+                    : Icon(
+                        option.icon,
+                        color: selected
+                            ? brand.primaryGradient.colors.first
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                title: Text(option.label),
+                subtitle: Text(option.subtitle),
+                trailing: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: isSaving
+                      ? const Padding(
+                          padding: EdgeInsets.all(3),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          selected
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: selected
+                              ? brand.primaryGradient.colors.first
+                              : colorScheme.outline,
+                        ),
+                ),
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                if (errorText != null)
+                  Semantics(
+                    liveRegion: true,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: Theme.of(context).colorScheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              errorText!,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ...options.map((option) {
+                  final isSaving = savingValue == option.value;
+                  return choiceTile(
+                    option,
+                    isSaving: saving && isSaving,
+                    onTap: saving
+                        ? null
+                        : () async {
+                            if (failureMessage != null) {
+                              setState(() {
+                                saving = true;
+                                savingValue = option.value;
+                                errorText = null;
+                              });
+                            }
+                            try {
+                              await onSelected(option.value);
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (_) {
+                              if (failureMessage == null) rethrow;
+                              if (!context.mounted) return;
+                              setState(() {
+                                saving = false;
+                                savingValue = null;
+                                errorText = failureMessage;
+                              });
+                            }
+                          },
+                  );
+                }),
+              ],
             );
-          }),
-        ],
-      ),
+          },
+        );
+      },
     );
   }
 
@@ -680,11 +865,13 @@ class _SettingsChoice {
   final String value;
   final String label;
   final String subtitle;
+  final IconData? icon;
 
   const _SettingsChoice({
     required this.value,
     required this.label,
     required this.subtitle,
+    this.icon,
   });
 }
 

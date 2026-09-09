@@ -877,6 +877,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearance => 'Appearance';
 
   @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystemSubtitle => 'Follows your device appearance';
+
+  @override
+  String get settingsThemeLightSubtitle => 'Always use light appearance';
+
+  @override
+  String get settingsThemeDarkSubtitle => 'Always use dark appearance';
+
+  @override
+  String get settingsThemeSaveFailed => 'Couldn\'t save the theme. Try again.';
+
+  @override
   String get settingsDarkMode => 'Dark Mode';
 
   @override
@@ -1000,6 +1024,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsGuestAccount => 'Local guest account';
+
+  @override
+  String get settingsGuestAccountSubtitle =>
+      'Your wardrobe is stored locally on this device';
 
   @override
   String get settingsSignOut => 'Sign out';

@@ -24,6 +24,20 @@ void main() {
     });
   });
 
+  test('account deletion error includes the backend failure', () {
+    const error = AccountDeletionException(
+      code: 'account_deletion_failed',
+      status: 500,
+      message: 'The deletion service is unavailable.',
+    );
+
+    expect(
+      error.toString(),
+      'AccountDeletionException(status: 500, code: account_deletion_failed, '
+      'message: The deletion service is unavailable.)',
+    );
+  });
+
   test(
     'account deletion skips Apple UI when the server deletes immediately',
     () async {

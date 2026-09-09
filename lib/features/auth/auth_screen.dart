@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/providers/ai_consent_provider.dart';
 import '../../core/providers/outfit_provider.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/providers/user_profile_provider.dart';
 import '../../core/providers/wardrobe_provider.dart';
 import '../../core/services/auth_service.dart';
@@ -24,9 +25,14 @@ import '../../shared/layout/mmm_entry_layout.dart';
 import 'auth_entry.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
-  const AuthScreen({super.key, this.entry = const AuthEntry.signIn()});
+  const AuthScreen({
+    super.key,
+    this.entry = const AuthEntry.signIn(),
+    @visibleForTesting this.authStateChanges,
+  });
 
   final AuthEntry entry;
+  final Stream<AuthState>? authStateChanges;
 
   @override
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
@@ -41,7 +47,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   void initState() {
     super.initState();
-    if (AppConfig.isSupabaseConfigured) {
+    final authStateChanges = widget.authStateChanges;
+    if (authStateChanges != null) {
+      _authSub = authStateChanges.listen(_onAuthStateChange);
+    } else if (AppConfig.isSupabaseConfigured) {
       _authSub = AuthService().authStateChanges.listen(_onAuthStateChange);
     }
   }
@@ -64,20 +73,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       });
     }
     ref.invalidate(aiConsentProvider);
+    ref.invalidate(sessionProvider);
     await ref.read(userProfileProvider.notifier).load();
+    if (!mounted) return;
     final migration = GuestAccountMigrationService();
-    if (await migration.hasPendingMigration() && mounted) {
+    final hasPendingMigration = await migration.hasPendingMigration();
+    if (!mounted) return;
+    if (hasPendingMigration) {
       final shouldImport = await _askToImportGuestData();
+      if (!mounted) return;
       if (shouldImport) {
         final result = await _runGuestMigration(migration);
+        if (!mounted) return;
         if (result.completed) {
           await ref.read(userProfileProvider.notifier).load();
+          if (!mounted) return;
           ref.invalidate(wardrobeProvider);
           ref.invalidate(outfitsProvider);
-          if (result.warnings.isNotEmpty && mounted) {
+          if (result.warnings.isNotEmpty) {
             await _showMigrationWarnings(result);
+            if (!mounted) return;
           }
-        } else if (mounted && result.error != null) {
+        } else if (result.error != null) {
           _showMessage(
             AppLocalizations.of(context)?.authImportFailed ??
                 'Local wardrobe import failed. Try again later.',
@@ -85,8 +102,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
     }
-    final profile = ref.read(userProfileProvider);
     if (!mounted) return;
+    final profile = ref.read(userProfileProvider);
     final returnLocation = widget.entry.safeReturnLocation;
     if (profile.onboardingComplete) {
       context.go(returnLocation ?? '/home');

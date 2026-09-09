@@ -28,27 +28,38 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
           onboardingComplete: false,
         ),
       ) {
-    load();
+    _loadProfile(initial: true);
   }
 
   final dynamic _ref;
   final ProfileRepository _repository;
   Future<void> _writeQueue = Future.value();
+  int _loadGeneration = 0;
+  int _mutationGeneration = 0;
 
-  Future<void> load() async {
+  Future<void> load() => _loadProfile(initial: false);
+
+  Future<void> _loadProfile({required bool initial}) async {
+    final requestGeneration = ++_loadGeneration;
+    final mutationGeneration = _mutationGeneration;
     try {
       final profile = await _repository.fetchProfile();
-      if (profile != null) {
-        state = profile;
-        _ref.read(skinToneIndexProvider.notifier).state = profile.skinToneIndex;
-        _ref.read(hairColorIndexProvider.notifier).state =
-            profile.hairColorIndex;
-        _ref.read(bodyShapeProvider.notifier).state = profile.bodyShape;
-        _ref.read(hairStyleIndexProvider.notifier).state =
-            profile.hairStyleIndex;
+      if (profile == null ||
+          !mounted ||
+          requestGeneration != _loadGeneration ||
+          (initial && mutationGeneration != _mutationGeneration)) {
+        return;
       }
+      state = profile;
+      if (_ref == null || !mounted) return;
+      _ref.read(skinToneIndexProvider.notifier).state = profile.skinToneIndex;
+      _ref.read(hairColorIndexProvider.notifier).state = profile.hairColorIndex;
+      _ref.read(bodyShapeProvider.notifier).state = profile.bodyShape;
+      _ref.read(hairStyleIndexProvider.notifier).state = profile.hairStyleIndex;
     } catch (_) {}
   }
+
+  void _markMutation() => _mutationGeneration++;
 
   void _persist() {
     unawaited(_enqueue(() => _repository.upsertProfile(state)));
@@ -67,11 +78,16 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
 
   Future<void> _saveProfileMutation(
     UserProfile Function(UserProfile current) mutation,
-  ) => _enqueue(() async {
-    final updated = mutation(state);
-    await _repository.upsertProfile(updated);
-    state = updated;
-  });
+  ) {
+    _markMutation();
+    return _enqueue(() async {
+      final updated = mutation(state);
+      await _repository.upsertProfile(updated);
+      // Persist the queued snapshot, then apply this field replacement to the
+      // current state so an edit made while awaiting the write is retained.
+      if (mounted) state = mutation(state);
+    });
+  }
 
   Future<void> saveColorSeason(ColorSeason season) =>
       _saveProfileMutation((current) => current.copyWith(colorSeason: season));
@@ -92,51 +108,60 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     String? avatarPath,
     Uint8List? customAvatarBytes,
     String customAvatarName = 'profile.png',
-  }) async {
-    await flush();
-    final updated = await _repository.updateIdentity(
-      displayName: displayName,
-      avatarMode: avatarMode,
-      avatarPath: avatarPath,
-      customAvatarBytes: customAvatarBytes,
-      customAvatarName: customAvatarName,
+  }) {
+    _markMutation();
+    return _enqueue(() async {
+      final updated = await _repository.updateIdentity(
+        displayName: displayName,
+        avatarMode: avatarMode,
+        avatarPath: avatarPath,
+        customAvatarBytes: customAvatarBytes,
+        customAvatarName: customAvatarName,
+      );
+      if (mounted) state = _mergeIdentity(state, updated);
+    });
+  }
+
+  UserProfile _mergeIdentity(UserProfile current, UserProfile identity) {
+    return current.copyWith(
+      id: identity.id,
+      name: identity.name,
+      avatarUrl: identity.avatarUrl,
+      avatarPath: identity.avatarPath,
+      avatarMode: identity.avatarMode,
+      avatarDisplayUrl: identity.avatarDisplayUrl,
     );
-    state = updated;
   }
 
   void updateColorSeason(ColorSeason season) {
-    state = state.copyWith(colorSeason: season);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(colorSeason: season));
   }
 
   void updateAvatarType(AvatarType type) {
-    state = state.copyWith(avatarType: type);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(avatarType: type));
   }
 
   void updateStylePreferences(List<String> prefs) {
-    state = state.copyWith(stylePreferences: prefs);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(stylePreferences: prefs));
   }
 
   void updateOccasions(List<String> occasions) {
-    state = state.copyWith(occasions: occasions);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(occasions: occasions));
   }
 
   void completeOnboarding() {
-    state = state.copyWith(onboardingComplete: true);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(onboardingComplete: true));
   }
 
   void updateName(String name) {
-    state = state.copyWith(name: name);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(name: name));
   }
 
   void updateBirthDate(DateTime date) {
-    state = state.copyWith(birthDate: date, birthWeekday: date.weekday);
-    _persist();
+    _updateAndPersist(
+      (current) =>
+          current.copyWith(birthDate: date, birthWeekday: date.weekday),
+    );
   }
 
   void updateOnboardingDetails({
@@ -144,31 +169,34 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     ColorSeason? colorSeason,
     double? brandTier,
   }) {
-    state = state.copyWith(
-      bodyType: bodyType,
-      colorSeason: colorSeason,
-      brandTier: brandTier,
+    _updateAndPersist(
+      (current) => current.copyWith(
+        bodyType: bodyType,
+        colorSeason: colorSeason,
+        brandTier: brandTier,
+      ),
     );
-    _persist();
   }
 
   void updateBodyShape(AvatarBodyShape shape) {
-    state = state.copyWith(bodyShape: shape);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(bodyShape: shape));
   }
 
   void updateSkinToneIndex(int i) {
-    state = state.copyWith(skinToneIndex: i);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(skinToneIndex: i));
   }
 
   void updateHairColorIndex(int i) {
-    state = state.copyWith(hairColorIndex: i);
-    _persist();
+    _updateAndPersist((current) => current.copyWith(hairColorIndex: i));
   }
 
   void updateHairStyleIndex(int i) {
-    state = state.copyWith(hairStyleIndex: i);
+    _updateAndPersist((current) => current.copyWith(hairStyleIndex: i));
+  }
+
+  void _updateAndPersist(UserProfile Function(UserProfile current) mutation) {
+    _markMutation();
+    state = mutation(state);
     _persist();
   }
 }

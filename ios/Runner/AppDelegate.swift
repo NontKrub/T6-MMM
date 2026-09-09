@@ -30,9 +30,20 @@ import flutter_local_notifications
         result(FlutterMethodNotImplemented)
         return
       }
-      guard let bytes = call.arguments as? FlutterStandardTypedData else {
-        result(FlutterError(code: "invalid_image", message: "Image bytes are required.", details: nil))
-        return
+      let bytes: FlutterStandardTypedData
+      if call.method == "segmentForeground" {
+        guard let arguments = call.arguments as? [String: Any],
+              let typedBytes = arguments["bytes"] as? FlutterStandardTypedData else {
+          result(FlutterError(code: "invalid_image", message: "Image bytes are required.", details: nil))
+          return
+        }
+        bytes = typedBytes
+      } else {
+        guard let typedBytes = call.arguments as? FlutterStandardTypedData else {
+          result(FlutterError(code: "invalid_image", message: "Image bytes are required.", details: nil))
+          return
+        }
+        bytes = typedBytes
       }
       DispatchQueue.global(qos: .userInitiated).async {
         do {

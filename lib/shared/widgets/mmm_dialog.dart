@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
 
+typedef MmmDialogActionsBuilder =
+    List<Widget> Function(BuildContext dialogContext);
+
 /// Thin dialog primitive that keeps Material semantics and shared geometry.
 class MmmDialog extends StatelessWidget {
   const MmmDialog({super.key, this.title, this.content, this.actions});
@@ -16,13 +19,21 @@ class MmmDialog extends StatelessWidget {
     Widget? title,
     Widget? content,
     List<Widget>? actions,
+    MmmDialogActionsBuilder? actionsBuilder,
     bool barrierDismissible = true,
   }) {
+    assert(
+      actions == null || actionsBuilder == null,
+      'Provide either actions or actionsBuilder, not both.',
+    );
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (_) =>
-          MmmDialog(title: title, content: content, actions: actions),
+      builder: (dialogContext) => MmmDialog(
+        title: title,
+        content: content,
+        actions: actionsBuilder?.call(dialogContext) ?? actions,
+      ),
     );
   }
 

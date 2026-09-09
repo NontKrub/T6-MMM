@@ -1688,6 +1688,54 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearance;
 
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeSystemSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows your device appearance'**
+  String get settingsThemeSystemSubtitle;
+
+  /// No description provided for @settingsThemeLightSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always use light appearance'**
+  String get settingsThemeLightSubtitle;
+
+  /// No description provided for @settingsThemeDarkSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always use dark appearance'**
+  String get settingsThemeDarkSubtitle;
+
+  /// No description provided for @settingsThemeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the theme. Try again.'**
+  String get settingsThemeSaveFailed;
+
   /// No description provided for @settingsDarkMode.
   ///
   /// In en, this message translates to:
@@ -1921,6 +1969,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Local guest account'**
   String get settingsGuestAccount;
+
+  /// No description provided for @settingsGuestAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wardrobe is stored locally on this device'**
+  String get settingsGuestAccountSubtitle;
 
   /// No description provided for @settingsSignOut.
   ///

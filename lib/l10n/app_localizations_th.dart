@@ -866,6 +866,31 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAppearance => 'การแสดงผล';
 
   @override
+  String get settingsTheme => 'ธีม';
+
+  @override
+  String get settingsThemeSystem => 'ตามระบบ';
+
+  @override
+  String get settingsThemeLight => 'สว่าง';
+
+  @override
+  String get settingsThemeDark => 'มืด';
+
+  @override
+  String get settingsThemeSystemSubtitle =>
+      'ทำตามการตั้งค่ารูปลักษณ์ของอุปกรณ์';
+
+  @override
+  String get settingsThemeLightSubtitle => 'ใช้รูปลักษณ์สว่างเสมอ';
+
+  @override
+  String get settingsThemeDarkSubtitle => 'ใช้รูปลักษณ์มืดเสมอ';
+
+  @override
+  String get settingsThemeSaveFailed => 'บันทึกธีมไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
   String get settingsDarkMode => 'โหมดมืด';
 
   @override
@@ -989,6 +1014,10 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsGuestAccount => 'บัญชีผู้เยี่ยมชมในเครื่อง';
+
+  @override
+  String get settingsGuestAccountSubtitle =>
+      'ตู้เสื้อผ้าของคุณเก็บไว้ในอุปกรณ์นี้';
 
   @override
   String get settingsSignOut => 'ออกจากระบบ';
